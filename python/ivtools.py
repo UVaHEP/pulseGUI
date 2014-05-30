@@ -12,7 +12,7 @@ def readVIcsv(file, V, I, vbar, dIdVi):
     tmpINP=tempfile.mktemp()
     # make a 2-column tmp file w/ V, I data
     if isAgilent:
-        print "Reading I-V curve from Agelint sourcemeter"
+        print "Reading I-V curve from Agilent sourcemeter"
         os.system("cat "+file+" | awk -F',' '{print $4,$5}' | grep -iv Volt >"+tmpINP)
     else:
         print "Reading I-V curve from Keithley sourcemeter"
