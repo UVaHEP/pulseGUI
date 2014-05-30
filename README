@@ -1,0 +1,85 @@
+Building pulseGUI
+=================
+Use the Makefile
+$ make
+This will create shared libraries in ROOT and exit
+
+Running pulseGUI
+================
+$ root -l pulseGUI.C
+This will load the shared libraries and start up the pulseGUI interface
+
+Python tools
+============
+source setup.sh
+# iv curve drawing and (incorrect) guesstimate of VBreak
+ivAnalyze.py ivfilename
+# reads in list of files w/ xx.xV field in filename and estimated VBreak
+vbreak.py file1 file2 [file3] ...
+vbreak.py path*
+
+SVN overview:
+============
+Some Links:
+http://svnbook.red-bean.com/
+http://www.thegeekstuff.com/2011/04/svn-command-examples/
+http://docs.codehaus.org/display/HAUSMATES/How+to+Organize+a+Subversion+Repository
+http://docs.codehaus.org/display/HAUSMATES/How+to+Tag+and+Branch+a+Subversion+Repository
+http://gcc.gnu.org/wiki/SvnTricks
+http://root.cern.ch/drupal/content/subversion-howto
+
+**Contact BH: to add you ssh key to access**
+
+
+checkout (for development on trunk):
+--------
+$ svn co svn+ssh://svn@hepcat.phys.virginia.edu/home/svn/repo/pulseGUI/trunk pulseGUI [or other dirname] 
+
+status
+------
+# see what's been done in the working directory
+$ svn status
+
+add file(s)
+-----------
+$ svn add filename(list)
+
+commit
+------
+$ svn commit -m"comment string"
+
+**IMPORTANT** The setup with sshkeys, logs all commits under the svn user.
+In order to log changes by real user, please use comments like:
+"BH: added cool functionality"
+or
+"TA: added new binary read format"
+
+make a tag
+----------
+$ svn copy -m"comment string" \
+  svn+ssh://svn@hepcat.phys.virginia.edu/home/svn/repo/pulseGUI/trunk \
+  svn+ssh://svn@hepcat.phys.virginia.edu/home/svn/repo/pulseGUI/tags/<tag-name>
+
+list available tags
+-------------------
+$ svn ls svn+ssh://svn@hepcat.phys.virginia.edu/home/svn/repo/pulseGUI/tags
+
+checkout a tag
+--------------
+svn co svn+ssh://svn@hepcat.phys.virginia.edu/home/svn/repo/pulseGUI/tags <tagname> [dirname]
+
+add exec bit after committing file
+==================================
+svn propset svn:executable ON <file>
+
+==== VERSIONS ====
+
+v00-06: BH initial revisions in
+To do	- move code/so's to src directory to cleanup top dir
+   	- consider breaking up pulseGUI.cxx into separate files for GUI and analysis tools
+	- add code to handle LED data
+	- new analsis tool to plot time-correlated pulse height distributions
+	- tool to analyze IV data
+
+v00-07: BH - major code cleanup
+	- add vbreak.py
