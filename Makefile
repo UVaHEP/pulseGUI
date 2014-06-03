@@ -23,12 +23,7 @@ clean:
 	rm -f AnalysisEventDict.cxx AnalysisEventDict.h *.so *.o *~ $(LIB)/* $(BUILDDIR)/pulseGUI.so
 
 pulseGUI.so: pulseGUI.o pulseAnalysis.so AnalysisEventDict.so
-	LIBS=$(wildcard $(LIB)/ReadMat.so)
-ifeq ($(LIBS),)
-	$(CC) $(SHAREDCFLAGS) $(ROOTLIBS) $(ROOTLFLAGS) -o $@ $(abspath $(patsubst %.so, $(LIB)/%.so,$^))
-else
-	$(CC) $(SHAREDCFLAGS) $(ROOTLIBS) $(ROOTLFLAGS) -o $@ $^ 
-endif
+	$(CC) $(SHAREDCFLAGS) $(ROOTLIBS) $(ROOTLFLAGS) -o $@ $(addprefix $(LIB)/,$(filter-out %.o,$(notdir $^))) $(filter-out %.so,$^)
 	mv $@ $(BUILDDIR)/
 
 
@@ -41,12 +36,7 @@ AnalysisEventDict.cxx:  pulseGUI.h pulseAnalysis.h LinkDef.h
 	rootcint  $@ -c $^ 
 
 pulseAnalysis.so: pulseAnalysis.cxx ReadMat.so ReadTXT.so pATools.o
-	LIBS=$(wildcard $(LIB)/ReadMat.so)
-ifeq ($(LIBS),)
-	$(CC) $(SHAREDCFLAGS) -o $@  $(ROOTLIBS) $(abspath $(patsubst %.so, $(LIB)/%.so,$^)) 
-else
-	$(CC) $(SHAREDCFLAGS) -o $@  $(ROOTLIBS) $^
-endif
+	$(CC) $(SHAREDCFLAGS) -o $@  $(ROOTLIBS) $(addprefix $(LIB)/,$(filter-out %.cxx %.o,$(notdir $^))) $(filter-out %.so,$^)
 	mv $@ $(LIB)/
 
 
