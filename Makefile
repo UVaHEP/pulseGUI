@@ -17,7 +17,10 @@ NONSHARED = -c -I$(CURDIR)/include -pipe -Wshadow -W -Woverloaded-virtual $(ROOT
 BUILDDIR = $(CURDIR)/build
 LIB = $(BUILDDIR)/lib
 
-all: pulseGUI.so 
+all: dirs pulseGUI.so 
+
+dirs:
+	test -d $(LIB) || mkdir -p $(LIB)
 
 clean:
 	rm -f AnalysisEventDict.cxx AnalysisEventDict.h *.so *.o *~ $(LIB)/* $(BUILDDIR)/pulseGUI.so
