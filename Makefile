@@ -16,16 +16,17 @@ SHAREDCFLAGS= -shared $(ROOTCFLAGS) $(CXXFLAGS) -I$(CURDIR)/include
 NONSHARED = -c -I$(CURDIR)/include -pipe -Wshadow -W -Woverloaded-virtual $(ROOTCFLAGS) $(CXXFLAGS) -DR__HAVE_CONFIG
 BUILDDIR = $(CURDIR)/build
 LIB = $(BUILDDIR)/lib
+SCRIPTDIR = $(CURDIR)/script
 
-all: dirs pulseGUI.so 
+all: dirs pulseGUI.so pythonHelper_C.so
 
 dirs:
 	test -d $(LIB) || mkdir -p $(LIB)
 
 clean:
-	rm -f AnalysisEventDict.cxx AnalysisEventDict.h *.so *.o *~ $(LIB)/* $(BUILDDIR)/pulseGUI.so
+	rm -f AnalysisEventDict.cxx AnalysisEventDict.h *.so *.o *~ $(LIB)/* $(BUILDDIR)/pulseGUI.so $(BUILDDIR)/pythonHelper_C.so
 
-pulseGUI.so: pulseGUI.o pulseAnalysis.so AnalysisEventDict.so
+pulseGUI.so: pulseGUI.o pulseAnalysis.so AnalysisEventDict.so 
 	$(CC) $(SHAREDCFLAGS) $(ROOTLIBS) $(ROOTLFLAGS) -o $@ $(addprefix $(LIB)/,$(filter-out %.o,$(notdir $^))) $(filter-out %.so,$^)
 	mv $@ $(BUILDDIR)/
 
@@ -61,4 +62,5 @@ ReadTXT.so: ReadTxt.cxx
 
 pythonHelper_C.so: Compile.C pythonHelper.C
 	root -b $^
+	mv $(SCRIPTDIR)/$@ $(BUILDDIR)/
 

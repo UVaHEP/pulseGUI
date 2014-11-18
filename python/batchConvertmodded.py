@@ -8,8 +8,11 @@ ROOTLIBS=commands.getoutput("root-config --libdir")
 sys.path.append(ROOTLIBS)
 
 from ROOT import gSystem
-gSystem.Load("pulseGUI.so")
-gSystem.Load("pythonHelper_C.so")
+
+gSystem.Load("../build/pulseGUI.so")
+gSystem.Load("../build/pythonHelper_C.so")
+
+
 from ROOT import pulseAnalysis, TArrayF, TFile, gatherArray, joinArrays, TString, TH1D, TH1F
 from array import array 
 
