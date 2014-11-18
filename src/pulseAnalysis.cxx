@@ -117,8 +117,14 @@ void pulseAnalysis::Reset() {
 
 
 void pulseAnalysis::LoadSpectrum(TString Filename){
-  _tf=new TFile(Filename);
+  if (Filename.Contains(".root")) { 
+    _tf=new TFile(Filename);
+  }
+  else {
+    ConvertFile(Filename); 
+  }
   Reset();  
+
 }
 
 void pulseAnalysis::LoadSpectrum() { 
