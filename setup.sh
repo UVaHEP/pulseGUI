@@ -30,7 +30,7 @@ add_to_envVar () {
 
 export PULSGUIDIR=$PWD
 
-add_to_envVar $PULSGUIDIR/bin        PATH
+add_to_envVar ${PULSGUIDIR}/bin        PATH
 add_to_envVar ${PULSGUIDIR}/python   PYTHONPATH
 add_to_envVar ${PULSGUIDIR}/build/lib  LD_LIBRARY_PATH
 
