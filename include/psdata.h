@@ -1,4 +1,4 @@
-// Infromation structure for picoscope data blocks
+// Information structure for picoscope data blocks
 
 #ifndef PSDATA_H
 #define PSDATA_H
@@ -16,7 +16,8 @@ using std::endl;
 // to do: better to turn this into a class
 // add Read/Write methods to save arrays and read in all pointers from TFile
 
-struct psdata { 
+class psdata { 
+ public:
   TH1D *dT; 
   TH1D *t0; 
   TH1F *vMax; 
@@ -26,17 +27,16 @@ struct psdata {
   TH1F *pHD;   // pulse height distribution
   TArrayF *volts; 
   TArrayC *trigger; 
-};
 
-
-bool checkPSData(psdata *ps) { 
-  if (ps == NULL || ps->dV == NULL || ps->dT == NULL || ps->t0 == NULL 
-      || ps->vMax == NULL || ps->vMin == NULL || ps->volts == NULL
-      || ps->trigger == NULL) {
-    return false; 
+  bool checkPSData(psdata *ps) {
+    if (ps == NULL || ps->dV == NULL || ps->dT == NULL || ps->t0 == NULL
+	|| ps->vMax == NULL || ps->vMin == NULL || ps->volts == NULL
+	|| ps->trigger == NULL) {
+      return false;
+    }
+    return true;
   }
-  return true; 
-}
+};
 
 
 #endif

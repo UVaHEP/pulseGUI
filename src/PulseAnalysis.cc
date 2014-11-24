@@ -1,5 +1,6 @@
-#include "pulseAnalysis.h"
+#include "PulseAnalysis.h"
 #include "pATools.h"
+#include "PicoReader.h"
 #include <TSystem.h>
 #include <TObject.h>
 #include <TInterpreter.h>
@@ -42,51 +43,40 @@ using std::endl;
 using std::vector;
 using TMath::Sqrt;
 
-pulseAnalysis::pulseAnalysis(const char *fName) { 
+PulseAnalysis::PulseAnalysis(TString fName){ 
   debug();
-  if (!fName) return;
-  if (!TString(fName).EndsWith(".root")) ConvertFile(fName);
-  else _tf=new TFile(fName);
-  if (_tf) { 
-    _tf->Print();
-    LoadSpectrum();
-  }
+  if (fName=="") return;
+  if (!fName.EndsWith(".root")) ConvertFile(fName);
+  else _tfName=fName;
+  LoadSpectrum();
 }
 
-pulseAnalysis::~pulseAnalysis() { 
+PulseAnalysis::~PulseAnalysis() { 
   debug();
   if (_tf) _tf->Close(); 
 } 
 
-void pulseAnalysis::ConvertFile(TString fName) { 
+void PulseAnalysis::ConvertFile(TString fName) { 
+  log_info("Converting file %s",fName.Data());
   debug();
-  TString rName=fName;  // name for root file
+  PicoReader* reader = new PicoReader();
+  _tfName=fName;  // name for root file
  
   // Convert file from MATLAB or ASCII format to ROOT binary
   debug("Begin Conversion of: %s",fName.Data());
-  if(fName.Contains(".mat")) {
-    rName.ReplaceAll(".mat",".root");
-    ConvertMatFile(fName, rName);
-  }
-  else {
-    rName.ReplaceAll(".csv",".root");
-    rName.ReplaceAll(".txt",".root");
-    ConvertTXTFile(fName, rName); 
-  }
 
-  if (_tf) {
-    //_tf has already been closed by this point, 
-    // but root may not have updated things yet......
-    debug("Why does tf still exist? It got killed in Convert*File....."); 
-    //    Reset(); 
-    // _tf->Close(); 
-    //    delete _tf;
-  }
-  _tf = new TFile(rName); 
+  // slighty dangerous assumption about file name conventions
+  _tfName.ReplaceAll(".txt",".root");
+  _tfName.ReplaceAll(".csv",".root");
+  _tfName.ReplaceAll(".mat",".root");
+
+  reader->Convert(fName, _tfName);  // to do add error check
+  delete reader;
+
   debug("Conversion Finished");
 } 
 
-void pulseAnalysis::AnaClean(){ 
+void PulseAnalysis::AnaClean(){ 
   debug();
   if (_hdt) _hdt = NULL; 
   if (_hph) _hph = NULL; 
@@ -94,7 +84,7 @@ void pulseAnalysis::AnaClean(){
   if (_hprms) _hprms = NULL;
 }
 
-void pulseAnalysis::Clear() {
+void PulseAnalysis::Clear() {
   debug();
   // Return all useful variables to default/NULL.
   _pThreshold = -1.0; 
@@ -109,28 +99,25 @@ void pulseAnalysis::Clear() {
   AnaClean();
 }
 
-void pulseAnalysis::Reset() { 
+void PulseAnalysis::Reset() { 
   debug();
   Clear();
   if (_tf) LoadSpectrum(); 
 }
 
-
-void pulseAnalysis::LoadSpectrum(TString Filename){
-  if (Filename.Contains(".root")) { 
-    _tf=new TFile(Filename);
-  }
-  else {
-    ConvertFile(Filename); 
-  }
+void PulseAnalysis::LoadSpectrum(TString fName){
+  if (fName.Contains(".root")) _tfName = fName;
+  else ConvertFile(fName); 
   Reset();  
-
+  LoadSpectrum();
 }
 
-void pulseAnalysis::LoadSpectrum() { 
+void PulseAnalysis::LoadSpectrum() { 
   debug();
+  log_info("Loading: %s",_tfName.Data());
+  _tf=new TFile(_tfName);
   if (!_tf||_tf->IsZombie()) {
-    debug("Invalid spectrum file");
+    debug("Invalid spectrum file: ",_tfName);
     return;
   }
 
@@ -165,7 +152,6 @@ void pulseAnalysis::LoadSpectrum() {
   _xmin = t0-_dT/2; 
   _xmax = t0+(_nbins-0.5)*_dT;
  
-
   _hspect = new TH1F("_hspect","Pulse Spectrum;Time [ns];Amplitude [mV]",
 		    _nbins, _xmin, _xmax);
   _hfreq = new TH1F("_hfreq","_hfreq",int((_pMax-_pMin)/dV)+1
@@ -180,15 +166,14 @@ void pulseAnalysis::LoadSpectrum() {
   SetWidth(5); 
   //  SetPeriod(); 
   SetThreshold(0.0); 
-
-  
-  // guestimate threshold based on pulse height frequency distro
-  // 1) assuming we have mostly noise samples, fit a gaussian to low voltage region
+ 
+  // Guestimate threshold based on pulse height frequency distro
+  // Assume we have mostly noise samples & fit a gaussian to low amplitude region
   _hfreq->Fit("gaus","0R","",_hfreq->GetBinLowEdge(1),_hfreq->GetRMS()*4);
   TF1 *f=_hfreq->GetFunction("gaus");
   _basePar[0]=f->GetParameter(1);
   _basePar[1]=f->GetParameter(2);
-  Double_t cut=f->GetParameter(1)+f->GetParameter(2)*pulseAnalysis::NSIGMA;
+  Double_t cut=f->GetParameter(1)+f->GetParameter(2)*PulseAnalysis::NSIGMA;
   SetThreshold(cut); 
   log_info("Threshold set to: %f",cut);
   
@@ -198,17 +183,16 @@ void pulseAnalysis::LoadSpectrum() {
   cout << "VMin:" << _pMin << " VMax:" << _pMax 
        << " dV:" << dV << " [mV]" << " dT: " << _dT << " [ns]" 
        << endl;
-} 
+}
 
 
-
-void pulseAnalysis::DrawSpectrum() { 
+void PulseAnalysis::DrawSpectrum() { 
   if (_hspect) { 
     _hspect->DrawCopy(); 
   }
 }
 
-void pulseAnalysis::SmoothHistogram() {
+void PulseAnalysis::SmoothHistogram() {
   debug();
   if (!_hspect) { 
     std::cout << "Spectrum not loaded!" << std::endl; 
@@ -218,7 +202,7 @@ void pulseAnalysis::SmoothHistogram() {
   _hspect->Smooth(); 
   
 }  
-TString pulseAnalysis::FindPeaks(bool nodraw){ 
+TString PulseAnalysis::FindPeaks(bool nodraw){ 
   debug();
   // Search the data for amplitudes above a given threshold, diplay the peaks,
   // and display the pulse rate.
@@ -273,7 +257,7 @@ TString pulseAnalysis::FindPeaks(bool nodraw){
   return msg; 
 }
 
-void pulseAnalysis::FindPeaksandReduce(Float_t window) { 
+void PulseAnalysis::FindPeaksandReduce(Float_t window) { 
 // Find Peaks and then eliminate non-peak regions by converting to a zero bin 
   FindPeaks(true); 
   TList *functions = _hspect->GetListOfFunctions(); 
@@ -288,22 +272,22 @@ void pulseAnalysis::FindPeaksandReduce(Float_t window) {
   TMath::Sort(_pNFound, pmarrayX, index, kFALSE);  // index sort by timestamp
   bool inWindow = false; 
 
-  Double_t start = 0.0; 
-  Double_t end =  0.0; 
+  //Double_t start = 0.0; 
+  // Double_t end =  0.0; 
   UInt_t s = 0; 
-  UInt_t c = 0; 
+  //UInt_t c = 0; 
 
   for (int i = 0; i < _pNFound; i++) { 
     Double_t current = pmarrayX[index[i]];
     
     if (!inWindow) { 
-      start = current - halfWindow;
+      //  start = current - halfWindow;
       s = _hspect->GetBin(current-halfWindow); 
     }
 
-    c = _hspect->GetBin(current); 
+    //c = _hspect->GetBin(current); 
     
-    end = current + halfWindow; 
+    //end = current + halfWindow; 
     Double_t next = pmarrayX[index[i+1]]; 
     Double_t difference = next - current; 
     std::cout << "Next:Current::" << next << " " << current << " Differece:" << difference << " I:" << i << std::endl; 
@@ -331,7 +315,7 @@ void pulseAnalysis::FindPeaksandReduce(Float_t window) {
     std::cout << "Start:End:Difference::" << (*it)[0] << ":" << (*it)[1] << ":" << (*it)[1] - (*it)[0] << std::endl; 
   }
 
-  Double_t t0=((TH1D*)_tf->Get("T0"))->GetBinContent(1);
+  //Double_t t0=((TH1D*)_tf->Get("T0"))->GetBinContent(1);
   TH1F *reduced = new TH1F("_reduced","Pulse Spectrum;Time [ns];Amplitude [mV]",
 		    _nbins, _xmin, _xmax);
 
@@ -354,7 +338,7 @@ void pulseAnalysis::FindPeaksandReduce(Float_t window) {
  
 
 
-void pulseAnalysis::Analyze(){ 
+void PulseAnalysis::Analyze(){ 
   debug("");
   if (!_pNFound){
     std::cout << "Find peaks first." << std::endl;return;
@@ -367,7 +351,7 @@ void pulseAnalysis::Analyze(){
   pmarrayX=pm->GetX();
   pmarrayY=pm->GetY();
   
-  Int_t *index=new Int_t[pulseAnalysis::MAXPEAKS];
+  Int_t *index=new Int_t[PulseAnalysis::MAXPEAKS];
   TMath::Sort(_pNFound, pmarrayX, index, kFALSE);  // index sort by timestamp
   AnaClean();
 
@@ -456,16 +440,16 @@ void pulseAnalysis::Analyze(){
 }
 
 
-void pulseAnalysis::DumpPeaks(){
+void PulseAnalysis::DumpPeaks(){
   debug();
 }
 
-void pulseAnalysis::SubBkg(){
+void PulseAnalysis::SubBkg(){
   debug();
 }
 
 
-TString pulseAnalysis::SetWidth(Float_t w){
+TString PulseAnalysis::SetWidth(Float_t w){
   debug();
  // set width in microseconds
   _pWidth = w; 
@@ -477,29 +461,29 @@ TString pulseAnalysis::SetWidth(Float_t w){
 }
 
 
-void pulseAnalysis::SetThreshold(Float_t t) {
+void PulseAnalysis::SetThreshold(Float_t t) {
   debug();
   _pThreshold = t;
 }
 
 
-void pulseAnalysis::SetXMarks(){
+void PulseAnalysis::SetXMarks(){
   debug("n/a");
 }
 
-void pulseAnalysis::SetYMarks(){
+void PulseAnalysis::SetYMarks(){
   debug("n/a");
 }
 
-void pulseAnalysis::GetBkg(){ 
+void PulseAnalysis::GetBkg(){ 
   debug("n/a");
 }
 
-void pulseAnalysis::SetResponse(){
+void PulseAnalysis::SetResponse(){
   debug("n/a");
 }
 
-void pulseAnalysis::inzoom(){ 
+void PulseAnalysis::inzoom(){ 
   debug();
   // Reduce the spectrum viewport range in by a factor of 2.
   if (!_hspect) 
@@ -511,14 +495,14 @@ void pulseAnalysis::inzoom(){
   _hspect->GetXaxis()->SetRange(center-range/4,center+range/4);
 }
 
-void pulseAnalysis::unzoom(){ 
+void PulseAnalysis::unzoom(){ 
   debug();
   if (!_hspect)
     return; 
   _hspect->GetXaxis()->SetRange(2,1);  //if last < first the range is reset
 }
 
-void pulseAnalysis::outzoom(){ 
+void PulseAnalysis::outzoom(){ 
   debug();
   // Expand the spectrum viewport viewring range by a factor of 2.
   if (!_hspect) 
@@ -531,7 +515,7 @@ void pulseAnalysis::outzoom(){
   _hspect->GetXaxis()->SetRange(TMath::Max(0,center-range),TMath::Min(center+range,nbins));
 }
 
-void pulseAnalysis::leftShift(){ 
+void PulseAnalysis::leftShift(){ 
   debug();
   // Shift the spectrum viewport range to the right.
   if (!_hspect)
@@ -544,7 +528,7 @@ void pulseAnalysis::leftShift(){
   _hspect->GetXaxis()->SetRange(first,last);
 }
 
-void pulseAnalysis::rightShift(){ 
+void PulseAnalysis::rightShift(){ 
   debug();
   // Shift the spectrum viewport range to the left.
 
@@ -559,11 +543,11 @@ void pulseAnalysis::rightShift(){
   _hspect->GetXaxis()->SetRange(first,last);
 }
 
-void pulseAnalysis::Print(){
+void PulseAnalysis::Print(){
   debug("n/a");
 }
 
-void pulseAnalysis::WriteHists(){ 
+void PulseAnalysis::WriteHists(){ 
   debug();
   TFile *tf=new TFile("hists.root","recreate");
   if (_hspect) _hspect->Write();

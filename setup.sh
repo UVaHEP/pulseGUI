@@ -30,6 +30,13 @@ add_to_envVar () {
 
 export PULSGUIDIR=$PWD
 
-add_to_envVar $PULSGUIDIR            PATH
+add_to_envVar $PULSGUIDIR/bin        PATH
 add_to_envVar ${PULSGUIDIR}/python   PYTHONPATH
+add_to_envVar ${PULSGUIDIR}/build/lib  LD_LIBRARY_PATH
+
+
+# hack until someone figures out how to check for root-config in the Makefile
+if [ -e /usr/bin/root ] ; then
+  if [ -z $ROOTSYS ] ; then export ROOTSYS="." ; fi
+fi
 

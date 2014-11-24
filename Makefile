@@ -1,66 +1,133 @@
+SHELL:=/bin/sh
+# ----------------------------------------------------------------------------
+# ----------------------------------------------------------------------------
+ifndef ROOTSYS
+$(error *** Please set up environment variable ROOTSYS)
+endif
+# ----------------------------------------------------------------------------
+NAME	:= PulseGUI
+BLDDIR	:= build
+LIBDIR	:= build/lib
+BINDIR  := bin
+SRCDIR	:= src
+EXEDIR  := exe
+INCDIR	:= include
+LIBRARY	:= $(LIBDIR)/lib$(NAME).so
+$(shell mkdir -p build/lib bin)
+# ----------------------------------------------------------------------------
+# sources for which dictionaries are to be created, 
+# but without the use of LinkDefs
+SRCSNOLINKDEF	:= PicoReader.cc PulseAnalysis.cc PulseGUI.cc 
 
+# sources for which dictionaries are to be created, 
+# using LinkDefs
+SRCSWITHLINKDEF :=
+# ----------------------------------------------------------------------------
+SRCSNOLINKDEF	:= $(patsubst %.cc,$(SRCDIR)/%.cc,$(SRCSNOLINKDEF))
+DICTSNOLINKDEF	:= $(patsubst $(SRCDIR)/%.cc,$(BLDDIR)/%Dict.cxx,$(SRCSNOLINKDEF))
 
-SHELL=/bin/sh
-.SUFFIXES:
-.SUFFIXES: .cxx .cc 
-VPATH=src:include:build:build/lib:../src:/include:../include:lib:script
-ROOTLIB=$(shell root-config --libdir)
-ROOTCFLAGS=$(shell root-config --cflags)
-ROOTLFLAGS=$(shell root-config --ldflags)
-ROOTLIBS=$(shell root-config --libs) -lSpectrum -lGui
-INC=../include
-DEBUG=-DDODEBUG
-PROFILE=-pg
-CXXFLAGS=-Wall -fPIC -O2 $(DEBUG) $(PROFILE) -rdynamic
-SHAREDCFLAGS= -shared $(ROOTCFLAGS) $(CXXFLAGS) -I$(CURDIR)/include
-NONSHARED = -c -I$(CURDIR)/include -pipe -Wshadow -W -Woverloaded-virtual $(ROOTCFLAGS) $(CXXFLAGS) -DR__HAVE_CONFIG
-BUILDDIR = $(CURDIR)/build
-LIB = $(BUILDDIR)/lib
-SCRIPTDIR = $(CURDIR)/script
+SRCSWITHLINKDEF	:= $(patsubst %.cc,$(SRCDIR)/%.cc,$(SRCSWITHLINKDEF))
+DICTSWITHLINKDEF:= $(patsubst $(SRCDIR)/%.cc,$(BLDDIR)/%Dict.cxx,$(SRCSWITHLINKDEF))
 
-all: dirs pulseGUI.so pythonHelper_C.so
+CCSRCS	:= $(SRCSNOLINKDEF)
+CCSRCS	+= $(SRCSWITHLINKDEF)
+# add other sources
+CCSRCS	+= $(filter-out $(CCSRCS),$(wildcard $(SRCDIR)/*.cc))
 
-dirs:
-	test -d $(LIB) || mkdir -p $(LIB)
+CXXSRCS	:= $(DICTSNOLINKDEF) $(DICTSWITHLINKDEF) 
+
+# objects
+CXXOBJS	:= $(patsubst %.cxx,%.o,$(CXXSRCS))
+CCOBJS	:= $(patsubst $(SRCDIR)/%.cc,$(BLDDIR)/%.o,$(CCSRCS))
+OBJECTS	:= $(CCOBJS) $(CXXOBJS) 
+# ----------------------------------------------------------------------------
+CINT	:= rootcint
+PYCFLAGS:= $(shell python-config --includes)
+CPPFLAGS:= -I. -I$(INCDIR) -DR__HAVE_CONFIG \
+$(filter-out -stdlib=libc++,$(shell root-config --cflags)) $(PYCFLAGS)
+CXXFLAGS:= -Wall -fPIC -g -ansi -Wextra -Wshadow
+LDFLAGS	:= -g
+# ----------------------------------------------------------------------------
+# which operating system?
+OS := $(shell uname -s)
+ifeq ($(OS),Darwin)
+CXX	:= g++
+LD	:= g++
+LDFLAGS += -dynamiclib
+ROOTLIBS:= $(shell root-config --glibs --nonew) -lMathMore
+else
+CXX	:= g++
+LD	:= g++
+LDFLAGS	+= -shared -Wl,-soname,lib$(NAME).so
+ROOTLIBS:= $(filter-out -stdlib=libc++,$(shell root-config --glibs --nonew))
+endif
+# ----------------------------------------------------------------------------
+# libs
+# ----------------------------------------------------------------------------
+PYHOME	:= $(shell python-config --prefix)
+PYLIB	:= -L$(PYHOME)/lib
+PYLIBS	:= $(shell python-config --libs)
+LDFLAGS += $(shell root-config --ldflags) $(PYLIB)
+LIBS	:= -lMathMore -lSpectrum -lPyROOT -lGui $(ROOTLIBS) $(PYLIBS)
+
+ifdef DEBUG
+say	:= $(shell echo "CCSRCS:  $(CCSRCS)" >& 2)
+say	:= $(shell echo "CCOBJS:  $(CCOBJS)\n" >& 2)
+
+say	:= $(shell echo "CXXSRCS: $(CXXSRCS)" >& 2)
+say	:= $(shell echo "CXXOBJS: $(CXXOBJS)\n" >& 2)
+
+say	:= $(shell echo "DICTSNOLINKDEF:   $(DICTSNOLINKDEF)" >& 2)
+say	:= $(shell echo "DICTSWITHLINKDEF: $(DICTSWITHLINKDEF)" >& 2)
+
+say	:= $(shell echo "LIBRARY:  $(LIBRARY)\n" >& 2)
+say 	:= $(shell echo "CPPFLAGS: $(CPPFLAGS)\n" >& 2)
+say 	:= $(shell echo "CXXFLAGS: $(CXXFLAGS)\n" >& 2)
+say 	:= $(shell echo "LDFLAGS:  $(LDFLAGS)\n" >& 2)
+say 	:= $(shell echo "LIBS:     $(LIBS)\n" >& 2)
+$(error bye)
+endif
+
+# ----------------------------------------------------------------------------
+all: $(LIBRARY) bin/pulseEXE bin/convertPS
+
+bin/pulseEXE: exe/pulseEXE.cc 
+	g++ $(CXXFLAGS) $(CPPFLAGS) -o bin/pulseEXE exe/pulseEXE.cc -L$(LIBDIR) -l$(NAME) $(ROOTLIBS)
+
+bin/convertPS: exe/pulseEXE.cc 
+	g++ $(CXXFLAGS) $(CPPFLAGS) -o bin/convertPS exe/convertPS.cc -L$(LIBDIR) -l$(NAME) $(ROOTLIBS)
+
+$(LIBRARY)	: $(OBJECTS)
+	@echo "===> Linking shared library $@"
+	$(LD) $(LDFLAGS)  $^ $(LIBS) -o $@
+	@echo ""
+
+$(CCOBJS)	: $(BLDDIR)/%.o	: 	$(SRCDIR)/%.cc
+	@echo "==> Compiling $<"
+	$(CXX) $(CXXFLAGS) $(CPPFLAGS) -c $< -o $@
+	@echo ""
+
+$(CXXOBJS)	: %.o	: %.cxx
+	@echo "==> Compiling $<"
+	$(CXX) $(CXXFLAGS) $(CPPFLAGS) -c $< -o $@
+	@echo ""
+
+$(DICTSNOLINKDEF)	: $(BLDDIR)/%Dict.cxx	: $(INCDIR)/%.h
+	@echo "===> Building dictionary for $*"
+	@rm -f $(BLDDIR)/$*.[ch]*
+	$(CINT)	-f $@ -c $^
+	@echo ""
+
+$(DICTSWITHLINKDEF)	: $(BLDDIR)/%Dict.cxx : $(INCDIR)/%.h $(INCDIR)/%LinkDef.h
+	@echo "===> Building dictionary for $*"
+	@rm -f $(BLDDIR)/$*Dict.[ch]*
+	$(CINT) $@ -c $^
+	@echo ""
 
 clean:
-	rm -f AnalysisEventDict.cxx AnalysisEventDict.h *.so *.o *~ $(LIB)/* $(BUILDDIR)/pulseGUI.so $(BUILDDIR)/pythonHelper_C.so
+	rm -rf $(LIBRARY) $(BLDDIR)/*Dict.* $(BLDDIR)/*.o */*.gch $(BINDIR)
 
-pulseGUI.so: pulseGUI.o pulseAnalysis.so AnalysisEventDict.so 
-	$(CC) $(SHAREDCFLAGS) $(ROOTLIBS) $(ROOTLFLAGS) -o $@ $(addprefix $(LIB)/,$(filter-out %.o,$(notdir $^))) $(filter-out %.so,$^)
-	mv $@ $(BUILDDIR)/
-
-
-AnalysisEventDict.so: AnalysisEventDict.cxx
-	$(CC) $(SHAREDCFLAGS) -I. $^ -o $@
-	mv $@ $(LIB)/
-
-AnalysisEventDict.cxx:  pulseGUI.h pulseAnalysis.h LinkDef.h
-	rm -f ./AnalysisEventDict.cxx ./AnalysisEventDict.h
-	rootcint  $@ -c $^ 
-
-pulseAnalysis.so: pulseAnalysis.cxx ReadMat.so ReadTXT.so pATools.o
-	$(CC) $(SHAREDCFLAGS) -o $@  $(ROOTLIBS) $(addprefix $(LIB)/,$(filter-out %.cxx %.o,$(notdir $^))) $(filter-out %.so,$^)
-	mv $@ $(LIB)/
-
-
-pATools.o: pATools.cxx 
-	$(CC) $(NONSHARED) $(abspath $(patsubst %.so, $(LIB)/%.so,$^)) 
-
-
-pulseGUI.o: pulseGUI.cxx
-	$(CC) $(NONSHARED) $^
-
-
-ReadMat.so: ReadMat.cxx 
-	$(CC) $(SHAREDCFLAGS) $^ -o $@
-	mv $@ $(LIB)/
-
-ReadTXT.so: ReadTxt.cxx 
-	$(CC) $(SHAREDCFLAGS) $^ -o $@
-	mv $@ $(LIB)/
-
-pythonHelper_C.so: Compile.C pythonHelper.C
-	root -b $^
-	mv $(SCRIPTDIR)/$@ $(BUILDDIR)/
-
+cleanall: clean
+	rm -f python/*pyc python/gui/*pyc rootscript/*_C.d 
+	rm -f rootscript/*.so *~ */*~ 
+	rm -rf tmp build

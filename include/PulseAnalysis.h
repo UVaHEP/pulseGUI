@@ -16,22 +16,22 @@
 #include "TPaveText.h"
 #include "TFile.h"
 #include "RQ_OBJECT.h"
-#include "ReadMat.h"
-#include "ReadTxt.h"
+//#include "ReadMat.h"
+//#include "ReadTxt.h"
 
 
-class pulseAnalysis : public TQObject { 
-  RQ_OBJECT("pulseAnalysis"); 
-  ClassDef(pulseAnalysis,1);
+class PulseAnalysis : public TQObject { 
+  RQ_OBJECT("PulseAnalysis"); 
+  ClassDef(PulseAnalysis,1);
 
  private: 
-
   static const Int_t MAXPEAKS = 100000;  // max peaks considered in spectrum
   static const double NSIGMA = 3.5;      // #_pSigma > noise for peak search threshold
 
-  TH1F *_hspect; // Histogram with pulse data spectrum
-  TH1F *_hfreq;  // pulse data frequency 
-  TFile *_tf;    // pointer to current data file
+  TFile *_tf;       // pointer to current data file
+  TString _tfName;  // name of current TFile
+  TH1F *_hspect;    // Histogram with pulse data spectrum
+  TH1F *_hfreq;     // pulse data frequency 
 
   // Analysis Histograms
   TH1F  *_hdt;   // delta time between peaks
@@ -63,8 +63,8 @@ class pulseAnalysis : public TQObject {
 
 public:
 
-  pulseAnalysis(const char *fName=0); 
-  virtual ~pulseAnalysis(); 
+  PulseAnalysis(TString fName=""); 
+  virtual ~PulseAnalysis(); 
 
   void ConvertFile(TString Filename); 
   void Clear();        // clear internal analysis data

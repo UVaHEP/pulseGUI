@@ -1,4 +1,4 @@
-#include "pulseGUI.h"
+#include "PulseGUI.h"
 #include <TSystem.h>
 #include <TObject.h>
 #include <TInterpreter.h>
@@ -42,16 +42,15 @@ using std::vector;
 
 
 
-pulseGUI::pulseGUI(const char* file) { 
-  _analysis = new pulseAnalysis(); 
+PulseGUI::PulseGUI(TString fName) { 
+  cout << "Creating PulseGUI " << endl;
+  _analysis = new PulseAnalysis(); 
   InitWindow();
-  if (file) LoadSpectrum(file);
+  if (fName!="") LoadSpectrum(fName);
 }
 
 
-
-
-pulseGUI::~pulseGUI() {
+PulseGUI::~PulseGUI() {
   //  delete spectPad; 
   //  delete controlPad; 
   //  delete mainCanvas;
@@ -65,12 +64,12 @@ pulseGUI::~pulseGUI() {
 
 }
 
-void pulseGUI::SetStatusText(const char *txt, Int_t pi){
+void PulseGUI::SetStatusText(const char *txt, Int_t pi){
   // Set the text shown in the status bar
   SpectStatusBar->SetText(txt, pi);
 }
 
-void pulseGUI::EventInfo(Int_t event, Int_t px, Int_t py, TObject *selected){
+void PulseGUI::EventInfo(Int_t event, Int_t px, Int_t py, TObject *selected){
   // Write the event status in the status bar windows
 
   const char *text0, *text1, *text3;
@@ -88,13 +87,13 @@ void pulseGUI::EventInfo(Int_t event, Int_t px, Int_t py, TObject *selected){
   }
 }
 
-void pulseGUI::Print() { 
+void PulseGUI::Print() { 
   std::cout << "Just a simple gui." << std::endl; 
 }
 
 //----------------------------------------------------------------------
-//void pulseGUI::PrintInfo(const char *va_(fmt), bool clear, ...){
-void pulseGUI::PrintInfo(const char *va_(fmt), ...){
+//void PulseGUI::PrintInfo(const char *va_(fmt), bool clear, ...){
+void PulseGUI::PrintInfo(const char *va_(fmt), ...){
   // Print info to the Info PaveText. If you want to append the info to
   // the previous call, pass clear=false.
   // Clears the TPaveText automatically before filling.
@@ -124,17 +123,17 @@ void pulseGUI::PrintInfo(const char *va_(fmt), ...){
 
 
 //----------------------------------------------------------------------
-void pulseGUI::Show() { 
+void PulseGUI::Show() { 
   //  FSpect->Draw(); 
 }
 
 //----------------------------------------------------------------------
-void pulseGUI::printState() { 
+void PulseGUI::printState() { 
   printf("xmark : ymark = [ %f : %f ]\n",marks[0].x,marks[0].y);
 }
 
 //----------------------------------------------------------------------
-void pulseGUI::SetThreshold(){
+void PulseGUI::SetThreshold(){
   // Passes the mouse click amplitude in mV to
   // SetThreshold(Float_t t)
 
@@ -143,7 +142,7 @@ void pulseGUI::SetThreshold(){
 }
 
 //----------------------------------------------------------------------
-void pulseGUI::SetThreshold(Float_t t){
+void PulseGUI::SetThreshold(Float_t t){
   // Sets the threshold value and updates
   // the spectrum canvas labels.
   if (_analysis) { 
@@ -162,7 +161,7 @@ void pulseGUI::SetThreshold(Float_t t){
 }
 
 //----------------------------------------------------------------------
-void pulseGUI::SetYMarks(){
+void PulseGUI::SetYMarks(){
   // Sets the y-value of marks to the number entry
   // which will be used in SetThreshold()
 
@@ -170,7 +169,7 @@ void pulseGUI::SetYMarks(){
   SetThreshold(marks[0].y);
 }
 
-void pulseGUI::SetXMarks() { 
+void PulseGUI::SetXMarks() { 
   // Sets the x-value width of marks to the value contained in the width box
   marks[1].x = marks[0].x+WidthNum->GetNumberEntry()->GetNumber(); 
   std::cout << "X-start:" << marks[0].x << 
@@ -182,7 +181,7 @@ void pulseGUI::SetXMarks() {
 
 
 //----------------------------------------------------------------------
-void pulseGUI::SetWidth(){
+void PulseGUI::SetWidth(){
   // set width in microseconds
 
   cout << "x1:" << marks[0].x << " x2:" << marks[1].x << endl; 
@@ -191,7 +190,7 @@ void pulseGUI::SetWidth(){
 }
 
 //----------------------------------------------------------------------
-void pulseGUI::SetWidth(Float_t w){
+void PulseGUI::SetWidth(Float_t w){
   // set width in microseconds
 
   
@@ -208,7 +207,7 @@ void pulseGUI::SetWidth(Float_t w){
 }
 
 //----------------------------------------------------------------------
-void pulseGUI::measure(){
+void PulseGUI::measure(){
   Double_t dx=marks[0].x-marks[1].x;
   Double_t dy=marks[0].y-marks[1].y;
   printf("deltaX: %e ns , deltaY: %e mV\n",dx,dy); 
@@ -226,7 +225,7 @@ void pulseGUI::measure(){
 //////////////////////////////////////////////////
 
 //----------------------------------------------------------------------
-void pulseGUI::SetPeriod(){
+void PulseGUI::SetPeriod(){
   // Set the value displayed for the shown period
 
   //  float xl = _hspect->GetBinCenter(_hspect->GetXaxis()->GetFirst()); 
@@ -245,7 +244,7 @@ void pulseGUI::SetPeriod(){
 
 
 //----------------------------------------------------------------------
-void pulseGUI::setupInfoPad() {
+void PulseGUI::setupInfoPad() {
   // Creates and positions the TPaveLabels that will display
   // information during the analysis.
 
@@ -256,7 +255,7 @@ void pulseGUI::setupInfoPad() {
 }
 
 //----------------------------------------------------------------------
-void pulseGUI::setMessage(const TString *msg, bool Alert ) { 
+void PulseGUI::setMessage(const TString *msg, bool Alert ) { 
   infoPad->cd(); 
   if (msg != NULL) {
     (Alert) ? info2->SetTextColor(kRed) :  info2->SetTextColor(kBlack); 
@@ -267,13 +266,13 @@ void pulseGUI::setMessage(const TString *msg, bool Alert ) {
 }
 
 //----------------------------------------------------------------------
-void pulseGUI::setMessage(const char *msg, bool Alert ) { 
+void PulseGUI::setMessage(const char *msg, bool Alert ) { 
   TString m(msg);
   setMessage(&m,Alert);
 }
 
 //----------------------------------------------------------------------
-void pulseGUI::execEvent(Int_t event, Int_t x, Int_t y, TObject *selected) {
+void PulseGUI::execEvent(Int_t event, Int_t x, Int_t y, TObject *selected) {
   if (selected) {} // prevent compiler warning
   //  TPad *c = (TPad *) gTQSender;
 
@@ -288,7 +287,7 @@ void pulseGUI::execEvent(Int_t event, Int_t x, Int_t y, TObject *selected) {
 }
 
 //----------------------------------------------------------------------
-void pulseGUI::OpenFileDialog() {
+void PulseGUI::OpenFileDialog() {
   // Open a browser window and let user select ROOT file to open.
   // Call LoadSpectrum().
  
@@ -302,7 +301,7 @@ void pulseGUI::OpenFileDialog() {
   LoadSpectrum(fileInfo->fFilename); 
 }
 
-void pulseGUI::LoadSpectrum(const char * fName){
+void PulseGUI::LoadSpectrum(TString fName){
   _analysis->LoadSpectrum(fName); 
   ConnectButtons(); 
   ThreshNum->SetNumber(_analysis->GetThreshold()); 
@@ -325,7 +324,7 @@ void pulseGUI::LoadSpectrum(const char * fName){
   DrawSpectrum();   
 }
 
-void pulseGUI::FindPeaks() { 
+void PulseGUI::FindPeaks() { 
   if (_analysis) { 
     spectPad->cd();
     TString s = _analysis->FindPeaks(); 
@@ -334,14 +333,14 @@ void pulseGUI::FindPeaks() {
   }
 }
 
-void pulseGUI::Analyze() { 
+void PulseGUI::Analyze() { 
   if (FAna) AnaClean();
   
   //  FAna = new TGHorizontalFrame(FMain, 1200, 350);
   UInt_t AnaW = 1200;
   UInt_t AnaH = 300;
   FAna = new TGMainFrame(FMain, AnaW, AnaH, kHorizontalFrame);
-  FAna->SetWindowName("pulseGUI Display");
+  FAna->SetWindowName("PulseGUI Display");
   FMain->AddFrame(FAna, new TGLayoutHints(kLHintsExpandX
 					  | kLHintsExpandY,2,2,5,1));
   EAnaCanvas = new TRootEmbeddedCanvas("Ana Canvas", FAna, 1200,350);
@@ -350,8 +349,8 @@ void pulseGUI::Analyze() {
   //  gStyle->SetOptStat(kTRUE);
   
   //  anaCanvas=new TCanvas("analysis","Data Analysis",0,490,1200,350);
-  //  anaCanvas->Connect("Closed()","pulseGUI",this,"NullPointer(&anaCanvas)");
-  //  FAna->Connect("Closed()","pulseGUI",this,"NullPointer()");
+  //  anaCanvas->Connect("Closed()","PulseGUI",this,"NullPointer(&anaCanvas)");
+  //  FAna->Connect("Closed()","PulseGUI",this,"NullPointer()");
   EAnaCanvas->GetCanvas()->Divide(3,1);
   // retrive peak locations
   _analysis->Analyze(); 
@@ -379,7 +378,7 @@ void pulseGUI::Analyze() {
 //----------------------------------------------------------------------
 // Initialize the GUI display
 //----------------------------------------------------------------------
-void pulseGUI::MakeButtons(){
+void PulseGUI::MakeButtons(){
   // Constructs the button frame, creates all buttons,
   // and connects buttons to functions. Also construct the
   // Info frame.
@@ -408,7 +407,7 @@ void pulseGUI::MakeButtons(){
   TGVerticalFrame *vframe1 = new TGVerticalFrame(FButton, WIDTH, HEIGHT, kFixedWidth);
   loadBN = new TGTextButton(vframe1, "&Load Spectrum");
   loadBN->SetTextColor(blue);
-  loadBN->Connect("Clicked()", "pulseGUI", this, "OpenFileDialog()");
+  loadBN->Connect("Clicked()", "PulseGUI", this, "OpenFileDialog()");
   // Set hover alt text
   loadBN->SetToolTipText("Select input ROOT file", 2000);
   vframe1->AddFrame(loadBN, new TGLayoutHints(kLHintsTop | kLHintsExpandX,
@@ -523,7 +522,7 @@ void pulseGUI::MakeButtons(){
   
   //TGVerticalFrame *vframe3 = new TGVerticalFrame(FButton, WIDTH, HEIGHT, kFixedWidth);
   /*  writePeaksBN = new TGTextButton(vframe3, "&Write Peaks");
-      writePeaksBN->Connect("Clicked()", "pulseGUI", this, "DumpPeaks()");
+      writePeaksBN->Connect("Clicked()", "PulseGUI", this, "DumpPeaks()");
       writePeaksBN->SetToolTipText("Write analysis to .dat file", 2000);*/
   //  vframe3->AddFrame(writePeaksBN, new TGLayoutHints(kLHintsTop | kLHintsExpandX,
   //        2,0,2,2));
@@ -592,50 +591,50 @@ void pulseGUI::MakeButtons(){
 
 }
 
-void pulseGUI::ConnectButtons() { 
+void PulseGUI::ConnectButtons() { 
   if (_analysis) { 
 
-  writePeaksBN->Connect("Clicked()", "pulseAnalysis", _analysis, "DumpPeaks()");
-  measureBN->Connect("Clicked()", "pulseGUI", this, "measure()");
+  writePeaksBN->Connect("Clicked()", "PulseAnalysis", _analysis, "DumpPeaks()");
+  measureBN->Connect("Clicked()", "PulseGUI", this, "measure()");
 
-  smoothBN->Connect("Clicked()", "pulseAnalysis", _analysis, "SmoothHistogram()"); 
-  smoothBN->Connect("Clicked()", "pulseGUI", this, "DrawSpectrum()"); 
+  smoothBN->Connect("Clicked()", "PulseAnalysis", _analysis, "SmoothHistogram()"); 
+  smoothBN->Connect("Clicked()", "PulseGUI", this, "DrawSpectrum()"); 
 
-  resetBN->Connect("Clicked()", "pulseGUI", this, "Reset()");
+  resetBN->Connect("Clicked()", "PulseGUI", this, "Reset()");
   
-  unzoomBN->Connect("Clicked()", "pulseAnalysis", _analysis, "unzoom()");
-  zoomOutBN->Connect("Clicked()", "pulseAnalysis", _analysis, "outzoom()");
-  zoomInBN->Connect("Clicked()", "pulseAnalysis", _analysis, "inzoom()");
-  shiftLeftBN->Connect("Clicked()", "pulseAnalysis", _analysis, "leftShift()");
-  shiftRightBN->Connect("Clicked()", "pulseAnalysis", _analysis, "rightShift()");
+  unzoomBN->Connect("Clicked()", "PulseAnalysis", _analysis, "unzoom()");
+  zoomOutBN->Connect("Clicked()", "PulseAnalysis", _analysis, "outzoom()");
+  zoomInBN->Connect("Clicked()", "PulseAnalysis", _analysis, "inzoom()");
+  shiftLeftBN->Connect("Clicked()", "PulseAnalysis", _analysis, "leftShift()");
+  shiftRightBN->Connect("Clicked()", "PulseAnalysis", _analysis, "rightShift()");
 
-  unzoomBN->Connect("Clicked()", "pulseGUI", this, "DrawSpectrum()");
-  zoomOutBN->Connect("Clicked()", "pulseGUI", this, "DrawSpectrum()");
-  zoomInBN->Connect("Clicked()", "pulseGUI", this, "DrawSpectrum()");
-  shiftLeftBN->Connect("Clicked()", "pulseGUI", this, "DrawSpectrum()");
-  shiftRightBN->Connect("Clicked()", "pulseGUI", this, "DrawSpectrum()");
-
-
-
-  analyzeBN->Connect("Clicked()", "pulseGUI", this, "Analyze()");
-  findPeaksBN->Connect("Clicked()", "pulseGUI", this, "FindPeaks()");
+  unzoomBN->Connect("Clicked()", "PulseGUI", this, "DrawSpectrum()");
+  zoomOutBN->Connect("Clicked()", "PulseGUI", this, "DrawSpectrum()");
+  zoomInBN->Connect("Clicked()", "PulseGUI", this, "DrawSpectrum()");
+  shiftLeftBN->Connect("Clicked()", "PulseGUI", this, "DrawSpectrum()");
+  shiftRightBN->Connect("Clicked()", "PulseGUI", this, "DrawSpectrum()");
 
 
-  subBKGBN->Connect("Clicked()", "pulseGUI", _analysis, "subBkg()");
-  getBKGBN->Connect("Clicked()", "pulseGUI", _analysis, "getBkg()");
-  responseBN->Connect("Clicked()", "pulseAnalysis", _analysis, "SetResponse()");
-  (WidthNum->GetNumberEntry())->Connect("ReturnPressed()", "pulseGUI", this, "SetXMarks()"); 
-  WidthNum->Connect("ValueSet(Long_t)", "pulseGUI", this, "SetXMarks()"); 
-  widthBN->Connect("Clicked()", "pulseGUI", this, "SetWidth()");
-  (ThreshNum->GetNumberEntry())->Connect("ReturnPressed()", "pulseGUI", this,
+
+  analyzeBN->Connect("Clicked()", "PulseGUI", this, "Analyze()");
+  findPeaksBN->Connect("Clicked()", "PulseGUI", this, "FindPeaks()");
+
+
+  //subBKGBN->Connect("Clicked()", "PulseGUI", _analysis, "subBkg()");
+  //getBKGBN->Connect("Clicked()", "PulseGUI", _analysis, "getBkg()");
+  responseBN->Connect("Clicked()", "PulseAnalysis", _analysis, "SetResponse()");
+  (WidthNum->GetNumberEntry())->Connect("ReturnPressed()", "PulseGUI", this, "SetXMarks()"); 
+  WidthNum->Connect("ValueSet(Long_t)", "PulseGUI", this, "SetXMarks()"); 
+  widthBN->Connect("Clicked()", "PulseGUI", this, "SetWidth()");
+  (ThreshNum->GetNumberEntry())->Connect("ReturnPressed()", "PulseGUI", this,
 					 "SetYMarks()");    // Fix connection
-  ThreshNum->Connect("ValueSet(Long_t)", "pulseGUI", this, "SetYMarks()");   //Fix connection
-  threshNumBN->Connect("Clicked()", "pulseGUI", this, "SetThreshold()");
+  ThreshNum->Connect("ValueSet(Long_t)", "PulseGUI", this, "SetYMarks()");   //Fix connection
+  threshNumBN->Connect("Clicked()", "PulseGUI", this, "SetThreshold()");
   }
 
 }
 
-void pulseGUI::Reset() { 
+void PulseGUI::Reset() { 
   _analysis->Reset(); 
   AnaClean(); 
   setMessage(TString("Reset Spectrum"));
@@ -645,14 +644,14 @@ void pulseGUI::Reset() {
 
 }
 
-void pulseGUI::DrawSpectrum() { 
+void PulseGUI::DrawSpectrum() { 
   spectPad->cd();
   _analysis->DrawSpectrum(); 
   spectPad->Modified(); 
   ESpectCanvas->GetCanvas()->Update();
 }
 
-void pulseGUI::AnaClean(){
+void PulseGUI::AnaClean(){
   // Cleans up and removes the FAna frame and readies for
   // Reset() or Analyze().
   if (FAna) { 
@@ -670,7 +669,7 @@ void pulseGUI::AnaClean(){
 
 
 //----------------------------------------------------------------------
-void pulseGUI::InitWindow(){
+void PulseGUI::InitWindow(){
 
   // Initalizes the frame and canvases for the GUI
   gStyle->SetOptStat(kFALSE);
@@ -706,10 +705,10 @@ void pulseGUI::InitWindow(){
   //  TCanvas *spectC = ESpectCanvas->GetCanvas();
   ESpectCanvas->GetCanvas()->ToggleEventStatus();
   ESpectCanvas->GetCanvas()->Connect("ProcessedEvent(Int_t,Int_t,Int_t,TObject*)",
-				     "pulseGUI", this, "execEvent(Int_t, Int_t, Int_t, TObject*)");  
+				     "PulseGUI", this, "execEvent(Int_t, Int_t, Int_t, TObject*)");  
   //  spectC->Connect("ProcessedEvent(Int_t,Int_t,Int_t,TObject*)",
   ESpectCanvas->GetCanvas()->Connect("ProcessedEvent(Int_t,Int_t,Int_t,TObject*)",
-				     "pulseGUI", this, "EventInfo(Int_t, Int_t, Int_t, TObject*)");  
+				     "PulseGUI", this, "EventInfo(Int_t, Int_t, Int_t, TObject*)");  
   // Embed the canvas in the Spectrum Frame 
   FSpect->AddFrame(ESpectCanvas, new TGLayoutHints(kLHintsTop | kLHintsLeft |
 						   kLHintsExpandX | kLHintsExpandY, 0,0,2,2));

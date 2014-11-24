@@ -14,12 +14,13 @@
 #include "TPaveLabel.h"
 #include "TPaveText.h"
 #include "TFile.h"
+#include "TString.h"
 #include "RQ_OBJECT.h"
-#include "pulseAnalysis.h"
+#include "PulseAnalysis.h"
 
-class pulseGUI : public TQObject { 
-  RQ_OBJECT("pulseGUI"); 
-  ClassDef(pulseGUI,1);
+class PulseGUI : public TQObject { 
+  RQ_OBJECT("PulseGUI"); 
+  //  ClassDef(PulseGUI,1);
 
   struct clickPosition_t { 
     Double_t x; 
@@ -81,19 +82,19 @@ private:
   static const bool ERRMSG=true;
 
   //Analysis object accesses/manages data 
-  pulseAnalysis *_analysis; 
+  PulseAnalysis *_analysis; 
   
   // member functions 
 public:
-  pulseGUI(const char* file=0);
-  virtual ~pulseGUI(); 
+  PulseGUI(TString fName="");
+  virtual ~PulseGUI(); 
 
   void InitWindow();
   void MakeButtons();   // replacement for setupControls
   void ConnectButtons(); 
 
   void OpenFileDialog(); 
-  void LoadSpectrum(const char * fName);
+  void LoadSpectrum(TString fName);
   void AnaClean();
 
   void setupInfoPad(); 
@@ -124,7 +125,7 @@ public:
   void setMessage(const char *msg, bool Alert = false);
   void Print();
 
-  pulseAnalysis* GetAnalysis() {return _analysis;}
+  PulseAnalysis* GetAnalysis() {return _analysis;}
 
   void execEvent(Int_t event, Int_t x, Int_t y, TObject *selected); 
 
