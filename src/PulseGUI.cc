@@ -5,6 +5,7 @@
 #include <TApplication.h> 
 #include "TString.h"
 #include "TSpectrum.h"
+#include "TStopwatch.h"
 #include "TList.h"
 #include "TPolyMarker.h"
 #include "TCanvas.h"
@@ -302,6 +303,8 @@ void PulseGUI::OpenFileDialog() {
 }
 
 void PulseGUI::LoadSpectrum(TString fName){
+  TStopwatch timer;
+  timer.Start();
   _analysis->LoadSpectrum(fName); 
   ConnectButtons(); 
   ThreshNum->SetNumber(_analysis->GetThreshold()); 
@@ -321,7 +324,9 @@ void PulseGUI::LoadSpectrum(TString fName){
     name="..."+name;
   }
   FMain->SetWindowName("File: "+name);
-  DrawSpectrum();   
+  DrawSpectrum();
+  timer.Stop();
+  log_info("Load Complete %lf seconds",timer.RealTime());
 }
 
 void PulseGUI::FindPeaks() { 
