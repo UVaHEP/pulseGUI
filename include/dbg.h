@@ -11,7 +11,7 @@
 #include <string.h>
 
 #ifdef DODEBUG
-#define debug(M, ...) fprintf(stderr, "\e[1;34m[DEBUG] %s:%d:\e[0m " M "\n", __FILE__, __LINE__, ##__VA_ARGS__)
+#define debug(M, ...) fprintf(stderr, "\e[1;34m[DEBUG] %s:%s:\e[0m " M "\n", __FILE__, __func__, ##__VA_ARGS__)
 #else
 #define debug(M, ...)
 #endif

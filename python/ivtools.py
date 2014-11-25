@@ -20,9 +20,9 @@ def readVIcsv(file, V, I, vbar, dIdVi):
 
     for line in open(tmpINP):
         line=line.strip().split()
-        v=float(line[0])
-        i=float(line[1])
-        if v<0 : continue
+        v=(float(line[0]))
+        i=abs(float(line[1]))
+#        if v<0 : continue
         if len(V)>0 and v==V[len(V)-1] : 
             I[len(V)-1]=i # if doing multiple readings, take the last one
             continue
@@ -30,10 +30,10 @@ def readVIcsv(file, V, I, vbar, dIdVi):
         I.append(i)
         # derived quantities
         j=len(V)
-        if v<VMIN or j<2: continue
+        if abs(v)<VMIN or j<2: continue
         j=j-1
         vbar.append((V[j]+V[j-1])/2)
-        dV=V[j]-V[j-1]
+        dV=abs(V[j]-V[j-1])
         ibar=(I[j]+I[j-1])/2
         dI=I[j]-I[j-1]
         delta=1/ibar*dI/dV

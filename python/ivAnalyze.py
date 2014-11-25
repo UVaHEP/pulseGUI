@@ -33,8 +33,9 @@ parser.add_argument('-f', metavar='-d', type=str, nargs=1, default=None,
 			    help="Filename to process")
 parser.add_argument('-l', metavar='-l', type=str, nargs=1, default=None,
 			    help="Optional illuminated filename to process")
+parser.add_argument('-a', '--auto',
+                    help="Run and exit w/o user input", action="store_true")
 args = parser.parse_args()
-
 
 
 if args.f is None: 
@@ -72,9 +73,6 @@ if args.l is not None:
             ratioMax = [V[x], LI[x]/I[x]]
         ratio.append(LI[x]/I[x])
     gRatio = TGraph(len(V), V, ratio)
-
-
-
     
 
 idx=getMaxIdx(dIdVi)
@@ -134,7 +132,13 @@ if args.l is not None:
 #vfitf.Draw("same")
 
 
-os.system('sleep 2')
+#os.system('sleep 2')
+if not args.auto:
+    print 'Hit any key to exit'
+    sys.stdout.flush() 
+    raw_input('')
+
+
 
 png=args.f[0].replace(".csv",".png")
 

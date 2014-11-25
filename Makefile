@@ -45,7 +45,11 @@ CINT	:= rootcint
 PYCFLAGS:= $(shell python-config --includes)
 CPPFLAGS:= -I. -I$(INCDIR) -DR__HAVE_CONFIG \
 $(filter-out -stdlib=libc++,$(shell root-config --cflags)) $(PYCFLAGS)
-CXXFLAGS:= -Wall -fPIC -g -ansi -Wextra -Wshadow
+ifdef DEBUG
+CXXFLAGS:= -Wall -fPIC -g -ansi -Wextra -Wshadow -DDODEBUG
+else
+CXXFLAGS:= -O3 -Wall -fPIC -ansi -Wextra -Wshadow
+endif
 LDFLAGS	:= -g
 # ----------------------------------------------------------------------------
 # which operating system?
@@ -85,7 +89,7 @@ say 	:= $(shell echo "CPPFLAGS: $(CPPFLAGS)\n" >& 2)
 say 	:= $(shell echo "CXXFLAGS: $(CXXFLAGS)\n" >& 2)
 say 	:= $(shell echo "LDFLAGS:  $(LDFLAGS)\n" >& 2)
 say 	:= $(shell echo "LIBS:     $(LIBS)\n" >& 2)
-$(error bye)
+#$(error bye)
 endif
 
 # ----------------------------------------------------------------------------

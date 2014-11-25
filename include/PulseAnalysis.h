@@ -27,6 +27,7 @@ class PulseAnalysis : public TQObject {
  private: 
   static const Int_t MAXPEAKS = 100000;  // max peaks considered in spectrum
   static const double NSIGMA = 3.5;      // #_pSigma > noise for peak search threshold
+  static const double DEFAULT_ZOOM=1e4;  // default (minimum) zoom [ns]
 
   TFile *_tf;       // pointer to current data file
   TString _tfName;  // name of current TFile
@@ -100,7 +101,6 @@ public:
   TString GetSpectName() { if (_tf) return _tf->GetName(); else return "none";}
   Double_t GetThreshold() { return _pThreshold;}
  
-
 
   TH1F* Hfreq() {return _hfreq;}
   TH1F* Hspect() {return _hspect;}

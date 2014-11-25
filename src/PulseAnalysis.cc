@@ -117,7 +117,7 @@ void PulseAnalysis::LoadSpectrum() {
   log_info("Loading: %s",_tfName.Data());
   _tf=new TFile(_tfName);
   if (!_tf||_tf->IsZombie()) {
-    debug("Invalid spectrum file: ",_tfName);
+    debug("Invalid spectrum file: %s",_tfName.Data());
     return;
   }
 
@@ -136,7 +136,7 @@ void PulseAnalysis::LoadSpectrum() {
   debug("got size %d",_nbins);
 
   Double_t t0=((TH1D*)_tf->Get("T0"))->GetBinContent(1);
-  _dT=((TH1D*)_tf->Get("dT"))->GetBinContent(1);
+  _dT=((TH1D*)_tf->Get("dT"))->GetBinContent(1);  // in ns
   Double_t dV=((TH1F*)_tf->Get("dV"))->GetBinContent(1);
   _pMax=((TH1F*)_tf->Get("vMax"))->GetBinContent(1);
   _pMin=((TH1F*)_tf->Get("vMin"))->GetBinContent(1);
@@ -183,12 +183,20 @@ void PulseAnalysis::LoadSpectrum() {
   cout << "VMin:" << _pMin << " VMax:" << _pMax 
        << " dV:" << dV << " [mV]" << " dT: " << _dT << " [ns]" 
        << endl;
+
+  // set defaut zoom level
+  int bHigh=TMath::Nint(DEFAULT_ZOOM/_dT);
+  if (bHigh<_hspect->GetNbinsX()) 
+    _hspect->GetXaxis()->SetRange(0,bHigh);
+  log_info("Set max bin to: %d",bHigh);
+
 }
 
 
 void PulseAnalysis::DrawSpectrum() { 
   if (_hspect) { 
-    _hspect->DrawCopy(); 
+    //    _hspect->DrawCopy(); 
+    _hspect->Draw();
   }
 }
 
@@ -199,8 +207,10 @@ void PulseAnalysis::SmoothHistogram() {
     return; 
   }
   std::cout << "Smoothing Histogram" << std::endl; 
+  TString title=_hspect->GetTitle();
+  if (!title.Contains("smoothed")) title+=" (smoothed)";
+  _hspect->SetTitle(title);
   _hspect->Smooth(); 
-  
 }  
 TString PulseAnalysis::FindPeaks(bool nodraw){ 
   debug();
@@ -488,11 +498,13 @@ void PulseAnalysis::inzoom(){
   // Reduce the spectrum viewport range in by a factor of 2.
   if (!_hspect) 
     return; 
-  int first=_hspect->GetXaxis()->GetFirst();
-  int last=_hspect->GetXaxis()->GetLast();
+  int first=_hspect->GetXaxis()->GetFirst();   // current 1st and
+  int last=_hspect->GetXaxis()->GetLast();     // last bins displayed
   int range=last-first+1;  // # of bins displayed
   int center=(last+first)/2;
-  _hspect->GetXaxis()->SetRange(center-range/4,center+range/4);
+  int bLow=center-range/4;
+  int bHigh=center-range/4;
+  _hspect->GetXaxis()->SetRange(bLow,bHigh);
 }
 
 void PulseAnalysis::unzoom(){ 

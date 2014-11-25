@@ -242,15 +242,13 @@ void PulseGUI::SetPeriod(){
 }
 
 
-
-
 //----------------------------------------------------------------------
 void PulseGUI::setupInfoPad() {
   // Creates and positions the TPaveLabels that will display
   // information during the analysis.
 
   infoPad->cd(); 
-  info2 = new TPaveLabel(0.05,0.02,0.95,0.47," ...more info....","NDC");
+  info2 = new TPaveLabel(0.03,0.10,0.97,0.60,"info label","NDC");
   info2->SetTextAlign(11); 
   info2->Draw(); 
 }
@@ -303,6 +301,7 @@ void PulseGUI::OpenFileDialog() {
 }
 
 void PulseGUI::LoadSpectrum(TString fName){
+  debug();
   TStopwatch timer;
   timer.Start();
   _analysis->LoadSpectrum(fName); 
@@ -313,7 +312,6 @@ void PulseGUI::LoadSpectrum(TString fName){
     AnaClean();
   }
   setMessage(TString("")); 
-  
   // TString name=fileInfo->fFilename;
   // if (name.Last('/')>-1) name.Remove(0,name.Last('/')+1);
   // if (name.Last('.')>-1) name.Remove(name.Last('.'));
@@ -325,8 +323,8 @@ void PulseGUI::LoadSpectrum(TString fName){
   }
   FMain->SetWindowName("File: "+name);
   DrawSpectrum();
-  timer.Stop();
-  log_info("Load Complete %lf seconds",timer.RealTime());
+  debug("Load Complete %lf seconds",timer.RealTime());
+  timer.Reset();
 }
 
 void PulseGUI::FindPeaks() { 
