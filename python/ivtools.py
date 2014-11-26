@@ -1,97 +1,74 @@
-import os, re, tempfile
+import os, re, sys
 from array import array
-from ROOT import TF1, TGraph
+
+########################
+def printf(format, *args):
+# C-like printf
+########################
+    sys.stdout.write(format % args)
 
 ########################
 def calcDelta(x,xbar,dx):
-# calculate bin centers and deltas for derivative calculations
+# calculate bin centers and width for derivative calculations
 ########################
     for i in range(len(x)-1):
         xbar.append((x[i]+x[i+1])/2)
         dx.append(x[i+1]-x[i])
 
+
 ########################
-def calc_dLogIdV(V,I,dLogIdV,Vbar):
-# simple derivative calculation for peak Vbr estimation
+def calc_dVdI(V,I,dIdV,Vbar):
+# simple derivative calculation dI/dV
 ########################
-    assert len(I)==len(V), "calc_dLogIdV: array sizes not equal"
+    assert len(I)==len(V), "calc_dIdV: array sizes not equal"
     dV=array("d")
     dI=array("d")
     Ibar=array("d")
     calcDelta(I,Ibar,dI)
     calcDelta(V,Vbar,dV)
+    for i in range(len(Ibar)):
+        if abs(Vbar[i])<0.1: continue
+        print Vbar[i],dV[i],dI[i]
+        R=abs(dV[i]/dI[i])
+        dIdV.append(R)
 
-    for i in range(len(dI)):
+########################
+def calc_dLogIdV(V,I,dLogIdV,Vbar):
+# simple derivative calculation for peak Vbr estimation
+########################
+    dV=array("d")
+    dI=array("d")
+    Ibar=array("d")
+    calcDelta(I,Ibar,dI)
+    calcDelta(V,Vbar,dV)
+    for i in range(len(Ibar)):
         dLogIdV.append(1/Ibar[i]*dI[i]/abs(dV[i]))
-        
+
 
 ########################
 def readVIfile(file, V, I):
 # read CSV file and return V,I data in given arrays 
 ########################
     VMIN=0  # minimum voltage to scan for Vbr
-    # identify file type from header
-    isAgilent = os.system("grep Repeat,VAR2 "+file)==0
-    tmpINP=tempfile.mktemp()
-    # make a 2-column tmp file w/ V, I data
-    if isAgilent:
-        print "Reading I-V curve from Agilent sourcemeter"
-        os.system("cat "+file+" | awk -F',' '{print $4,$5}' | grep -iv Volt >"+tmpINP)
-    else:
-        print "Reading I-V curve from Keithley sourcemeter"
-        os.system("cat "+file+" | awk -F',' '{print $1,$2}' | grep -iv Volt  >"+tmpINP)
 
-    for line in open(tmpINP):
-        line=line.strip().split()
-        v=(float(line[0]))
-        i=abs(float(line[1]))
-        if len(V)>0 and v==V[len(V)-1] : 
+    f = open(file, 'r')
+    # identify file type from header
+    isAgilent = "Repeat,VAR2" in f.readline()
+    if isAgilent: print "Reading I-V curve from Agilent sourcemeter"
+    else: print "Reading I-V curve from Keithley sourcemeter"
+
+    for line in f.readlines():
+        line=line.strip().split(',')
+        if isAgilent: v,i=line[3:5]
+        else: v,i=line[0,2]           # Keithley data format
+        v=float(v)
+        i=abs(float(i))
+        if len(V)>0 and v==V[len(V)-1] :
             I[len(V)-1]=i # if doing multiple readings, take the last one
             continue
         V.append(v)
         I.append(i)
-        os.system("rm -f "+tmpINP)
 
-
-########################
-def readVIcsv(file, V, I, vbar, dLogIdV):
-# read CSV file and return V,I data in given arrays 
-########################
-    VMIN=0  # minimum voltage to scan for Vbr
-    # identify file type from header
-    isAgilent = os.system("grep Repeat,VAR2 "+file)==0
-    tmpINP=tempfile.mktemp()
-    # make a 2-column tmp file w/ V, I data
-    if isAgilent:
-        print "Reading I-V curve from Agilent sourcemeter"
-        os.system("cat "+file+" | awk -F',' '{print $4,$5}' | grep -iv Volt >"+tmpINP)
-    else:
-        print "Reading I-V curve from Keithley sourcemeter"
-        os.system("cat "+file+" | awk -F',' '{print $1,$2}' | grep -iv Volt  >"+tmpINP)
-
-    for line in open(tmpINP):
-        line=line.strip().split()
-        v=(float(line[0]))
-        i=abs(float(line[1]))
-#        if v<0 : continue
-        if len(V)>0 and v==V[len(V)-1] : 
-            I[len(V)-1]=i # if doing multiple readings, take the last one
-            continue
-        V.append(v)
-        I.append(i)
-        # derived quantities
-        j=len(V)
-        if abs(v)<VMIN or j<2: continue
-        j=j-1
-        vbar.append((V[j]+V[j-1])/2)
-        dV=abs(V[j]-V[j-1])
-        ibar=(I[j]+I[j-1])/2
-        dI=I[j]-I[j-1]
-        delta=1/ibar*dI/dV
-        dLogIdV.append(delta)
-                
-#        print v,i
-    os.system("rm -f "+tmpINP)
 
 #######################
 # find idx for maximum entry in array
@@ -105,7 +82,10 @@ def getMaxIdx(a):
             idx=j
     return idx
 
+#######################
 def getMaxXY(x,y):
+# return (x,y) for y_max
+#######################
     idx=getMaxIdx(y)
     return x[idx],y[idx]
 

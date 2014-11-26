@@ -98,7 +98,7 @@ all: $(LIBRARY) bin/pulseEXE bin/convertPS
 bin/pulseEXE: exe/pulseEXE.cc 
 	g++ $(CXXFLAGS) $(CPPFLAGS) -o bin/pulseEXE exe/pulseEXE.cc -L$(LIBDIR) -l$(NAME) $(ROOTLIBS)
 
-bin/convertPS: exe/pulseEXE.cc 
+bin/convertPS: exe/convertPS.cc 
 	g++ $(CXXFLAGS) $(CPPFLAGS) -o bin/convertPS exe/convertPS.cc -L$(LIBDIR) -l$(NAME) $(ROOTLIBS)
 
 $(LIBRARY)	: $(OBJECTS)

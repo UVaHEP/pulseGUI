@@ -1,6 +1,6 @@
 #!/usr/bin/python
 #######################################################
-# convert CSV file to tree
+# analyse reverse bias I-V data
 #######################################################
 
 ### 5-30-2014 Updated by Thomas Anderson to add a ratio of Light to Dark I-V curves
@@ -16,12 +16,10 @@ import argparse
 rootlibs=commands.getoutput("root-config --libdir")
 sys.path.append(rootlibs)
 
-from ROOT import TFile, gROOT, gStyle, Double, kRed, kBlue
-from ROOT import TString, TCanvas, TMultiGraph, TGraph, TLine
+from ROOT import Double, kRed, kBlue
+from ROOT import TString, TCanvas, TGraph, TLine, TF1
 from ivtools import *
 
-def printf(format, *args):
-    sys.stdout.write(format % args)
 
 #######################
 # main
