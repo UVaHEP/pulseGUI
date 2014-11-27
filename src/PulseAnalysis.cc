@@ -188,7 +188,8 @@ void PulseAnalysis::LoadSpectrum() {
   int bHigh=TMath::Nint(DEFAULT_ZOOM/_dT);
   if (bHigh<_hspect->GetNbinsX()) 
     _hspect->GetXaxis()->SetRange(0,bHigh);
-  log_info("Set max bin to: %d",bHigh);
+  log_info("Initial Zoom setting max bin to: %d of %d",
+	   bHigh,_hspect->GetNbinsX());
 
 }
 
@@ -212,6 +213,47 @@ void PulseAnalysis::SmoothHistogram() {
   _hspect->SetTitle(title);
   _hspect->Smooth(); 
 }  
+
+// simple peak counter
+int  PulseAnalysis::CountPeaksFast(double threshold) const{
+  if (threshold==0) threshold=_pThreshold; // use previously set threshold
+
+  // scan for peaks > threshold
+  int window=(int)(_pSigma*2);
+  int nb=1;  // bin number
+  int nbins=_hspect->GetNbinsX();
+  int lastWin=(nbins-window)+1;
+  int count=0;
+  while ( nb <= lastWin ){
+      bool onPeak=true;
+      for (int nw=0;nw<window;nw++){  // sliding search window for peak
+	nb++;
+	if (_hspect->GetBinContent(nb)<threshold){
+	  onPeak=false;
+	  break;
+	}
+      }
+      if (onPeak) count++;
+  }
+  return count;
+}
+
+
+// simple peak counter scan from ~current threshold to maximum peak
+void PulseAnalysis::ScanPeaksFast(int nsteps, 
+				   double *thresholds, double *count) const{
+  double threshold0=_pThreshold/2;
+  double step=(_hspect->GetMaximum()*0.666-threshold0)/nsteps;
+  for (int ns=0; ns<=nsteps; ns++){
+    thresholds[ns]=threshold0+ns*step;
+    cout << "Scanning thresold "<< thresholds[ns] << endl;
+    count[ns]=CountPeaksFast(thresholds[ns]);
+    cout << "Peaks found: "<< count[ns] << endl;
+  }
+}
+
+
+
 TString PulseAnalysis::FindPeaks(bool nodraw){ 
   debug();
   // Search the data for amplitudes above a given threshold, diplay the peaks,
@@ -229,7 +271,7 @@ TString PulseAnalysis::FindPeaks(bool nodraw){
   //  float minpeak=State::_hspect->GetBinContent(State::_hspect->GetMinimumBin());
   Double_t thresFrac;
   if (_pThreshold<0){ // not initialized by user
-    log_info("Threshold not set, using 0.20 of maximum voltage");
+    log_info("Threshold not set, using 0.20 * maximum voltage");
     thresFrac=0.20;  // 20% of max peak
   }
   else {thresFrac=_pThreshold/maxpeak;}   // fix me?
@@ -451,6 +493,7 @@ void PulseAnalysis::Analyze(){
 
 
 void PulseAnalysis::DumpPeaks(){
+  
   debug();
 }
 

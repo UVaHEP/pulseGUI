@@ -16,10 +16,11 @@ import argparse
 rootlibs=commands.getoutput("root-config --libdir")
 sys.path.append(rootlibs)
 
-from ROOT import Double, kRed, kBlue
-from ROOT import TString, TCanvas, TGraph, TLine, TF1
+from ROOT import Double, gStyle, kRed, kBlue, kGreen, kTeal
+from ROOT import TString, TCanvas, TGraph, TLine, TF1, TH2F, TPaveText
 from ivtools import *
 
+VMIN=10  # minimum voltage to read
 
 #######################
 # main
@@ -29,6 +30,8 @@ parser.add_argument('-f', metavar='-d', type=str, nargs=1, default=None,
 			    help="I-V data file to process")
 parser.add_argument('-l', metavar='-l', type=str, nargs=1, default=None,
 			    help="Optional illuminated I-V data file")
+parser.add_argument('-p', '--png',
+                    help="Create PNG file from canvas", action="store_true")
 parser.add_argument('-a', '--auto',
                     help="Run and exit w/o user interaction", action="store_true")
 args = parser.parse_args()
@@ -38,7 +41,7 @@ if args.f is None:
     print 'No I-V data file to process...quitting'
     exit(0)
 
-
+gStyle.SetOptStat(0)
 doLightAnalysis = not (args.l is None)
 
 # variables for analysis of IV data
@@ -50,7 +53,7 @@ dLogIdV=array("d")
 
 
 # read dark I-V data
-readVIfile(args.f[0],V,I)
+readVIfile(args.f[0],V,I,VMIN)
 calc_dLogIdV(V,I,dLogIdV,Vbar)
 
 
@@ -66,7 +69,7 @@ rLD=array("d")  # light to dark current ratio
 ratioMax=[0,0]
 if doLightAnalysis:
     print "Also analyzing illuminated I-V curve"
-    readVIfile(args.l[0],LV,LI)
+    readVIfile(args.l[0],LV,LI,VMIN)
 #    calc_dLogIdV(LV,LI,LdLogIdV,LVbar)
 
     for x in range(len(V)):
@@ -94,6 +97,8 @@ if doLightAnalysis:
 vPeak=getMaxXY(Vbar,dLogIdV)[0]  # estimate of Vbr from peak
 fitFcn=TF1("fitFcn","[0]+exp(-[1]*(x-[2]))",-80,80)
 fitFcn.SetParameters(0.05,5,vPeak) # guess at starting params
+fitFcn.SetLineWidth(2)
+fitFcn.SetLineColor(kTeal)
 if vPeak<0:
     gDV.Fit(fitFcn,"","",vPeak,vPeak+5);
 else:
@@ -113,12 +118,18 @@ xmin=Double(); xmax=Double(); ymin=Double(); ymax=Double()
 gIV.ComputeRange(xmin,ymin,xmax,ymax)
 gIV.SetTitle("I-V Curve;Volts;Current [Amps]");
 gIV.SetMinimum(10e-9)
-gIV.Draw("APL")
-
+gIV.Draw("AL")
+if doLightAnalysis:
+    gLIV=TGraph(len(V), LV, LI)
+    gLIV.SetTitle("I-V Curve (light);Volts;Current [Amps]");
+    gLIV.SetName("LIV")
+    gLIV.SetLineWidth(2)
+    gLIV.SetLineColor(kGreen)
+    gLIV.Draw("L")
 
 canvas.cd(2)
 gDV.ComputeRange(xmin,ymin,xmax,ymax)
-gDV.Draw("APL")
+gDV.Draw("AL")
 gDV.SetTitle("Breakdown analysis;Volts;dlog(I)/DV");
 tlVpeak=TLine(vPeak,ymin+(ymax-ymin)/2,vPeak,ymax*1.08)
 tlVpeak.SetLineColor(kRed)
@@ -127,6 +138,12 @@ tlVknee=TLine(vKnee, gDV.GetYaxis().GetXmin(),vKnee,fitFcn.GetParameter(0))
 tlVknee.SetLineColor(kBlue)
 tlVknee.SetLineWidth(2)
 tlVknee.Draw("same")
+labVbr=TPaveText(0.50,0.76,0.90,0.90,"NDC")
+msg="Vpeak="+("%5.2f" % vPeak)
+labVbr.AddText(msg)
+msg="Vknee="+("%5.2f" % vKnee)
+labVbr.AddText(msg)
+labVbr.Draw()
 
 
 if doLightAnalysis:
@@ -134,10 +151,16 @@ if doLightAnalysis:
     canvas.cd(3)
     gRatio.ComputeRange(xmin, ymin, xmax, ymax)
     gRatio.SetTitle("Ratio of Light to Dark;Volts;Current Ratio [A]")
-    gRatio.Draw("APC")
-    RatioMax = TLine(ratioMax[0], ymin, ratioMax[0], ymax*1.08)
+    gRframe=TH2F("grFrame",gRatio.GetTitle(),10,xmin,xmax,10,1,ymax*1.1)
+    gRframe.Draw()
+    gRatio.Draw("L")
+    RatioMax = TLine(ratioMax[0], ymin+(ymax-ymin)/2, ratioMax[0], ymax*1.08)
     RatioMax.SetLineColor(kRed)
     RatioMax.Draw("same")
+    labRat=TPaveText(0.50,0.83,0.90,0.90,"NDC")
+    msg="Vpeak="+("%5.2f" % ratioMax[0])
+    labRat.AddText(msg)
+    labRat.Draw()
 
 canvas.Update()
 
@@ -153,10 +176,8 @@ if not args.auto:
     sys.stdout.flush() 
     raw_input('')
 
-
-png=args.f[0].replace(".csv",".png")
-
-canvas.Print(png)
-
+if args.png:
+    png=args.f[0].replace(".csv",".png")
+    canvas.Print(png)
 
 

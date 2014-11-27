@@ -192,8 +192,7 @@ void PulseGUI::SetWidth(){
 
 //----------------------------------------------------------------------
 void PulseGUI::SetWidth(Float_t w){
-  // set width in microseconds
-
+  // set width in nanoseconds
   
   TString s; 
   if (_analysis)
@@ -472,23 +471,22 @@ void PulseGUI::MakeButtons(){
 
   // Set Response
   responseBN = new TGTextButton(cframe2, "Set &Response");
-
+  responseBN->SetTextColor(gray);
   cframe2->AddFrame(responseBN, new TGLayoutHints(kLHintsTop | kLHintsExpandX,
 						  2,2,2,2));
   FButton->AddFrame(cframe2, new TGLayoutHints(kLHintsCenterX,2,2,5,1));
-  
+
+
   // Get Background and Subtract Background
   TGCompositeFrame *cframe3 = new TGCompositeFrame(FButton, WIDTH, HEIGHT,
 						   kHorizontalFrame | kFixedWidth);
   // Get Background
   getBKGBN = new TGTextButton(cframe3, "&Get Background");
-
   cframe3->AddFrame(getBKGBN, new TGLayoutHints(kLHintsTop | kLHintsExpandX,
 						2,2,2,2));
   // Subtract Background
   subBKGBN = new TGTextButton(cframe3, "Subtract BKG");
   subBKGBN->SetTextColor(gray);
-
   cframe3->AddFrame(subBKGBN, new TGLayoutHints(kLHintsTop | kLHintsExpandX,
 						2,2,2,2));
   FButton->AddFrame(cframe3, new TGLayoutHints(kLHintsCenterX,2,2,5,1));

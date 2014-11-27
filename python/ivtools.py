@@ -46,10 +46,9 @@ def calc_dLogIdV(V,I,dLogIdV,Vbar):
 
 
 ########################
-def readVIfile(file, V, I):
+def readVIfile(file, V, I, Vmin=0):
 # read CSV file and return V,I data in given arrays 
 ########################
-    VMIN=0  # minimum voltage to scan for Vbr
 
     f = open(file, 'r')
     # identify file type from header
@@ -63,6 +62,7 @@ def readVIfile(file, V, I):
         else: v,i=line[0,2]           # Keithley data format
         v=float(v)
         i=abs(float(i))
+        if abs(v)<Vmin: continue
         if len(V)>0 and v==V[len(V)-1] :
             I[len(V)-1]=i # if doing multiple readings, take the last one
             continue

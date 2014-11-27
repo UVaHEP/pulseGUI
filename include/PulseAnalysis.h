@@ -77,6 +77,8 @@ public:
   // Analysis tools
   void Analyze();
   TString FindPeaks(bool nodraw=false);
+  void ScanPeaksFast(int nsteps, double *thresholds, double *count) const;
+  int CountPeaksFast(double threshold=0) const;
   void FindPeaksandReduce(Float_t window); 
 
   void SmoothHistogram(); 
