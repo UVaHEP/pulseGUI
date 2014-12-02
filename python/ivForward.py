@@ -52,22 +52,23 @@ for i in range(len(V)):
     R.append(r)
 
 # graphs
-gIV=TGraph(len(Vsample), Vsample, R)
-gIV.SetName("IV")
-gIV.SetTitle("Resistance Curve;Volts;Resistance [Ohms]");
-gIV.SetLineWidth(2)
+gRV=TGraph(len(Vsample), Vsample, R)
+gRV.SetName("IV")
+gRV.SetTitle("Resistance Curve;Volts;Resistance [Ohms]");
+gRV.SetLineWidth(2)
+gIV=TGraph(len(V), V, I)
 
 # plotting
 canvas = TCanvas("cR","Resistance",800,800)
 canvas.Divide(1,2)
 
 canvas.cd(1).SetLogy()
-gIV.Draw("APL")
+gRV.Draw("APL")
 
 canvas.cd(2)
 # make subsample in range of higher voltages
 xmin=Double(); xmax=Double(); ymin=Double(); ymax=Double()
-gIV.ComputeRange(xmin,ymin,xmax,ymax)
+gRV.ComputeRange(xmin,ymin,xmax,ymax)
 V2=array("d")
 R2=array("d")
 
@@ -76,30 +77,32 @@ for i in range(len(Vsample)):
         V2.append(Vsample[i])
         R2.append(R[i])
 
-gIV2=TGraph(len(V2), V2, R2)
+gRV2=TGraph(len(V2), V2, R2)
 
-gIV2.Draw("APL")
-gIV2.SetName("IV2")
-gIV2.SetTitle("Resistance Curve;Volts;Resistance [Ohms]");
-gIV2.SetLineWidth(3)
-gIV2.ComputeRange(xmin,ymin,xmax,ymax)
+gRV2.Draw("APL")
+gRV2.SetName("IV2")
+gRV2.SetTitle("Resistance Curve;Volts;Resistance [Ohms]");
+gRV2.SetLineWidth(3)
+gRV2.ComputeRange(xmin,ymin,xmax,ymax)
 
 fitFcn=TF1("fitFcn","[0]+exp([1])*exp(-(x*[2]))",xmin,xmax)
 print xmin,ymin,xmax,ymax
 fitFcn.SetParameters(ymin,log(ymax),1) # guess at starting params
-gIV2.Fit(fitFcn,"0")
+gRV2.Fit(fitFcn,"0")
 fitFcn.Draw("same")
 
 canvas.cd(1)
 fitFcn.Draw("same")
 canvas.Update()
 
-#gIV.ComputeRange(xmin,ymin,xmax,ymax)
+#gRV.ComputeRange(xmin,ymin,xmax,ymax)
 #xmin=
 #h=TH2F("h",gIV.GetTitle(),10,1,gIV.GetXaxis().GetXmax(),10,0,ymin*10);
 #gStyle.SetOptStat(0)
 #h.Draw()
 #gIV.Draw("PL")
+
+
 
 
 
@@ -109,11 +112,18 @@ printf("Estimated total quence resistance: %6.0f\n",QR)
 printf("Estimated quence resistance / SPAD: %6.2e\n",QR*nSPADs)
 print "===================="
 
+canvas2 = TCanvas("cIV","I-V",800,800)
+gIV.Draw("APL")
+canvas2.Update()
+
+
+
 #os.system('sleep 2')
 if not args.auto:
     print 'Hit return to exit'
     sys.stdout.flush() 
     raw_input('')
+
 
 
 #png=args.f[0].replace(".csv",".png")

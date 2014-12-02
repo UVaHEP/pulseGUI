@@ -9,3 +9,6 @@ bin
 *.mat
 *.pyc
 *.png
+*_.py
+*_.cc
+*_.h

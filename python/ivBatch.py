@@ -5,8 +5,8 @@ from ivAnalyze import ivAnalyze
 
 def usage():
     print
-    print "Usage: python [OPTION] ivBAtch DIR"
-    print "      -r DIR         : Recursively process all in DIR"
+    print "Usage: python [OPTION] ivBatch DIR"
+    print "      -r             : Recursively process all in DIR"
     print "      -v             : verbose output"
     print 
     sys.exit()
@@ -18,7 +18,9 @@ def ProcessDir(dir):
     print "Processing data in:",dir
     darkFiles=[]
     darkFiles.extend( glob.glob(dir+'/*Dark*csv') )
+    darkFiles.extend( glob.glob(dir+'/*-D-*csv') )
     lightFiles=[]
+    lightFiles.extend( glob.glob(dir+'/*-L-*csv') )
     lightFiles.extend( glob.glob(dir+'/*Light*csv') )
     lightFiles.extend( glob.glob(dir+'/*urple*csv') )
     lightFiles.extend( glob.glob(dir+'/*reen*csv') )
@@ -62,11 +64,11 @@ if __name__ == '__main__':
         dirList.extend(commands.getoutput(cmd).split())
     else: dirList.append(dir)
     
-
     for d in dirList: 
         ProcessDir(d)
 
     # ouch!
+    
     for k in results:
         df=k
         lf=results[k][0]
@@ -74,4 +76,10 @@ if __name__ == '__main__':
         vKnee=results[k][1][1]
         vRmax=results[k][1][2][0]
         rMax=results[k][1][2][1]
-        print (":: %s %s %4.2f %4.2f %4.2f %5.2f" % (k, lf, vPeak, vKnee, vRmax, rMax) )
+        print k,lf
+        df=os.path.basename(k)
+        if lf==None: 
+            lf="None"
+        else:
+            lf=os.path.basename(lf)
+        print (":: %25s %25s %4.2f %4.2f (%4.2f) %4.2f %5.2f" % (df, lf, vPeak, vKnee, abs(vPeak-vKnee), vRmax, rMax) )

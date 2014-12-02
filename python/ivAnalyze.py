@@ -14,20 +14,20 @@ import argparse
 
 
 from ROOT import Double, gStyle, kRed, kBlue, kGreen, kTeal
-from ROOT import TString, TCanvas, TGraph, TLine, TF1, TH2F, TPaveText
+from ROOT import TString, TCanvas, TGraph, TLine, TF1, TH2F, TPaveText, TSpectrum
 from ivtools import *
 
 
 
 class ivAnalyze():
     def Reset(self):
-        self.V=array("d")
-        self.I=array("d")
-        self.Vbar=array("d")
-        self.dLogIdV=array("d")
-        self.LV=array("d")
-        self.LI=array("d")
-        self.rLD=array("d")  # light to dark current ratio
+        self.V=array("f")
+        self.I=array("f")
+        self.Vbar=array("f")
+        self.dLogIdV=array("f")
+        self.LV=array("f")
+        self.LI=array("f")
+        self.rLD=array("f")  # light to dark current ratio
         self.ratioMax=[0,0]  # location of peak light/dark ratio 
         self.vPeak=0
         self.vKnee=0
@@ -52,14 +52,19 @@ class ivAnalyze():
         if self.doLightAnalysis: self.AnalyzeLight()
         self.vPeak=getMaxXY(self.Vbar,self.dLogIdV)[0]  # estimate of Vbr from peak
         self.gIV=TGraph(len(self.V), self.V, self.I)
-        self.gDV=TGraph(len(self.V), self.V, self.dLogIdV)
+        self.gDV=TGraph(len(self.Vbar), self.Vbar, self.dLogIdV)
         fitFcn=TF1("fitFcn","[0]+exp(-[1]*(x-[2]))",-80,80)
         fitFcn.SetParameters(0.05,5,self.vPeak) # guess at starting params
         if self.vPeak<0:
-            self.gDV.Fit(fitFcn,"","",self.vPeak,self.vPeak+5);
+            self.gDV.Fit(fitFcn,"","",self.vPeak,self.vPeak+5)
         else:
-            self.self.gDV.Fit(fitFcn,"","",self.vPeak-5,self.vPeak);
+            self.self.gDV.Fit(fitFcn,"","",self.vPeak-5,self.vPeak)
         self.vKnee=fitFcn.GetParameter(2)
+        #tspect=TSpectrum()
+        #dest=self.dLogIdV
+        #npeaks=tspect.SearchHighRes(self.dLogIdV,dest,len(self.dLogIdV),3,0.2,False,1,False,3)
+        #for i in range(npeaks): print dest[i]
+        #print "Number of peaks found",npeaks
         return self.vPeak,self.vKnee,self.ratioMax
     def AnalyzeLight(self):
         #generate Light/Dark Ratio

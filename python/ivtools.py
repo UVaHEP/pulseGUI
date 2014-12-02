@@ -21,9 +21,9 @@ def calc_dVdI(V,I,dIdV,Vbar):
 # simple derivative calculation dI/dV
 ########################
     assert len(I)==len(V), "calc_dIdV: array sizes not equal"
-    dV=array("d")
-    dI=array("d")
-    Ibar=array("d")
+    dV=array("f")
+    dI=array("f")
+    Ibar=array("f")
     calcDelta(I,Ibar,dI)
     calcDelta(V,Vbar,dV)
     for i in range(len(Ibar)):
@@ -36,9 +36,9 @@ def calc_dVdI(V,I,dIdV,Vbar):
 def calc_dLogIdV(V,I,dLogIdV,Vbar):
 # simple derivative calculation for peak Vbr estimation
 ########################
-    dV=array("d")
-    dI=array("d")
-    Ibar=array("d")
+    dV=array("f")
+    dI=array("f")
+    Ibar=array("f")
     calcDelta(I,Ibar,dI)
     calcDelta(V,Vbar,dV)
     for i in range(len(Ibar)):
@@ -80,6 +80,7 @@ def getMaxIdx(a):
         if a[j]>amax:
             amax=a[j]
             idx=j
+        if amax>1 and a[j]<0.5*amax: break  # take first peak in case of doubles
     return idx
 
 #######################

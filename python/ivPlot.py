@@ -65,7 +65,8 @@ if doLightAnalysis:
     gRatio.SetName("LD_ratio")
     gRatio.SetLineWidth(2)
 
-canvas = TCanvas("ivdata","I-V Data",800,400)
+#canvas = TCanvas("ivdata","I-V Data",800,400)
+canvas = TCanvas("ivdata",args.f[0],800,400)
 if doLightAnalysis:
     canvas.Divide(3,1)
 else:
@@ -95,7 +96,7 @@ if doLightAnalysis:
 canvas.cd(2)
 gDV.ComputeRange(xmin,ymin,xmax,ymax)
 gDV.Draw("AL")
-gDV.SetTitle("Breakdown analysis;Volts;dlog(I)/DV");
+gDV.SetTitle("Breakdown analysis;Volts;dlog(I)/dV");
 tlVpeak=TLine(vPeak,ymin+(ymax-ymin)/2,vPeak,ymax*1.08)
 tlVpeak.SetLineColor(kRed)
 tlVpeak.Draw("same")
