@@ -34,6 +34,7 @@ def scaleToPad(obj2):
     color=obj2.GetLineColor()
     axis.SetLineColor(color)
     axis.SetTextColor(color)
+    axis.SetLabelColor(color)
     axis.SetTitle("Gain")
     return obj2,axis
 
