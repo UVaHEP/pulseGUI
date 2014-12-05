@@ -32,7 +32,7 @@ def ProcessDir(dir):
         for f in lightFiles:
             ln=os.path.basename(f)
             dn=os.path.basename(df)
-            if ln[0:3]==dn[0:3]: # not the smartest file matcher, be careful w/ file names!
+            if ln[0:2]==dn[0:2]: # not the smartest file matcher, be careful w/ file names!
                 lf=f
                 break
         print df,lf

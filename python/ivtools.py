@@ -1,5 +1,6 @@
 import os, re, sys
 from array import array
+from ROOT import TGraph
 
 ########################
 def printf(format, *args):
@@ -62,7 +63,7 @@ def readVIfile(file, V, I, Vmin=0):
         else: v,i=line[0,2]           # Keithley data format
         v=float(v)
         i=abs(float(i))
-        if abs(v)<Vmin: continue
+        if abs(v)<Vmin or i==0: continue
         if len(V)>0 and v==V[len(V)-1] :
             I[len(V)-1]=i # if doing multiple readings, take the last one
             continue
@@ -109,5 +110,4 @@ def getField(sname, tgt):
 	
 
 
-
-        
+    

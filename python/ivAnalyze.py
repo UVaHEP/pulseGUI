@@ -21,12 +21,13 @@ from ivtools import *
 
 class ivAnalyze():
     def Reset(self):
-        self.V=array("f")
-        self.I=array("f")
-        self.Vbar=array("f")
-        self.dLogIdV=array("f")
-        self.LV=array("f")
-        self.LI=array("f")
+        self.V=array("f")    # I-V
+        self.I=array("f")    #   for dark
+        self.Vbar=array("f")     # V for 1/dV plots
+        self.dLogIdV=array("f")   
+        self.LV=array("f")   # I-V
+        self.LI=array("f")   #   for light
+        self.G=array("f")    # gain
         self.rLD=array("f")  # light to dark current ratio
         self.ratioMax=[0,0]  # location of peak light/dark ratio 
         self.vPeak=0
@@ -34,6 +35,7 @@ class ivAnalyze():
         self.gIV=None
         self.gDV=None
         self.gRatio=None
+        self.gGain=None
         self.VMIN=10
     def __init__(self,fnIV=None,fnLIV=None):
         self.Reset()
@@ -45,7 +47,8 @@ class ivAnalyze():
         self.fnIV=fnIV  
         self.fnLIV=fnLIV
         self.doLightAnalysis= not (fnLIV is None)
-    def Analyze(self):
+        
+    def Analyze(self, dorebin=False):
         # read dark I-V data and estimate Vbr
         readVIfile(self.fnIV,self.V,self.I,self.VMIN)
         calc_dLogIdV(self.V,self.I,self.dLogIdV,self.Vbar)
@@ -58,14 +61,10 @@ class ivAnalyze():
         if self.vPeak<0:
             self.gDV.Fit(fitFcn,"","",self.vPeak,self.vPeak+5)
         else:
-            self.self.gDV.Fit(fitFcn,"","",self.vPeak-5,self.vPeak)
+            self.gDV.Fit(fitFcn,"","",self.vPeak-5,self.vPeak)
         self.vKnee=fitFcn.GetParameter(2)
-        #tspect=TSpectrum()
-        #dest=self.dLogIdV
-        #npeaks=tspect.SearchHighRes(self.dLogIdV,dest,len(self.dLogIdV),3,0.2,False,1,False,3)
-        #for i in range(npeaks): print dest[i]
-        #print "Number of peaks found",npeaks
         return self.vPeak,self.vKnee,self.ratioMax
+
     def AnalyzeLight(self):
         #generate Light/Dark Ratio
         #Nota bene! I'm not doing any error checking with this, so if you have files with 
@@ -75,10 +74,22 @@ class ivAnalyze():
 
         if not len(self.LI)==len(self.I):
             print "Dark/light files of different length:",len(self.LI),len(self.I)
+            sys.exit(1)
+
+        dV=999
+        iMid=0
         for i in range(len(self.V)):
             r=self.LI[i]/self.I[i]
             if (r) > self.ratioMax[1]:
                 self.ratioMax = [self.V[i], r]
             self.rLD.append(r)
+            if abs(self.V[i]-self.vPeak*0.5) < dV:
+                dV=abs(self.V[i]-self.vPeak*0.5)
+                iMid=self.I[i]
         self.gRatio = TGraph(len(self.V), self.V, self.rLD)
-
+        # gain analysis
+        # (I_light-I_dark) / (I_light-I_dark)@Vbr/2 [iMid]
+        for i in range(len(self.V)):
+            self.G.append( (self.LI[i]-self.I[i])/iMid )
+        self.gGain=TGraph(len(self.V), self.V, self.G)
+        

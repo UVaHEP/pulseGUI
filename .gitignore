@@ -12,3 +12,6 @@ bin
 *_.py
 *_.cc
 *_.h
+*_
+*dat
+*.plt
