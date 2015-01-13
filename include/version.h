@@ -1,0 +1,4 @@
+#ifndef VERSION_H
+#define VERSION_H
+const PULSEGUI_VERSION=000701
+#ENDIF
