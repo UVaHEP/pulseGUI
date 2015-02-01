@@ -8,6 +8,11 @@ using TMath::Pi;
 using std::cerr;
 using std::endl;
 
+// using FFT in ROOT
+// TH1* hcos=hist->FFT(0,"RE R2HC M") cos terms 
+// TH1* hsin=hist->FFT(0,"IM R2HC M") sin terms
+// offset = hcos->GetBinContent(1)/nbins
+
 void fourier(const TH1F *h, double *r, double *i, int fmax){
   if (fmax >= h->GetNbinsX()) {
     cerr << __FILE__ << " : Max frequency reduced to Nbins-1"  << endl;
