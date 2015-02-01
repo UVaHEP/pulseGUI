@@ -22,7 +22,8 @@ class psdata {
   TH1D *t0; 
   TH1F *vMax; 
   TH1F *vMin; 
-  TH1F *dV; 
+  TH1F *dV;
+  TH1F *dcOffset;
   TH1F *sign;  // primary sign of data +1: >0, -1<0
   TH1F *pHD;   // pulse height distribution
   TArrayF *volts; 

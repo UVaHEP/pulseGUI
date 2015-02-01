@@ -17,11 +17,11 @@ $(shell mkdir -p build/lib bin)
 # ----------------------------------------------------------------------------
 # sources for which dictionaries are to be created, 
 # but without the use of LinkDefs
-SRCSNOLINKDEF	:= PicoReader.cc PulseAnalysis.cc PulseGUI.cc 
+SRCSNOLINKDEF	:= PicoReader.cc PulseAnalysis.cc PulseGUI.cc PSbuffer.cc
 
 # sources for which dictionaries are to be created, 
 # using LinkDefs
-SRCSWITHLINKDEF :=
+SRCSWITHLINKDEF := 
 # ----------------------------------------------------------------------------
 SRCSNOLINKDEF	:= $(patsubst %.cc,$(SRCDIR)/%.cc,$(SRCSNOLINKDEF))
 DICTSNOLINKDEF	:= $(patsubst $(SRCDIR)/%.cc,$(BLDDIR)/%Dict.cxx,$(SRCSNOLINKDEF))

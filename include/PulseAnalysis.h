@@ -3,26 +3,11 @@
 #define PULSEANALYSIS_H
 
 
-#include "TGFrame.h"
-#include "TRootEmbeddedCanvas.h"
-#include "TGFileDialog.h"
-#include "TGCanvas.h"
-#include "TGStatusBar.h"
-#include "TGNumberEntry.h"
-#include "TArrow.h"
-#include "TPad.h"
-#include "TH1F.h"
-#include "TPaveLabel.h"
-#include "TPaveText.h"
 #include "TFile.h"
-#include "RQ_OBJECT.h"
-//#include "ReadMat.h"
-//#include "ReadTxt.h"
+#include "TH1F.h"
+#include "PSbuffer.h"
 
-
-class PulseAnalysis : public TQObject { 
-  RQ_OBJECT("PulseAnalysis"); 
-  ClassDef(PulseAnalysis,1);
+class PulseAnalysis {
 
  private: 
   static const Int_t MAXPEAKS = 100000;  // max peaks considered in spectrum
@@ -30,10 +15,12 @@ class PulseAnalysis : public TQObject {
   static const double DEFAULT_ZOOM=1e4;  // default (minimum) zoom [ns]
 
   TFile *_tf;       // pointer to current data file
-  TString _tfName;  // name of current TFile
+  TString _currentTFile;  // name of current TFile
   TH1F *_hspect;    // Histogram with pulse data spectrum
   TH1F *_hfreq;     // pulse data frequency 
 
+  PSbuffer *psbuffer; // pico scope data buffer
+  
   // Analysis Histograms
   TH1F  *_hdt;   // delta time between peaks
   TH1F  *_hph;   // spectrum of peak heights
@@ -65,6 +52,7 @@ class PulseAnalysis : public TQObject {
 public:
 
   PulseAnalysis(TString fName=""); 
+  PulseAnalysis(PSbuffer *buffer);
   virtual ~PulseAnalysis(); 
 
   void ConvertFile(TString Filename); 
@@ -72,7 +60,8 @@ public:
   void AnaClean();     // clear peak analysis histograms
   void Reset();        // reset analysis for current spectrum
   void LoadSpectrum(TString Filename);
-  void LoadSpectrum(); 
+  void LoadSpectrum();
+  void LoadBuffer(TString Filename);
 
   // Analysis tools
   void Analyze();
@@ -86,9 +75,9 @@ public:
 
   // manipulate spectrum view
   void DrawSpectrum();
-  void inzoom(); 
-  void unzoom(); 
-  void outzoom(); 
+  void ZoomIn(); 
+  void UnZoom(); 
+  void ZoomOut(); 
   void leftShift(); 
   void rightShift();
 

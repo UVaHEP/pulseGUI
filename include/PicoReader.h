@@ -4,6 +4,7 @@
 #define PICOREADER_H
 
 #include "psdata.h"
+#include "PSbuffer.h"
 #include "TString.h"
 
 #include <fstream> 
@@ -26,8 +27,14 @@ class psblock {
   UInt_t dataStart; 
   UInt_t nValues; 
   void Print();
-}; 
+};
 
+class PSBlock {
+ private:
+  fstream &fin;
+ public:
+ PSBlock(fstream &f) : fin(f) {;}
+};
 
 class PicoReader{
  public:
@@ -35,11 +42,13 @@ class PicoReader{
   int Convert(TString infile, TString rootfile="");
   // PicoScope Binary MATLAB File
   int ConvertMatFile(TString matfile, TString rootfile);
+
   void Print(){;}
   // PicoScope Text File
   int ConvertTXTFile(TString datfile, TString rootfile);
  private:
   psdata* ReadMatFile(TString& filename);
+  PSbuffer* ReadMatFile2(TString& filename);
   bool LocateBlock(vector<psblock> &blocks, TString name, psblock &block);
   vector<psblock> ReadBlocks(fstream& fin);
 };

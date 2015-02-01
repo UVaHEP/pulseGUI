@@ -1,15 +1,24 @@
-#include "PicoReader.h"
 #include "dbg.h"
-#include "TMath.h"
+#include "PicoReader.h"
+#include "psdata.h"
+#include "PSbuffer.h"
+
 #include "TFile.h"
 #include "TH1F.h"
+#include "TMath.h"
 #include "TRegexp.h"
-#include "psdata.h"
 
 #include <iostream>
+#include <vector>
+
+using TMath::Abs;
+using TMath::Max;
+using TMath::Min;
 using std::cout;
+using std::cerr;
 using std::endl;
 using std::ios;
+using std::vector;
 
 
 void psblock::Print(){
@@ -25,7 +34,7 @@ int PicoReader::Convert(TString infile, TString rootfile){
   bool matFile=infile.EndsWith(".mat");
 
   if (!txtFile && !matFile) {
-    cout << "Unknown file type: "<<infile<<endl;
+    cout << "PicoReader::Convert : Unknown file type: "<<infile<<endl;
     return 1;
   }
   cout << "Converting PicoScope data to ROOT file: " << infile << endl;
@@ -58,6 +67,14 @@ int PicoReader::ConvertMatFile(TString matfile, TString rootfile) {
   f.Write(); 
   f.Close(); 
   debug("Finished Writing new TFile."); 
+  rootfile.ReplaceAll(".root","_2.root");
+
+
+  PSbuffer *psb=ReadMatFile2(matfile);
+  TFile f2(rootfile, "RECREATE"); 
+  psb->Write();
+  f2.Write(); 
+  f2.Close();
   return 0;
 }
 
@@ -194,6 +211,7 @@ void readNext(fstream &fin, T &channelData) {
 }
 
 
+
 // replace me w/ readNext call!
 Double_t getPSDouble(psblock block, fstream &fin){
   Double_t val;
@@ -214,8 +232,6 @@ bool PicoReader::LocateBlock(vector<psblock> &blocks,
   }
   return false;
 }
-
-
 
 
 psdata* PicoReader::ReadMatFile(TString& filename){
@@ -266,6 +282,7 @@ psdata* PicoReader::ReadMatFile(TString& filename){
 	dV=TMath::Abs(channelData);
     }
     debug("Finished reading voltage channel data."); 
+
     // majority sign
     ps->sign = new TH1F("sign","sign",1,-1,1); 
     int sign=-1;
@@ -438,6 +455,103 @@ vector<psblock> PicoReader::ReadBlocks(fstream& fin) {
   }    
 
   return blocks; 
+}
+
+PSbuffer* PicoReader::ReadMatFile2(TString& filename){
+  fstream fin; 
+  fin.open(filename.Data(), ios::binary | ios::in); 
+  if (!fin.is_open()) {
+    cerr << "Open error: " << filename << endl;
+    return NULL;
+  }
+  vector<psblock> blocks = ReadBlocks(fin); 
+
+  PSbuffer *ps = new PSbuffer(); 
+  
+  // get time data
+  psblock block;
+  if (LocateBlock(blocks, "Tstart",block)){
+    debug("Reading: Tstart Block");
+    double t0=getPSDouble(block,fin)*1e3;  // convert to ns
+    debug("t0: %20e ns",t0);
+    ps->SetT0(t0);
+  }
+
+
+  if (LocateBlock(blocks, "Tinterval",block)){
+    debug("Reading: Tinterval Block");
+    double dT=getPSDouble(block,fin)*1e9;  // convert to ns
+    debug("dt: %20e ns",dT);
+    ps->SetDt(dT);
+  }
+
+  if (!(LocateBlock(blocks, "A", block))){
+    cerr << "Waveform data block not found on Channel A" << endl;
+    return ps;
+  }  
+
+  // get waveform from channel A
+  
+  fin.seekg(block.dataStart, fin.beg); 
+  std::cout << "Reading: Voltage Channel" << std::endl; 
+  block.Print();
+  ps->InitWaveform(block.nValues);
+  TH1F *wave=ps->GetWaveform();
+
+  Float_t channelData = 0.0; 
+  Float_t dV=1e12;  
+
+  float last=0;  
+  for (UInt_t i = 0; i < block.nValues; i++) { 
+    readNext(fin, channelData); 
+    channelData*=1000;  // convert to mV
+    wave->SetBinContent(i+1,channelData);
+    // find minimal voltage step
+    float delta=Abs(channelData-last);
+    if ( delta>1e-6 && delta<dV ) dV=delta;
+    last=channelData;
+  }
+  ps->SetDV(dV);
+  debug("Finished reading voltage channel data."); 
+    
+
+  // get channel B (trigger)
+  float min=1e12;
+  float max=-1e12;
+  vector<float> *vtrig=new vector<float>;
+  if (LocateBlock(blocks, "B", block)){
+    fin.seekg(block.dataStart, fin.beg);
+    // temporarily store trigger data
+    for (UInt_t i = 0; i < block.nValues; i++) { 
+      readNext(fin, channelData); 
+      vtrig->push_back(channelData);
+      min=Min(min,channelData);
+      max=Max(max,channelData);
+    }
+    
+    // set trigger point and hysterisis
+    // WARNING!  This may fail in case of bad terminations
+    // *** TODO:  Use t0 vs t=0  to find 1st trigger bin and gte threshold there ***
+    Float_t onThreshold = max*0.5; 
+    Float_t offThreshold = max*0.3; 
+    std::cout << "On Threshold:"   << onThreshold 
+	      << " Off Threshold:" << offThreshold << std::endl;
+
+    Bool_t fired = false;
+    // mark triggers
+    for (UInt_t i = 0; i < block.nValues; i++) {
+      if (!fired && vtrig->at(i)>onThreshold){
+	fired = true;
+	ps->AddTrig(i);
+	continue;
+      }
+    }
+    fired = !(channelData < offThreshold); 
+  }
+
+  ps->Analyze();  // calculate DC offset, frequency spectrum, noise, etc
+  ps->Print();
+  return ps;  // picoscope data structure
 }
 
 

@@ -33,7 +33,8 @@ if __name__ == '__main__':
                         help="Set search directory for I-V data files")
     args = parser.parse_args()
 
-    # avoid ANNOYING conflict in argument parsing
+    # import ROOT here to
+    # avoid ANNOYING conflict in argument parsing 
     
     from ROOT import Double, gStyle
     from ROOT import TCanvas, TGraph, TMultiGraph, TH1F, TPaveText

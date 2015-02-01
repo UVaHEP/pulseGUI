@@ -6,7 +6,6 @@
 using namespace std;
 
 
-
 int main(int argc, char **argv) {
   TString fName="";
   if (argc>1) {
@@ -18,7 +17,7 @@ int main(int argc, char **argv) {
   PulseGUI *pg=new PulseGUI(fName);
   pg->Print();
 
-  cout << "To exit, quit ROOT from the File menu of the plot (or use control-C)" << endl;
+  cout << "To exit, quit ROOT from the File menu of the GUI (or use control-C)" << endl;
   theApp.Run(true);
   return 0;
 }

@@ -1,26 +1,23 @@
 #ifndef PULSEGUI_H
 #define PULSEGUI_H
 
+#include "PulseAnalysis.h"
 
-#include "TGFrame.h"
-#include "TRootEmbeddedCanvas.h"
-#include "TGFileDialog.h"
+#include "RQ_OBJECT.h"
 #include "TGCanvas.h"
-#include "TGStatusBar.h"
+#include "TGFrame.h"
+#include "TGFileDialog.h"
 #include "TGNumberEntry.h"
-#include "TArrow.h"
+#include "TGStatusBar.h"
 #include "TPad.h"
-#include "TH1F.h"
 #include "TPaveLabel.h"
 #include "TPaveText.h"
-#include "TFile.h"
+#include "TRootEmbeddedCanvas.h"
 #include "TString.h"
-#include "RQ_OBJECT.h"
-#include "PulseAnalysis.h"
+
 
 class PulseGUI : public TQObject { 
   RQ_OBJECT("PulseGUI"); 
-  //  ClassDef(PulseGUI,1);
 
   struct clickPosition_t { 
     Double_t x; 
@@ -52,7 +49,7 @@ private:
   // Button Frame and buttons
   TGTextButton  *loadBN, *convertBN, *threshBN, *threshNumBN, *widthBN, *measureBN,
     *responseBN, *getBKGBN, *subBKGBN, *findPeaksBN, *analyzeBN,
-    *writePeaksBN, *zoomOutBN,*unzoomBN, *zoomInBN, *shiftLeftBN,
+    *writePeaksBN, *zoomOutBN,*UnZoomBN, *zoomInBN, *shiftLeftBN,
     *shiftRightBN, *resetBN, *exitBN, *smoothBN;
 
   TGTextButton  *ShowHideBN;
@@ -108,7 +105,6 @@ public:
   void EventInfo(Int_t event, Int_t px, Int_t py, TObject *selected); 
 
   void measure(); 
-  void SetPeriod();
   void SetWidth();
   void SetWidth(Float_t w);
   void SetThreshold();

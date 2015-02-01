@@ -20,6 +20,8 @@
 
 #define log_err(M, ...) fprintf(stderr, "[ERROR] (%s:%d: errno: %s) " M "\n", __FILE__, __LINE__, clean_errno(), ##__VA_ARGS__)
 
+//#define log_err2(M, ...) fprintf(stderr, "[ERROR] (%s:%d) " M "\n", __PRETTY_FUNCTION__, ##__VA_ARGS__)
+
 #define log_warn(M, ...) fprintf(stderr, "[WARN] (%s:%d: errno: %s) " M "\n", __FILE__, __LINE__, clean_errno(), ##__VA_ARGS__)
 
 #define log_info(M, ...) fprintf(stderr, "\e[1;34m[INFO] (%s:%d)\e[0m " M "\n", __FILE__, __LINE__, ##__VA_ARGS__)
