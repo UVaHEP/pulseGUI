@@ -42,6 +42,7 @@ void PSbuffer::Print(){
 
 
 void PSbuffer::Analyze(){
+  // consider replacing w/ ROOT FFT
   dcOffset=calcDCoffset(waveBuffer);
   double min=waveBuffer->GetBinContent(waveBuffer->GetMinimumBin());  // min/max voltage
   double max=waveBuffer->GetBinContent(waveBuffer->GetMaximumBin());
