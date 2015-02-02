@@ -19,6 +19,7 @@ VMIN=10  # minimum voltage to read
 if __name__ == '__main__': 
     if len(sys.argv)<2: 
         print "No file names given"
+        print "Usage ivOverlay.py IVfiles [-t title] [-l labels] [-d search dir]"
         sys.exit()
 
     parser = argparse.ArgumentParser(description='I-V Overlay Plotter') 
@@ -31,6 +32,10 @@ if __name__ == '__main__':
                         help="Labels for graph")
     parser.add_argument('-d','--dir', type=str, nargs='?', default=None,
                         help="Set search directory for I-V data files")
+    parser.add_argument('-o','--output', type=str, nargs='?', default=None,
+                        help="Output file for image")
+    parser.add_argument("-b", "--batch", help="run in batch mode",
+                    action="store_true")
     args = parser.parse_args()
 
     # import ROOT here to
@@ -94,7 +99,8 @@ if __name__ == '__main__':
 
 
     canvas.Update()
-
+    if args.output: canvas.Print(args.output)
+    if args.batch: exit()
     print 'Hit return to exit'
     sys.stdout.flush()
     raw_input('')

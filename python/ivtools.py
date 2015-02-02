@@ -1,4 +1,4 @@
-import os, re, sys
+import numpy, os, re, sys
 from array import array
 from ROOT import TGraph
 
@@ -108,6 +108,9 @@ def getField(sname, tgt):
 # use isinstance(val,bool) to check for error
 	return False
 	
+def CalcCelcius(resistance):
+    T,R=numpy.genfromtxt(os.getenv("PULSGUIDIR")+"/dat/KT103J2.dat.bz2",unpack=True)
+    return numpy.interp(resistance,R,T)
 
-
+    
     

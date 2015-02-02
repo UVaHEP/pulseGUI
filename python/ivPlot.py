@@ -40,9 +40,11 @@ class Thermistor():
 # main
 #######################
 
+# TO DO: conver to argparse.ArgumentParser
 parser = optparse.OptionParser() 
+parser.add_option('-o', '--output', dest='outfn', default=None)
 parser.add_option('-p', '--png', dest='png', action="store_true")
-parser.add_option('-a', '--auto', dest='auto', action="store_true")
+parser.add_option('-b', '--batch', dest='batch', action="store_true")
 parser.add_option('-f', '--darkfn', dest='dfn', default=None)
 parser.add_option('-l', '--lightfn', dest='lfn', default=None)
 
@@ -181,14 +183,16 @@ if doLightAnalysis: printf("Peak light/dark: %4.2f\n",ratioMax[0])
 print "===================="
 
 #os.system('sleep 2')
-if not options.auto:
+if not options.batch:
     print 'Hit return to exit'
     sys.stdout.flush() 
     raw_input('')
-
+    
 if options.png:
     png=dfn.replace(".csv",".png")
     canvas.Print(png)
+elif options.outfn:
+    canvas.Print(options.outfn)
 
 # temporary
 #R=float(dfn.split(".c")[0].split("-")[4])*1000
