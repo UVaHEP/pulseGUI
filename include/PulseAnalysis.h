@@ -5,14 +5,29 @@
 
 #include "TFile.h"
 #include "TH1F.h"
+
+
+//Have to hide PSbuffer from CINT, otherwise the c++11 code causes it to blow up
+#ifndef __CINT__
 #include "PSbuffer.h"
+#else
+class PSbuffer;
+#endif 
 
 class PulseAnalysis {
 
  private: 
-  static const Int_t MAXPEAKS = 100000;  // max peaks considered in spectrum
-  static const double NSIGMA = 3.5;      // #_pSigma > noise for peak search threshold
-  static const double DEFAULT_ZOOM=1e4;  // default (minimum) zoom [ns]
+  //c++11 uses constexpr for calculated values in classes rather than const static, CINT doesn't support constexpr so this is a quick
+  //hack to work around the incompatibility 
+  #ifdef __CINT__
+  const static  Int_t MAXPEAKS = 100000;  // max peaks considered in spectrum
+  const  static double NSIGMA = 3.5;      // #_pSigma > noise for peak search threshold
+  const static  double DEFAULT_ZOOM=1e4;  // default (minimum) zoom [ns]
+  #else 
+  constexpr static  Int_t MAXPEAKS = 100000;  // max peaks considered in spectrum
+  constexpr  static double NSIGMA = 3.5;      // #_pSigma > noise for peak search threshold
+  constexpr static  double DEFAULT_ZOOM=1e4;  // default (minimum) zoom [ns]
+  #endif
 
   TFile *_tf;       // pointer to current data file
   TString _currentTFile;  // name of current TFile
@@ -69,6 +84,9 @@ public:
   void ScanPeaksFast(int nsteps, double *thresholds, double *count) const;
   int CountPeaksFast(double threshold=0) const;
   void FindPeaksandReduce(Float_t window); 
+
+
+  // February 03, 2015 To Do: Remove the drawing functionality, most of this needs to get moved to the gui 
 
   void SmoothHistogram(); 
   void SubBkg(); // tbd

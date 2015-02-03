@@ -496,7 +496,7 @@ PSbuffer* PicoReader::ReadMatFile2(TString& filename){
   std::cout << "Reading: Voltage Channel" << std::endl; 
   block.Print();
   ps->InitWaveform(block.nValues);
-  TH1F *wave=ps->GetWaveform();
+  TH1F *wave=ps->R_GetWaveform();
 
   Float_t channelData = 0.0; 
   Float_t dV=1e12;  

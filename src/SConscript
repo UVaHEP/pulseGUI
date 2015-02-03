@@ -1,0 +1,29 @@
+include = Dir('#/include')
+env = Environment(CCFLAGS='-std=c++11', CPPPATH=[include, '#'])
+env.ParseConfig("root-config --cflags --glibs")
+
+print env['CPPPATH']	
+
+
+## Generate Root Dictionary File 
+cintBuilder = Builder(action = 'rootcint -f $TARGET -c $SOURCES')
+env.Append(BUILDERS= {'cint': cintBuilder})
+
+pGDict = env.cint('PulseGUIDict.cxx', ['#/include/PulseGUI.h'])
+pADict = env.cint('PulseAnalysisDict.cxx', ['#/include/PulseAnalysis.h', '#/include/PulseAnalysisLinkDef.h'])
+PSbuffer = env.cint('PSbuffer.cxx', ['#/include/PSbuffer.h'])
+Clean(pGDict, 'PulseGUIDict.h')
+Clean(pADict, 'PulseAnalysisDict.h')
+Clean(PSbuffer, 'PSbufferDict.h')
+
+paDictObj = env.SharedLibrary(pADict)
+pgDictObj = env.SharedLibrary(pGDict)
+PSbufferDictObj = env.SharedLibrary(PSbuffer)
+
+
+pR = env.SharedLibrary('picoReader', ['PicoReader.cc'])
+pA = env.SharedLibrary('PulseAnalysis', ['PulseAnalysis.cc', 'PulseAnalysis.analysis.cc', 'PulseAnalysis.display.cc', paDictObj, pR, PSbufferDictObj])
+env.Install('#/exe', [pA, paDictObj])
+pG = env.SharedLibrary('PulseGUI', ['PulseGUI.cc', 'PulseGUI.actions.cc', 'PulseGUI.gui.cc', pgDictObj, pA, pR, PSbufferDictObj])
+env.Install('#/exe', [pG, pgDictObj])
+env.Install('#/exe', [PSbufferDictObj])

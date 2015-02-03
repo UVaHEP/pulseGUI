@@ -1,6 +1,8 @@
 #ifndef PULSEGUI_H
 #define PULSEGUI_H
 
+
+
 #include "PulseAnalysis.h"
 
 #include "RQ_OBJECT.h"
