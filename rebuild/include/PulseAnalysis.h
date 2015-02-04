@@ -30,10 +30,6 @@ class PulseAnalysis {
   constexpr static  double DEFAULT_ZOOM=1e4;  // default (minimum) zoom [ns]
   #endif
 
-  //  TFile *_tf;       // pointer to current data file
-  //  TString _currentTFile;  // name of current TFile
-  shared_ptr<TH1F> _hspect;    // Histogram with pulse data spectrum
-  shared_ptr<TH1F> _hfreq;     // pulse data frequency 
 
   PSbuffer *psbuffer; // pico scope data buffer
   
@@ -42,7 +38,6 @@ class PulseAnalysis {
   shared_ptr<TH1F>  _hph;   // spectrum of peak heights
   shared_ptr<TH1F>  _hpi;   // spectrum of peak integrals
   shared_ptr<TH1F>  _hprms; // RMS width of pulses
-  shared_ptr<TH1>   _hb;    // pointer to baseline histogram (not implemented)
 
   // Parameters for the current spectrum
   Double_t _pMax; 
@@ -71,13 +66,9 @@ public:
   PulseAnalysis(PSbuffer *buffer);
   virtual ~PulseAnalysis(); 
 
-  //  void ConvertFile(TString Filename); 
   void Clear();        // clear internal analysis data
   void AnaClean();     // clear peak analysis histograms
   void Reset();        // reset analysis for current spectrum
-  //  void LoadSpectrum(TString Filename);
-  //  void LoadSpectrum();
-  //  void LoadBuffer(TString Filename);
 
   // Analysis tools
   void Analyze();
@@ -112,15 +103,13 @@ public:
   Double_t GetThreshold() { return _pThreshold;}
  
 
-  shared_ptr<TH1F> Hfreq() {return _hfreq;}
-  shared_ptr<TH1F> Hspect() {return _hspect;}
+
   shared_ptr<TH1F> Hdt() {return _hdt;}
   shared_ptr<TH1F> Hph() {return _hph;}
   shared_ptr<TH1F> Hpi() {return _hpi;}
   shared_ptr<TH1F> Hprms() {return _hprms;}
 
-  TH1F* R_Hfreq() {return _hfreq.get();}
-  TH1F* R_Hspect() {return _hspect.get();}
+
   TH1F* R_Hdt() {return _hdt.get();}
   TH1F* R_Hph() {return _hph.get();}
   TH1F* R_Hpi() {return _hpi.get();}

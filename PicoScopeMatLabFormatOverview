@@ -1,0 +1,54 @@
+From Picotech's Documentation: 
+
+
+The variables described above (under Importing into Matlab) are stored in a series of
+data blocks, each preceded by a header. Each variable has its own header and data
+block and the corresponding variable names are stored with them (such as A, B,
+Tstart). The following sections describe how to read each variable from the file.
+The order of the data blocks is not specified, so programs should look at the variable
+names to decide which variable is currently being loaded.
+
+The header
+
+The file consists of a number of data blocks preceded by 20-byte headers. Each header
+contains five 32-bit integers (as described in the table below).
+
+Bytes           Value
+0 – 3		Data format (0, 10 or 20)
+4 – 7		Number of values
+8 – 11		1
+12 – 15		0
+16 – 19		Name length
+
+Data format
+The ‘Data format’ in the first 4-bytes describes the type of numerical data in the array.
+Value	  	Description
+0		Double (64-bit floating point)
+10		Single (32-bit floating point)
+20		Integer (32-bit)
+
+Number of values
+The ‘Number of values’ is a 32-bit integer describing the number of numerical values
+in the array. This value may be 1 for variables that only describe one value; but for
+arrays of samples or times, expect this to be a large number.
+
+
+Name length
+The ‘Name length’ is the length of the name of the variable as a null-terminated 1-
+byte per character ASCII string. The last null terminating character (‘\0’) is included in
+the ‘Name length’ so if the variable name is “TStart” (same as ‘TStart\0’) then the
+name length will be 7.
+
+The data block
+The data block begins with the name of the variable (such as A, Tinterval) and you
+should read in the number of bytes described by the ‘Name length’ part of the header
+(not forgetting that the last byte in the string is ‘\0’ if your programming language
+needs to take account of this).
+
+The remaining part of the data block is the actual data itself, so read in the number of
+values described in the ‘Number of values’ part of the header. Remember to take
+account of the size of each value as described in the ‘Data format’ part of the header.
+Channel data such as voltages, in variables such as A and B, are stored as 32-bit
+single-precision floating-point data types. Times such as Tstart, Tinterval and T are
+stored as 64-bit double-precision floating-point data types. Length is stored as a 32-
+bit integer.

@@ -19,7 +19,7 @@ paDictObj = env.SharedLibrary(pADict)
 PSbufferDictObj = env.SharedLibrary(PSbuffer)
 
 
-pR = env.SharedLibrary('picoReader', ['PicoReader.cc'])
-pA = env.SharedLibrary('PulseAnalysis', ['PulseAnalysis.cc', 'PulseAnalysis.analysis.cc', 'PulseAnalysis.display.cc', paDictObj, pR, PSbufferDictObj])
+pR = env.SharedLibrary('picoReader', ['src/PicoReader.cc'])
+pA = env.SharedLibrary('PulseAnalysis', ['src/PulseAnalysis.cc', 'src/PulseAnalysis.analysis.cc', 'src/PulseAnalysis.display.cc', paDictObj, pR, PSbufferDictObj])
 env.Install('#/rebuild/install', [pA, paDictObj])
 env.Install('#/rebuild/install', [PSbufferDictObj])
