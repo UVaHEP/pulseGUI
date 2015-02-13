@@ -7,13 +7,7 @@
 #include "TH1F.h"
 
 
-//Have to hide PSbuffer from CINT, otherwise the c++11 code causes it to blow up
-#ifndef __CINT__
 #include "PSbuffer.h"
-#else
-class PSbuffer;
-template<class T> class shared_ptr; 
-#endif 
 
 class PulseAnalysis {
 
@@ -34,10 +28,10 @@ class PulseAnalysis {
   PSbuffer *psbuffer; // pico scope data buffer
   
   // Analysis Histograms
-  shared_ptr<TH1F>  _hdt;   // delta time between peaks
-  shared_ptr<TH1F>  _hph;   // spectrum of peak heights
-  shared_ptr<TH1F>  _hpi;   // spectrum of peak integrals
-  shared_ptr<TH1F>  _hprms; // RMS width of pulses
+  TH1F  *_hdt;   // delta time between peaks
+  TH1F  *_hph;   // spectrum of peak heights
+  TH1F  *_hpi;   // spectrum of peak integrals
+  TH1F  *_hprms; // RMS width of pulses
 
   // Parameters for the current spectrum
   Double_t _pMax; 
@@ -104,16 +98,12 @@ public:
  
 
 
-  shared_ptr<TH1F> Hdt() {return _hdt;}
-  shared_ptr<TH1F> Hph() {return _hph;}
-  shared_ptr<TH1F> Hpi() {return _hpi;}
-  shared_ptr<TH1F> Hprms() {return _hprms;}
+  TH1F* Hdt() {return _hdt;}
+  TH1F* Hph() {return _hph;}
+  TH1F* Hpi() {return _hpi;}
+  TH1F* Hprms() {return _hprms;}
 
 
-  TH1F* R_Hdt() {return _hdt.get();}
-  TH1F* R_Hph() {return _hph.get();}
-  TH1F* R_Hpi() {return _hpi.get();}
-  TH1F* R_Hprms() {return _hprms.get();}
 
   // various setters
   void SetResponse();

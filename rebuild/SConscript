@@ -1,8 +1,9 @@
 include = Dir('#/rebuild/include')
-env = Environment(CCFLAGS='-std=c++11', CPPPATH=[include, '#'])
+env = Environment(LIBS=['MathMore', 'Spectrum'], CCFLAGS='-std=c++11', CPPPATH=[include, '#'])
 env.ParseConfig("root-config --cflags --glibs")
 
-print env['CPPPATH']	
+#print env['CPPPATH']	
+#print dir(env)
 
 
 ## Generate Root Dictionary File 

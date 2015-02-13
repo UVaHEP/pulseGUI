@@ -10,7 +10,7 @@ void PulseAnalysis::DrawSpectrum() {
 void PulseAnalysis::SmoothHistogram() {
   debug();
 
-  shared_ptr<TH1F> spect = psbuffer->GetWaveform(); 
+  TH1F *spect = psbuffer->GetWaveform(); 
   std::cout << "Smoothing Histogram" << std::endl; 
   TString title=spect->GetTitle();
   if (!title.Contains("smoothed")) title+=" (smoothed)";

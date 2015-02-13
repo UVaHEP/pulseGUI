@@ -466,7 +466,7 @@ PSbuffer* PicoReader::ReadMatFile2(TString& filename){
     return NULL;
   }
   vector<psblock> blocks = ReadBlocks(fin); 
-  shared_ptr<PSbuffer> ps(new PSbuffer());
+  PSbuffer *ps = new PSbuffer();
   //  PSbuffer *ps = new PSbuffer(); 
   
   // get time data
@@ -488,7 +488,7 @@ PSbuffer* PicoReader::ReadMatFile2(TString& filename){
 
   if (!(LocateBlock(blocks, "A", block))){
     cerr << "Waveform data block not found on Channel A" << endl;
-    return ps.get();
+    return ps;
   }  
 
   // get waveform from channel A
@@ -497,7 +497,7 @@ PSbuffer* PicoReader::ReadMatFile2(TString& filename){
   std::cout << "Reading: Voltage Channel" << std::endl; 
   block.Print();
   ps->InitWaveform(block.nValues);
-  shared_ptr<TH1F> wave(ps->GetWaveform()); 
+  TH1F* wave= ps->GetWaveform(); 
   //  TH1F *wave=ps->R_GetWaveform();
 
   Float_t channelData = 0.0; 
@@ -553,7 +553,7 @@ PSbuffer* PicoReader::ReadMatFile2(TString& filename){
 
   ps->Analyze();  // calculate DC offset, frequency spectrum, noise, etc
   ps->Print();
-  return ps.get();  // picoscope data structure
+  return ps;  // picoscope data structure
 }
 
 

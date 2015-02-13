@@ -41,12 +41,12 @@ void PulseAnalysis::Analyze(){
   AnaClean();
 
   // Analysis of peak data
-  _hdt = shared_ptr<TH1F>(new TH1F("hdt","Delta Time;Peak-to-peak time [ns];Entries",
-				   201,-_dT/2,3/_pulseRate*1000+_dT/2)); 
+  _hdt = new TH1F("hdt","Delta Time;Peak-to-peak time [ns];Entries",
+				   201,-_dT/2,3/_pulseRate*1000+_dT/2); 
   // Pulse heights
-  _hph = shared_ptr<TH1F>(new TH1F("hph","Pulse Height;[mV];Entries",100,0,_pMax*1.1)); 
+  _hph = new TH1F("hph","Pulse Height;[mV];Entries",100,0,_pMax*1.1); 
   // Pulse RMS width
-  _hprms =  shared_ptr<TH1F>(new TH1F("hprms","Pulse RMW Width;[ns];Entries",100,0,_pWidth*2));
+  _hprms =  new TH1F("hprms","Pulse RMW Width;[ns];Entries",100,0,_pWidth*2);
   //  debug("Pointer Values for histograms, _hdt:%p, _hph:%p, _hprms:%p", _hdt, _hph, _hprms); 
   Double_t maxInt=-1e-30;
 
@@ -111,7 +111,7 @@ void PulseAnalysis::Analyze(){
 
   // Pulse integrals
   //  hpi=new TH1F("hpi","Pulse Integral;[mV][ns];Entries",200,0,maxInt*1.05);
-  _hpi = shared_ptr<TH1F>(new TH1F("hpi","Pulse Integral;[Vns];Entries",100,0,maxInt*1.1));  // need to fix upper limit
+  _hpi = new TH1F("hpi","Pulse Integral;[Vns];Entries",100,0,maxInt*1.1);  // need to fix upper limit
   for(int i=0;i<_pNFound;i++) { 
     _hpi->Fill(_pInteg[i]); 
     _hprms->Fill(_pRMS[i]); 
@@ -194,9 +194,9 @@ TString PulseAnalysis::FindPeaks(bool nodraw){
   //  float _pThreshold=_pThreshold/maxpeak;  // fix me?
   //  cout<<"thresholds: "<<threshold<<" "<<threshold<<endl;
   if (nodraw)
-    _pNFound = s->Search(psbuffer->R_GetSpectrum(), _pSigma, "nobackground,nomarkov,nodraw",thresFrac);
+    _pNFound = s->Search(psbuffer->GetSpectrum(), _pSigma, "nobackground,nomarkov,nodraw",thresFrac);
   else
-    _pNFound = s->Search(psbuffer->R_GetSpectrum(),_pSigma,"nobackground,nomarkov",thresFrac);
+    _pNFound = s->Search(psbuffer->GetSpectrum(),_pSigma,"nobackground,nomarkov",thresFrac);
 
   // http://root.cern.ch/root/htmldoc/TSpectrum.html#TSpectrum:Background
   // TH1 *hb = s->Background(_hspect,100,"same,kBackOrder8,kBackSmoothing15");
