@@ -1,13 +1,8 @@
-Building pulseGUI
-=================
-Use the Makefile
-$ make
-This will create shared libraries in ROOT and exit
+Use scons to build 
 
-Running pulseGUI
-================
-$ root -l pulseGUI.C
-This will load the shared libraries and start up the pulseGUI interface
+You'll have to manually load the analysis library, and pulseGUI doesn't work in this version. 
+
+
 
 Python tools
 ============
@@ -37,7 +32,7 @@ check it in:
 
 
 ==== VERSIONS ====
-
+v07: TA in the middle of changing from one internal data format to another
 v00-06: BH initial revisions in
 To do	- move code/so's to src directory to cleanup top dir
    	- consider breaking up pulseGUI.cxx into separate files for GUI and analysis tools
