@@ -7,12 +7,7 @@
 #include "TH1F.h"
 
 
-//Have to hide PSbuffer from CINT, otherwise the c++11 code causes it to blow up
-#ifndef __CINT__
 #include "PSbuffer.h"
-#else
-class PSbuffer;
-#endif 
 
 class PulseAnalysis {
 
@@ -29,10 +24,6 @@ class PulseAnalysis {
   constexpr static  double DEFAULT_ZOOM=1e4;  // default (minimum) zoom [ns]
   #endif
 
-  TFile *_tf;       // pointer to current data file
-  TString _currentTFile;  // name of current TFile
-  TH1F *_hspect;    // Histogram with pulse data spectrum
-  TH1F *_hfreq;     // pulse data frequency 
 
   PSbuffer *psbuffer; // pico scope data buffer
   
@@ -41,7 +32,6 @@ class PulseAnalysis {
   TH1F  *_hph;   // spectrum of peak heights
   TH1F  *_hpi;   // spectrum of peak integrals
   TH1F  *_hprms; // RMS width of pulses
-  TH1   *_hb;    // pointer to baseline histogram (not implemented)
 
   // Parameters for the current spectrum
   Double_t _pMax; 
@@ -66,17 +56,13 @@ class PulseAnalysis {
 
 public:
 
-  PulseAnalysis(TString fName=""); 
+  //  PulseAnalysis(TString fName=""); 
   PulseAnalysis(PSbuffer *buffer);
   virtual ~PulseAnalysis(); 
 
-  void ConvertFile(TString Filename); 
   void Clear();        // clear internal analysis data
   void AnaClean();     // clear peak analysis histograms
   void Reset();        // reset analysis for current spectrum
-  void LoadSpectrum(TString Filename);
-  void LoadSpectrum();
-  void LoadBuffer(TString Filename);
 
   // Analysis tools
   void Analyze();
@@ -107,16 +93,17 @@ public:
   void GetBkg(); // tbd
   Double_t GetPulseRate() { return _pulseRate; }
   Double_t GetPulseWidth() { return _pWidth; }
-  TString GetSpectName() { if (_tf) return _tf->GetName(); else return "none";}
+  //  TString GetSpectName() { if (_tf) return _tf->GetName(); else return "none";}
   Double_t GetThreshold() { return _pThreshold;}
  
 
-  TH1F* Hfreq() {return _hfreq;}
-  TH1F* Hspect() {return _hspect;}
+
   TH1F* Hdt() {return _hdt;}
   TH1F* Hph() {return _hph;}
   TH1F* Hpi() {return _hpi;}
   TH1F* Hprms() {return _hprms;}
+
+
 
   // various setters
   void SetResponse();

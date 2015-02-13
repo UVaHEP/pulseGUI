@@ -18,13 +18,18 @@ using std::vector;
 
 
 
+
+
+
+
+
 void PulseAnalysis::Analyze(){ 
   debug("");
   if (!_pNFound){
     std::cout << "Find peaks first." << std::endl;return;
   }
 
-  TList *functions = _hspect->GetListOfFunctions();
+  TList *functions = psbuffer->GetSpectrum()->GetListOfFunctions();
   TPolyMarker *pm = (TPolyMarker*)functions->FindObject("TPolyMarker");
   Double_t *pmarrayX;
   Double_t *pmarrayY;
@@ -37,12 +42,12 @@ void PulseAnalysis::Analyze(){
 
   // Analysis of peak data
   _hdt = new TH1F("hdt","Delta Time;Peak-to-peak time [ns];Entries",
-		 201,-_dT/2,3/_pulseRate*1000+_dT/2);
+				   201,-_dT/2,3/_pulseRate*1000+_dT/2); 
   // Pulse heights
-  _hph = new TH1F("hph","Pulse Height;[mV];Entries",100,0,_pMax*1.1);
+  _hph = new TH1F("hph","Pulse Height;[mV];Entries",100,0,_pMax*1.1); 
   // Pulse RMS width
   _hprms =  new TH1F("hprms","Pulse RMW Width;[ns];Entries",100,0,_pWidth*2);
-  debug("Pointer Values for histograms, _hdt:%p, _hph:%p, _hprms:%p", _hdt, _hph, _hprms); 
+  //  debug("Pointer Values for histograms, _hdt:%p, _hph:%p, _hprms:%p", _hdt, _hph, _hprms); 
   Double_t maxInt=-1e-30;
 
   int count0=0, count1=0, count2=0, count3=0;
@@ -59,15 +64,15 @@ void PulseAnalysis::Analyze(){
     // integrate the peaks, using a simple sum of bins 0.5 sigma above baseline noise
     double cut=_basePar[0]+_basePar[1]/2;
     // locate bin corresponding to peak finder's result
-    int pBin=_hspect->FindBin(pmarrayX[index[i]]);
+    int pBin=psbuffer->GetSpectrum()->FindBin(pmarrayX[index[i]]);
     _pInteg[i]=0;
     _pRMS[i]=0;
     sumv=0; sumt=0; sum2t=0;
     int ib=pBin;
     while (ib>0){                     // left side
-      if (_hspect->GetBinContent(ib)>cut){
-	double v=_hspect->GetBinContent(ib);
-	double t=_hspect->GetBinCenter(ib); 
+      if (psbuffer->GetSpectrum()->GetBinContent(ib)>cut){
+	double v=psbuffer->GetSpectrum()->GetBinContent(ib);
+	double t=psbuffer->GetSpectrum()->GetBinCenter(ib); 
 	sumv+=v;
 	sumt+=t*v;
 	sum2t+=t*t*v;
@@ -76,10 +81,10 @@ void PulseAnalysis::Analyze(){
       else break;
     }
     ib=pBin+1;
-    while (ib<=_hspect->GetNbinsX()){  // right side
-      if (_hspect->GetBinContent(ib)>cut){
-	double v=_hspect->GetBinContent(ib);
-	double t=_hspect->GetBinCenter(ib);
+    while (ib<=psbuffer->GetSpectrum()->GetNbinsX()){  // right side
+      if (psbuffer->GetSpectrum()->GetBinContent(ib)>cut){
+	double v=psbuffer->GetSpectrum()->GetBinContent(ib);
+	double t=psbuffer->GetSpectrum()->GetBinCenter(ib);
 	sumv+=v;
 	sumt+=t*v;
 	sum2t+=t*t*v;	
@@ -106,7 +111,7 @@ void PulseAnalysis::Analyze(){
 
   // Pulse integrals
   //  hpi=new TH1F("hpi","Pulse Integral;[mV][ns];Entries",200,0,maxInt*1.05);
-  _hpi=new TH1F("hpi","Pulse Integral;[Vns];Entries",100,0,maxInt*1.1);  // need to fix upper limit
+  _hpi = new TH1F("hpi","Pulse Integral;[Vns];Entries",100,0,maxInt*1.1);  // need to fix upper limit
   for(int i=0;i<_pNFound;i++) { 
     _hpi->Fill(_pInteg[i]); 
     _hprms->Fill(_pRMS[i]); 
@@ -128,14 +133,14 @@ int  PulseAnalysis::CountPeaksFast(double threshold) const{
   // scan for peaks > threshold
   int window=(int)(_pSigma*2);
   int nb=1;  // bin number
-  int nbins=_hspect->GetNbinsX();
+  int nbins=psbuffer->GetSpectrum()->GetNbinsX();
   int lastWin=(nbins-window)+1;
   int count=0;
   while ( nb <= lastWin ){
       bool onPeak=true;
       for (int nw=0;nw<window;nw++){  // sliding search window for peak
 	nb++;
-	if (_hspect->GetBinContent(nb)<threshold){
+	if (psbuffer->GetSpectrum()->GetBinContent(nb)<threshold){
 	  onPeak=false;
 	  break;
 	}
@@ -150,7 +155,7 @@ int  PulseAnalysis::CountPeaksFast(double threshold) const{
 void PulseAnalysis::ScanPeaksFast(int nsteps, 
 				   double *thresholds, double *count) const{
   double threshold0=_pThreshold/2;
-  double step=(_hspect->GetMaximum()*0.666-threshold0)/nsteps;
+  double step=(psbuffer->GetSpectrum()->GetMaximum()*0.666-threshold0)/nsteps;
   for (int ns=0; ns<=nsteps; ns++){
     thresholds[ns]=threshold0+ns*step;
     cout << "Scanning thresold "<< thresholds[ns] << endl;
@@ -166,15 +171,15 @@ TString PulseAnalysis::FindPeaks(bool nodraw){
   // Search the data for amplitudes above a given threshold, diplay the peaks,
   // and display the pulse rate.
 
-  if (!_hspect){
+  /*  if (!_hspect){
     log_info("Load specturm first");
     return TString("");
-  }
+    }*/
 
   debug("search parameters: threshold = %f , sigma(bins) = %f",
 	_pThreshold, _pSigma);
 
-  Double_t maxpeak=_hspect->GetBinContent(_hspect->GetMaximumBin());
+  Double_t maxpeak=psbuffer->GetSpectrum()->GetBinContent(psbuffer->GetSpectrum()->GetMaximumBin());
   //  float minpeak=State::_hspect->GetBinContent(State::_hspect->GetMinimumBin());
   Double_t thresFrac;
   if (_pThreshold<0){ // not initialized by user
@@ -189,9 +194,9 @@ TString PulseAnalysis::FindPeaks(bool nodraw){
   //  float _pThreshold=_pThreshold/maxpeak;  // fix me?
   //  cout<<"thresholds: "<<threshold<<" "<<threshold<<endl;
   if (nodraw)
-    _pNFound = s->Search(_hspect, _pSigma, "nobackground,nomarkov,nodraw",thresFrac);
+    _pNFound = s->Search(psbuffer->GetSpectrum(), _pSigma, "nobackground,nomarkov,nodraw",thresFrac);
   else
-    _pNFound = s->Search(_hspect,_pSigma,"nobackground,nomarkov",thresFrac);
+    _pNFound = s->Search(psbuffer->GetSpectrum(),_pSigma,"nobackground,nomarkov",thresFrac);
 
   // http://root.cern.ch/root/htmldoc/TSpectrum.html#TSpectrum:Background
   // TH1 *hb = s->Background(_hspect,100,"same,kBackOrder8,kBackSmoothing15");
@@ -219,7 +224,7 @@ TString PulseAnalysis::FindPeaks(bool nodraw){
 void PulseAnalysis::FindPeaksandReduce(Float_t window) { 
 // Find Peaks and then eliminate non-peak regions by converting to a zero bin 
   FindPeaks(true); 
-  TList *functions = _hspect->GetListOfFunctions(); 
+  TList *functions = psbuffer->GetSpectrum()->GetListOfFunctions(); 
   TPolyMarker *pm = (TPolyMarker*)functions->FindObject("TPolyMarker"); 
   Double_t *pmarrayX = pm->GetX(); 
 
@@ -241,7 +246,7 @@ void PulseAnalysis::FindPeaksandReduce(Float_t window) {
     
     if (!inWindow) { 
       //  start = current - halfWindow;
-      s = _hspect->GetBin(current-halfWindow); 
+      s = psbuffer->GetSpectrum()->GetBin(current-halfWindow); 
     }
 
     //c = _hspect->GetBin(current); 
@@ -261,7 +266,7 @@ void PulseAnalysis::FindPeaksandReduce(Float_t window) {
     else {
       std::vector<UInt_t> startEndPair; 
       startEndPair.push_back(s); 
-      startEndPair.push_back(_hspect->GetBin(current+halfWindow)); 
+      startEndPair.push_back(psbuffer->GetSpectrum()->GetBin(current+halfWindow)); 
       inWindow = false; 
       startEndPairs.push_back(startEndPair); 
 
@@ -284,7 +289,7 @@ void PulseAnalysis::FindPeaksandReduce(Float_t window) {
     std::cout << "Setting Bins:" << start << ":" << end << std::endl; 
     UInt_t i = start; 
     do { 
-      reduced->SetBinContent(i,   _hspect->GetBinContent(i)); 
+      reduced->SetBinContent(i,   psbuffer->GetSpectrum()->GetBinContent(i)); 
       i++; 
     }
     while (i < end); 

@@ -224,13 +224,14 @@ Double_t getPSDouble(psblock block, fstream &fin){
 
 bool PicoReader::LocateBlock(vector<psblock> &blocks, 
 			     TString name, psblock &block) {
-  for (std::vector<psblock>::iterator it = blocks.begin(); it < blocks.end(); ++it){
-    if (it->name==name) {
-      block=*it;
-      return true;
+  for (auto &b : blocks) { 
+    if (b.name == name) { 
+      block = b; 
+      return true; 
     }
   }
-  return false;
+  return false; 
+
 }
 
 
@@ -465,8 +466,8 @@ PSbuffer* PicoReader::ReadMatFile2(TString& filename){
     return NULL;
   }
   vector<psblock> blocks = ReadBlocks(fin); 
-
-  PSbuffer *ps = new PSbuffer(); 
+  PSbuffer *ps = new PSbuffer();
+  //  PSbuffer *ps = new PSbuffer(); 
   
   // get time data
   psblock block;
@@ -496,7 +497,8 @@ PSbuffer* PicoReader::ReadMatFile2(TString& filename){
   std::cout << "Reading: Voltage Channel" << std::endl; 
   block.Print();
   ps->InitWaveform(block.nValues);
-  TH1F *wave=ps->R_GetWaveform();
+  TH1F* wave= ps->GetWaveform(); 
+  //  TH1F *wave=ps->R_GetWaveform();
 
   Float_t channelData = 0.0; 
   Float_t dV=1e12;  
