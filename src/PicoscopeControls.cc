@@ -1,6 +1,7 @@
 #include "PicoscopeControls.h"
 
 #include <iostream> 
+#include <vector> 
 
 static const unsigned int win_x = 800; 
 static const unsigned int win_y = 600; 
@@ -8,7 +9,37 @@ static const unsigned int win_y = 600;
 static const unsigned int voltage_y = 100; 
 
 
-
+static std::vector<TString> timeDivs = { 
+  TString("1 ns"),
+  TString("2 ns"),
+  TString("5 ns"),
+  TString("10 ns"),
+  TString("20 ns"),
+  TString("50 ns"),
+  TString("100 ns"),
+  TString("200 ns"),
+  TString("500 ns"),
+  TString("1 us"),
+  TString("2 us"),
+  TString("5 us"),
+  TString("10 us"),
+  TString("20 us"),
+  TString("50 us"),
+  TString("100 us"),
+  TString("200 us"),
+  TString("500 us"),
+  TString("1 ms"),
+  TString("2 ms"),
+  TString("5 ms"),
+  TString("10 ms"),
+  TString("20 ms"),
+  TString("50 ms"),
+  TString("100 ms"),
+  TString("200 ms"),
+  TString("500 ms"),
+}; 
+  
+  
 
 PicoscopeControls::PicoscopeControls() { 
 
@@ -25,7 +56,7 @@ PicoscopeControls::PicoscopeControls() {
   //  _otherApp = new TGMainFrame(NULL, 500, 500, kVerticalFrame); 
   //  _otherApp->MapWindow(); 
 
-  _mf = new TGMainFrame(NULL,win_x,win_y, kVerticalFrame);
+  _mf = new TGMainFrame(NULL,win_x,win_y, kHorizontalFrame);
   _mf->SetWindowName("PicoScope Controls"); 
   
 
@@ -70,9 +101,10 @@ PicoscopeControls::PicoscopeControls() {
 
   _comboF = new TGGroupFrame(_mf, "Combo Test", kHorizontalFrame);
   _comboB = new TGComboBox(_comboF, 100); 
-  for (auto i = 1; i < 6; i++) { 
 
-    _comboB->AddEntry(TString::Format("Entry:%d", i), i); 
+  for (auto i = 0; i < timeDivs.size(); i++) { 
+
+    _comboB->AddEntry(timeDivs[i], i); 
 
   }
   _comboB->Resize(150, 20); 
