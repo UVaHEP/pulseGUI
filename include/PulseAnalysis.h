@@ -55,7 +55,7 @@ class PulseAnalysis {
   Double_t _pRMS[MAXPEAKS];    // RMS width of pulses
 
 public:
-
+  PulseAnalysis(); 
   //  PulseAnalysis(TString fName=""); 
   PulseAnalysis(PSbuffer *buffer);
   virtual ~PulseAnalysis(); 

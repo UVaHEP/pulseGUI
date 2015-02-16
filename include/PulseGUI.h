@@ -16,7 +16,7 @@
 #include "TPaveText.h"
 #include "TRootEmbeddedCanvas.h"
 #include "TString.h"
-
+#include "PicoScopeControls.h"
 
 class PulseGUI : public TQObject { 
   RQ_OBJECT("PulseGUI"); 

@@ -10,17 +10,22 @@ cintBuilder = Builder(action = 'rootcint -f $TARGET -c $SOURCES')
 env.Append(BUILDERS= {'cint': cintBuilder})
 
 #pGDict = env.cint('PulseGUIDict.cxx', ['#/include/PulseGUI.h'])
+PSControlsDict = env.cint('PicoscopeControlsDict.cxx', ['#/include/PicoscopeControls.h'])
+Clean(PSControlsDict, 'PicoscopeControlsDict.h')
+
 pADict = env.cint('PulseAnalysisDict.cxx', ['#/include/PulseAnalysis.h', '#/include/PulseAnalysisLinkDef.h'])
 PSbuffer = env.cint('PSbuffer.cxx', ['#/include/PSbuffer.h'])
 #Clean(pGDict, 'PulseGUIDict.h')
 Clean(pADict, 'PulseAnalysisDict.h')
 Clean(PSbuffer, 'PSbufferDict.h')
 
+psControlsDictObj = env.SharedLibrary(PSControlsDict)
 paDictObj = env.SharedLibrary(pADict)
 #pgDictObj = env.SharedLibrary(pGDict)
 PSbufferDictObj = env.SharedLibrary(PSbuffer)
 
 
+psControls = env.SharedLibrary('PicoscopeControls', ['PicoscopeControls.cc', psControlsDictObj])
 pR = env.SharedLibrary('picoReader', ['PicoReader.cc'])
 pA = env.SharedLibrary('PulseAnalysis', ['PulseAnalysis.cc', 'PulseAnalysis.analysis.cc', 'PulseAnalysis.display.cc', paDictObj, pR, PSbufferDictObj])
 env.Install('#/exe', [pA, paDictObj])
