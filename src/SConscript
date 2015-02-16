@@ -1,5 +1,7 @@
 include = Dir('#/include')
-env = Environment(LIBS=['MathMore', 'Spectrum'], CCFLAGS='-std=c++11', CPPPATH=[include, '#'])
+picoscopeInclude = Dir('/opt/picoscope/include')
+picoscopeDriverInclude = Dir('#/picoscopeDriver')
+env = Environment(LIBS=['MathMore', 'Spectrum'], CCFLAGS='-std=c++11', CPPPATH=[include, picoscopeDriverInclude, picoscopeInclude, '#'])
 env.ParseConfig("root-config --cflags --glibs")
 
 print env['CPPPATH']	

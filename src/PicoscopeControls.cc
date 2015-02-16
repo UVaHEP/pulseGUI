@@ -2,11 +2,63 @@
 
 #include <iostream> 
 #include <vector> 
+#include <utility> 
+
 
 static const unsigned int win_x = 800; 
 static const unsigned int win_y = 600; 
 
 static const unsigned int voltage_y = 100; 
+
+
+static std::vector<std::pair<TString, Int_t> > couplingTypesTest = { 
+  std::pair<TString, Int_t>("DC_50R", 50),
+  std::pair<TString, Int_t>("DC_1Meg", 1e6),
+  std::pair<TString, Int_t>("AC", 0)
+}; 
+  
+
+static std::vector<TString> couplingTypes = { 
+  TString("DC_50R"),
+  TString("DC_1Meg"),
+  TString("AC")
+}; 
+ 
+
+
+
+
+static std::vector<std::pair<TString, PS6000_RANGE> > voltages = { 
+  std::pair<TString, PS6000_RANGE>("+/-10mV", PS6000_10MV),
+  std::pair<TString, PS6000_RANGE>("+/-20mV", PS6000_20MV),
+  std::pair<TString, PS6000_RANGE>("+/-50mV", PS6000_50MV), 
+  std::pair<TString, PS6000_RANGE>("+/-100mV", PS6000_100MV),
+  std::pair<TString, PS6000_RANGE>("+/-200mV", PS6000_200MV), 
+  std::pair<TString, PS6000_RANGE>("+/-500mV", PS6000_500MV), 
+  std::pair<TString, PS6000_RANGE>("+/-1V", PS6000_1V),
+  std::pair<TString, PS6000_RANGE>("+/-2V", PS6000_2V), 
+  std::pair<TString, PS6000_RANGE>("+/-5V", PS6000_5V), 
+  std::pair<TString, PS6000_RANGE>("+/-10V", PS6000_10V),
+  std::pair<TString, PS6000_RANGE>("+/-20V", PS6000_20V), 
+  std::pair<TString, PS6000_RANGE>("+/-50V", PS6000_50V)
+
+};
+
+
+/*static std::vector<TString> voltages = { 
+TString("+/-10mV"), 
+TString("+/-20mV"), 
+TString("+/-50mV"), 
+TString("+/-100mV"), 
+TString("+/-200mV"), 
+TString("+/-500mV"), 
+TString("+/-1V"), 
+TString("+/-2V"), 
+TString("+/-5V"), 
+TString("+/-10V"), 
+TString("+/-20V"), 
+TString("+/-50V")
+};*/ 
 
 
 static std::vector<TString> timeDivs = { 
@@ -50,67 +102,55 @@ PicoscopeControls::PicoscopeControls() {
 					     5, 5, 5, 5); 
 
   TGDimension itemSize; 
-  //  gStyle->SetOptStat(kFALSE); 
   std::cout << "Initialising Window" << std::endl; 
   
-  //  _otherApp = new TGMainFrame(NULL, 500, 500, kVerticalFrame); 
-  //  _otherApp->MapWindow(); 
-
   _mf = new TGMainFrame(NULL,win_x,win_y, kHorizontalFrame);
   _mf->SetWindowName("PicoScope Controls"); 
   
 
-  // Lisp Generated
   // Voltage Frame 
-  setupVoltageEntries(); 
-  _voltageF = new TGGroupFrame(_mf, "Voltages", kVerticalFrame);
-  _voltageL = new TGListBox(_voltageF);
-  _voltageC = new TGLBContainer(_voltageL);
+  _voltageF = new TGGroupFrame(_mf, "Voltages", kHorizontalFrame); 
+  _voltageB = new TGComboBox(_voltageF, 100); 
   
-  itemSize = _voltages[0]->GetDefaultSize(); 
-
-  for (auto i : _voltages) { 
-    _voltageL->AddEntry(i, _hintse); 
+  for (auto i = 0; i < voltages.size(); i++) { 
+    _voltageB->AddEntry(voltages[i].first, i); 
   }
 
-  _voltageL->Resize(100, 0*itemSize.fHeight); 
-  _voltageF->AddFrame(_voltageL,_hintse); 
+  _voltageB->Resize(150, 20); 
+  _voltageB->Select(1); 
+  _voltageB->Connect("Selected(Int_t)", "PicoscopeControls", this, "voltageHandler(Int_t , Int_t)"); 
+  _voltageF->AddFrame(_voltageB, _hintse); 
   _mf->AddFrame(_voltageF,_hintse);  
 
   //Coupling Frame 
 
   _couplingF = new TGGroupFrame(_mf, "Coupling", kHorizontalFrame);
-  _couplingL = new TGListBox(_couplingF);
-  _couplingC = new TGLBContainer(_couplingL);
-  DC_50R = new TGTextLBEntry(_couplingC, new TGString("DC 50 Ohms"), 0); 
+  _couplingB = new TGComboBox(_couplingF, 100);
+  _couplingB->Connect("Selected(Int_t)", "PicoscopeControls", this, "couplingHandler(Int_t , Int_t)"); 
+  for (auto i = 0; i < couplingTypesTest.size(); i++) { 
+    _couplingB->AddEntry(couplingTypesTest[i].first, i); 
+  }
+  
+  _couplingB->Resize(150, 20); 
+  _couplingB->Select(1); 
 
-  _couplingL->AddEntry(DC_50R, _hintse); 
-  DC_1M = new TGTextLBEntry(_couplingC, new TGString("DC"), 1); 
-  _couplingL->AddEntry(DC_1M, _hintse); 
-  AC = new TGTextLBEntry(_couplingC, new TGString("AC"), 2); 
-  _couplingL->AddEntry(AC, _hintse); 
-  itemSize = DC_50R->GetDefaultSize(); 
-  _couplingL->Resize(100, 6*itemSize.fHeight); 
-  _couplingF->AddFrame(_couplingL,_hintse); 
-  _couplingL->SetMultipleSelections(false); 
-  _setCoupling = new TGTextButton(_couplingF, "&Coupling"); 
-  _setCoupling->Connect("Pressed()", "PicoscopeControls", this, "updateCoupling()"); 
-  _couplingF->AddFrame(_setCoupling, _hintse); 
+  _couplingF->AddFrame(_couplingB,_hintse); 
+
   _mf->AddFrame(_couplingF,_hintse); 
 
 
-  _comboF = new TGGroupFrame(_mf, "Combo Test", kHorizontalFrame);
-  _comboB = new TGComboBox(_comboF, 100); 
-
+  _timeF = new TGGroupFrame(_mf, "Time Div", kHorizontalFrame);
+  _timeB = new TGComboBox(_timeF, 100); 
+  _timeB->Connect("Selected(Int_t)", "PicoscopeControls", this, "timedivHandler(Int_t , Int_t)"); 
   for (auto i = 0; i < timeDivs.size(); i++) { 
 
-    _comboB->AddEntry(timeDivs[i], i); 
+    _timeB->AddEntry(timeDivs[i], i); 
 
   }
-  _comboB->Resize(150, 20); 
-  _comboB->Select(2); 
-  _comboF->AddFrame(_comboB, _hintse); 
-  _mf->AddFrame(_comboF, _hintse); 
+  _timeB->Resize(150, 20); 
+  _timeB->Select(1); 
+  _timeF->AddFrame(_timeB, _hintse); 
+  _mf->AddFrame(_timeF, _hintse); 
 
   _mf->MapSubwindows(); 
   _mf->Resize(_mf->GetDefaultSize()); 
@@ -125,53 +165,31 @@ PicoscopeControls::~PicoscopeControls() {
 
 }
 
-void PicoscopeControls::setupVoltageEntries() { 
-  _voltages.push_back(new TGTextLBEntry(_voltageC, new TGString("+/-10mV"), 0)); 
-  _voltages.push_back(new TGTextLBEntry(_voltageC, new TGString("+/-20mV"), 1)); 
-  _voltages.push_back(new TGTextLBEntry(_voltageC, new TGString("+/-50mV"), 2));
-  _voltages.push_back(new TGTextLBEntry(_voltageC, new TGString("+/-100mV"), 3)); 
-  _voltages.push_back(new TGTextLBEntry(_voltageC, new TGString("+/-200mV"), 4)); 
-  _voltages.push_back(new TGTextLBEntry(_voltageC, new TGString("+/-500mV"), 5)); 
-  _voltages.push_back(new TGTextLBEntry(_voltageC, new TGString("+/-1V"), 6)); 
-  _voltages.push_back(new TGTextLBEntry(_voltageC, new TGString("+/-2V"), 7)); 
-  _voltages.push_back(new TGTextLBEntry(_voltageC, new TGString("+/-5V"), 8)); 
-  _voltages.push_back(new TGTextLBEntry(_voltageC, new TGString("+/-10V"), 9));
-  _voltages.push_back(new TGTextLBEntry(_voltageC, new TGString("+/-20V"), 10)); 
-  _voltages.push_back(new TGTextLBEntry(_voltageC, new TGString("+/-50V"), 11));
+
+
+void PicoscopeControls::voltageHandler(Int_t selection, Int_t widgetID) { 
+
+  std::cout << voltages[selection].first << std::endl; 
+  
+}
+
+void PicoscopeControls::couplingHandler(Int_t selection, Int_t widgetID)  {
+  std::cout << couplingTypesTest[selection].second << std::endl; 
+
+}
+
+void PicoscopeControls::timedivHandler(Int_t selection, Int_t widgetID) {
+
+
+  std::cout << timeDivs[selection] << std::endl; 
 
 
 }
 
 
-void PicoscopeControls::updateVoltageScale() { 
 
-  std::cout << "Voltage Scale Changed." << std::endl; 
 
-}
 
-void PicoscopeControls::updateCoupling()  {
-
-    TGTextLBEntry *selected = (TGTextLBEntry *) _couplingL->GetSelectedEntry(); 
-    if (selected != NULL)  { 
-      std::cout  << selected->GetText()->GetString() << std::endl; 
-      
-      switch(selected->EntryId()) { 
-      case 0: 
-	std::cout << "50 Ohms" << std::endl; 
-	break; 
-      case 1: 
-	std::cout << "DC 1 MOhm" << std::endl; 
-	break; 
-      case 2:
-	std::cout << "AC" << std::endl; 
-	break; 
-      default: 
-	break;
-      };
-
-    }
-
-}
 
 
 

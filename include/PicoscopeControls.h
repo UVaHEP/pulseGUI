@@ -14,6 +14,9 @@
 #include "TGListBox.h"
 #include "TGComboBox.h" 
 
+#ifndef __CINT__
+#include "picoscopeDriver.h"
+#endif 
 
 class PicoscopeControls : public TQObject  { 
 
@@ -21,29 +24,22 @@ class PicoscopeControls : public TQObject  {
   
 
   private:
-  void setupVoltageEntries(); 
+
+  
+
   TGLayoutHints *_hintsn; 
   TGLayoutHints *_hintsy; 
 
   TGGroupFrame *_voltageF; 
-  TGLBContainer *_voltageC; 
-  TGListBox *_voltageL; 
-
-  std::vector<TGTextLBEntry *> _voltages; 
+  TGComboBox *_voltageB; 
 
   TGGroupFrame *_couplingF; 
-  TGLBContainer *_couplingC; 
-  TGListBox *_couplingL; 
+  TGComboBox *_couplingB; 
 
-  TGTextLBEntry *DC_50R; 
-  TGTextLBEntry *DC_1M; 
-  TGTextLBEntry *AC; 
   
-  TGComboBox *_comboB; 
-  TGGroupFrame *_comboF; 
+  TGComboBox *_timeB; 
+  TGGroupFrame *_timeF; 
 
-  TGTextButton *_setVoltage; 
-  TGTextButton *_setCoupling; 
 
   
   TGMainFrame *_mf; 
@@ -53,11 +49,13 @@ class PicoscopeControls : public TQObject  {
   PicoscopeControls(); 
   virtual ~PicoscopeControls(); 
   
-  void updateVoltageScale();
+  void voltageHandler(Int_t selection, Int_t widgetID); 
     
 
   
-  void updateCoupling(); 
+  void couplingHandler(Int_t selection, Int_t widgetID);
+
+  void timedivHandler(Int_t selection, Int_t widgetID);
 
 
 }; 
