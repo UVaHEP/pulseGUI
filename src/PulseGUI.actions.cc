@@ -28,7 +28,15 @@ void PulseGUI::OpenFileDialog() {
 
 void PulseGUI::LoadSpectrum(TString fName){
   debug();
-  _analysis->LoadSpectrum(fName);
+  if (dataFile != NULL) {
+    dataFile->Close(); 
+    buffer = NULL; 
+  }
+  
+  dataFile = TFile::Open(fName); 
+  buffer = (PSbuffer *) dataFile->Get("PSbuffer"); 
+  _analysis = new PulseAnalysis(buffer); 
+
   ConnectButtons(); 
   ThreshNum->SetNumber(_analysis->GetThreshold()); 
   WidthNum->SetNumber(_analysis->GetPulseWidth()); 
@@ -36,7 +44,7 @@ void PulseGUI::LoadSpectrum(TString fName){
     AnaClean();
   }
   setMessage(TString("")); 
-  TString name=(_analysis->GetSpectName());
+  TString name=(dataFile->GetName());
   if (name.Length()>50) {
     name.Remove(0,51);
     name="..."+name;

@@ -4,7 +4,7 @@
 
 
 #include "PulseAnalysis.h"
-
+#include "PSbuffer.h" 
 #include "RQ_OBJECT.h"
 #include "TGCanvas.h"
 #include "TGFrame.h"
@@ -29,6 +29,7 @@ class PulseGUI : public TQObject {
 
 private: 
   // Class global objects
+  TFile                 *dataFile; 
   TGMainFrame           *FMain;
   TGHorizontalFrame     *FControl;
   TGVerticalFrame       *FButton;
@@ -82,6 +83,8 @@ private:
 
   //Analysis object accesses/manages data 
   PulseAnalysis *_analysis; 
+
+  PSbuffer * buffer; 
   
   // member functions 
 public:

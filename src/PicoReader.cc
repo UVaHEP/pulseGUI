@@ -224,13 +224,22 @@ Double_t getPSDouble(psblock block, fstream &fin){
 
 bool PicoReader::LocateBlock(vector<psblock> &blocks, 
 			     TString name, psblock &block) {
-  for (auto &b : blocks) { 
+
+  for (std::vector<psblock>::iterator it = blocks.begin(); it != blocks.end(); it++) { 
+    if (*it->name == name) { 
+      block = *it; 
+      return true; 
+    }
+  }
+  return false; 
+    
+  /*  for (auto &b : blocks) { 
     if (b.name == name) { 
       block = b; 
       return true; 
     }
   }
-  return false; 
+  return false; */
 
 }
 

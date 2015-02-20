@@ -27,6 +27,11 @@ PulseAnalysis::PulseAnalysis(PSbuffer *buffer){
 
 }
 
+PulseAnalysis::PulseAnalysis() { 
+
+
+}
+
 
 PulseAnalysis::~PulseAnalysis() { 
   debug();

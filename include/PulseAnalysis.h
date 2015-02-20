@@ -14,15 +14,15 @@ class PulseAnalysis {
  private: 
   //c++11 uses constexpr for calculated values in classes rather than const static, CINT doesn't support constexpr so this is a quick
   //hack to work around the incompatibility 
-  #ifdef __CINT__
+#if (__cplusplus <= 199711L) || defined (__CINT__)
   const static  Int_t MAXPEAKS = 100000;  // max peaks considered in spectrum
   const  static double NSIGMA = 3.5;      // #_pSigma > noise for peak search threshold
   const static  double DEFAULT_ZOOM=1e4;  // default (minimum) zoom [ns]
-  #else 
+  #else
   constexpr static  Int_t MAXPEAKS = 100000;  // max peaks considered in spectrum
   constexpr  static double NSIGMA = 3.5;      // #_pSigma > noise for peak search threshold
   constexpr static  double DEFAULT_ZOOM=1e4;  // default (minimum) zoom [ns]
-  #endif
+#endif
 
 
   PSbuffer *psbuffer; // pico scope data buffer
