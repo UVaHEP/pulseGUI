@@ -46,9 +46,9 @@ PYCFLAGS:= $(shell python-config --includes)
 CPPFLAGS:= -I. -I$(INCDIR) -DR__HAVE_CONFIG \
 $(filter-out -stdlib=libc++,$(shell root-config --cflags)) $(PYCFLAGS)
 ifdef DEBUG
-CXXFLAGS:= -Wall -fPIC -g -ansi -Wextra -Wshadow -DDODEBUG -std=c++11
+CXXFLAGS:= -Wall -fPIC -g -ansi -Wextra -Wshadow -DDODEBUG 
 else
-CXXFLAGS:= -O3 -Wall -fPIC -ansi -Wextra -Wshadow -std=c++11
+CXXFLAGS:= -O3 -Wall -fPIC -ansi -Wextra -Wshadow 
 endif
 LDFLAGS	:= -g
 # ----------------------------------------------------------------------------
