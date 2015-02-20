@@ -98,7 +98,7 @@ public:
   void OpenFileDialog(); 
   void LoadSpectrum(TString fName);
   void AnaClean();
-
+  void CleanupAndClose(); 
   void setupInfoPad(); 
   void Show();
   void DrawSpectrum(); 

@@ -16,7 +16,6 @@ using std::vector;
 
 PulseGUI::PulseGUI(TString fName) { 
   cout << "Creating PulseGUI " << endl;
-  _analysis = new PulseAnalysis(); 
   InitWindow();
   if (fName!="") LoadSpectrum(fName);
 }

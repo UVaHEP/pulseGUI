@@ -25,7 +25,6 @@ SRCSWITHLINKDEF :=
 # ----------------------------------------------------------------------------
 SRCSNOLINKDEF	:= $(patsubst %.cc,$(SRCDIR)/%.cc,$(SRCSNOLINKDEF))
 DICTSNOLINKDEF	:= $(patsubst $(SRCDIR)/%.cc,$(BLDDIR)/%Dict.cxx,$(SRCSNOLINKDEF))
-
 SRCSWITHLINKDEF	:= $(patsubst %.cc,$(SRCDIR)/%.cc,$(SRCSWITHLINKDEF))
 DICTSWITHLINKDEF:= $(patsubst $(SRCDIR)/%.cc,$(BLDDIR)/%Dict.cxx,$(SRCSWITHLINKDEF))
 

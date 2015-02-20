@@ -269,6 +269,7 @@ void PulseGUI::InitWindow(){
   UInt_t w = 1200;   // main frame width
   UInt_t h = 550;   // main frame height
   FMain = new TGMainFrame(gClient->GetRoot(),w,h, kVerticalFrame);
+  FMain->Connect("CloseWindow()", "PulseGUI", this, "CleanupAndClose()"); 
   // Create the control frame for the buttons and spectrum
   FControl = new TGHorizontalFrame(FMain,w,h);
   // Add the frames to the parent frame
@@ -334,5 +335,25 @@ void PulseGUI::InitWindow(){
   FMain->Resize(FMain->GetDefaultSize());
   FMain->MapWindow(); 
 }
+
+
+//Cleanup and close when main window has been closed
+void PulseGUI::CleanupAndClose() { 
+  if (dataFile && dataFile->IsOpen()) {
+    dataFile->Close(); 
+  }
+  exit(0); 
+
+
+
+}
+
+
+
+
+
+
+
+
 
 
