@@ -17,10 +17,10 @@ ROOTLINK=-L$(ROOTLIBDIR) $(ROOTLIBS) $(ROOTLDFLAGS)
 default: pulseEXE convertPS
 
 pulseEXE: pulseEXE.cc
-	g++ $(CPPFLAGS) $(ROOTC) -o pulseEXE pulseEXE.cc -L../build/lib -lpulseGUI $(ROOTLINK) 
+	g++ $(CPPFLAGS) $(ROOTC) -o pulseEXE pulseEXE.cc -L../build/lib -lPulseGUI $(ROOTLINK) -Wl,-rpath ../build/lib
 
 convertPS: convertPS.cc
-	g++ $(CPPFLAGS) $(ROOTC) -o convertPS convertPS.cc -L../build/lib -lpulseGUI $(ROOTLINK)
+	g++ $(CPPFLAGS) $(ROOTC) -o convertPS convertPS.cc -L../build/lib -lPulseGUI $(ROOTLINK) -Wl,-rpath ../build/lib
 
 clean: 
 	rm -f pulseEXE convertPS *.d *.so
