@@ -27,7 +27,7 @@ pgDictObj = env.SharedLibrary(pGDict)
 PSbufferDictObj = env.SharedLibrary(PSbuffer)
 
 
-psControls = env.SharedLibrary('PicoscopeControls', ['PicoscopeControls.cc', psControlsDictObj])
+psControls = env.SharedLibrary('PicoscopeControls', ['PicoscopeControls.cc', psControlsDictObj, '#/picoscopeDriver/libpicoscopeDriver.so'])
 pR = env.SharedLibrary('picoReader', ['PicoReader.cc'])
 pA = env.SharedLibrary('PulseAnalysis', ['PulseAnalysis.cc', 'PulseAnalysis.analysis.cc', 'PulseAnalysis.display.cc', paDictObj, pR, PSbufferDictObj])
 env.Install('#/exe', [pA, paDictObj])

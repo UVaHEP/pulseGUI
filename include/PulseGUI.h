@@ -2,7 +2,6 @@
 #define PULSEGUI_H
 
 
-
 #include "PulseAnalysis.h"
 #include "PSbuffer.h" 
 #include "RQ_OBJECT.h"
@@ -16,7 +15,7 @@
 #include "TPaveText.h"
 #include "TRootEmbeddedCanvas.h"
 #include "TString.h"
-#include "PicoScopeControls.h"
+#include "PicoscopeControls.h"
 
 class PulseGUI : public TQObject { 
   RQ_OBJECT("PulseGUI"); 
