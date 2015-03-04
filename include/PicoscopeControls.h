@@ -14,7 +14,9 @@
 #include "TGListBox.h"
 #include "TGComboBox.h" 
 #include "TGLabel.h"
-
+#include "TMath.h"
+#include "PSbuffer.h"
+#include <functional>
 
 #ifndef __CINT__
 #include "../picoscopeDriver/picoscopeDriver.h"
@@ -46,10 +48,14 @@ private:
   TGGroupFrame *_channelF;
   TGComboBox *_channelB; 
   
-  TGComboBox *_timeB; 
-  TGGroupFrame *_timeF; 
+  //  TGComboBox *_timeB; 
+  //  TGGroupFrame *_timeF; 
+
+  TGNumberEntry *_sampleInterval; 
+  TGLabel *_intervalLabel; 
 
   TGNumberEntry *_sampleNumber; 
+  TGLabel *_windowLabel; 
 
   TGTextButton *_runBtn; 
 
@@ -58,6 +64,8 @@ private:
   //  TGMainFrame *_otherApp; 
 
   public: 
+
+
   PicoscopeControls(); 
   virtual ~PicoscopeControls(); 
   
@@ -65,7 +73,9 @@ private:
   void voltageHandler(Int_t selection, Int_t widgetID); 
     
   void sampleNumberHandler(Long_t val); 
-  
+  void sampleIntervalHandler(Long_t val); 
+  TString prettyPrintInterval();   
+  TString prettyPrintWindow();   
   void couplingHandler(Int_t selection, Int_t widgetID);
 
   void timedivHandler(Int_t selection, Int_t widgetID);

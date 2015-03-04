@@ -48,7 +48,7 @@ static std::vector<std::pair<TString, PS6000_RANGE> > voltages = {
 };
 
 
-static std::vector<std::pair<TString, unsigned long> > timeDivs = { 
+/*static std::vector<std::pair<TString, unsigned long> > timeDivs = { 
   std::pair<TString, unsigned long>("1 ns", 1),
   std::pair<TString, unsigned long>("2 ns", 2),
   std::pair<TString, unsigned long>("5 ns", 5),
@@ -76,7 +76,7 @@ static std::vector<std::pair<TString, unsigned long> > timeDivs = {
   std::pair<TString, unsigned long>("100 ms", 100e6),
   std::pair<TString, unsigned long>("200 ms", 200e6),
   std::pair<TString, unsigned long>("500 ms", 500e6)
-}; 
+  }; */
   
   
 
@@ -143,7 +143,7 @@ PicoscopeControls::PicoscopeControls() {
 
   _mf->AddFrame(_couplingF,_hintse); 
 
-
+  /*
   _timeF = new TGGroupFrame(_mf, "Time Div", kHorizontalFrame);
   _timeB = new TGComboBox(_timeF, 100); 
   _timeB->Connect("Selected(Int_t)", "PicoscopeControls", this, "timedivHandler(Int_t , Int_t)"); 
@@ -156,14 +156,30 @@ PicoscopeControls::PicoscopeControls() {
   _timeB->Select(1); 
   _timeF->AddFrame(_timeB, _hintse); 
   _mf->AddFrame(_timeF, _hintse); 
+  */
 
-  _sampleNumber = new TGNumberEntry(_mf, 1, 5, 5, TGNumberFormat::kNESInteger); 
+  //Sampling Interval
+  _sampleInterval = new TGNumberEntry(_mf, 0, 5, 5, TGNumberFormat::kNESInteger); 
+  _sampleInterval->Connect("ValueSet(Long_t)", "PicoscopeControls", this, "sampleIntervalHandler(Long_t)"); 
+  _mf->AddFrame(_sampleInterval, _hintse); 
+
+  _intervalLabel = new TGLabel(_mf, TGString(prettyPrintInterval())); 
+  
+  _mf->AddFrame(_intervalLabel, _hintse); 
+  
+
+  //Sampling Number
+  _sampleNumber = new TGNumberEntry(_mf, 1e4, 5, 5, TGNumberFormat::kNESInteger); 
   _sampleNumber->Connect("ValueSet(Long_t)", "PicoscopeControls", this, "sampleNumberHandler(Long_t)"); 
   _mf->AddFrame(_sampleNumber, _hintse); 
 
 
   TGLabel *sampleLabel = new TGLabel(_mf, TGString("# Samples")); 
   _mf->AddFrame(sampleLabel, _hintse); 
+
+  _windowLabel = new TGLabel(_mf, TGString(prettyPrintWindow())); 
+  _mf->AddFrame(_windowLabel, _hintse); 
+  
 
   // Test Run Button
   _runBtn = new TGTextButton(_mf, TGHotString("Capture Block!"), 5); 
@@ -229,33 +245,173 @@ void PicoscopeControls::couplingHandler(Int_t selection, Int_t widgetID)  {
 }
 
 
-void PicoscopeControls::sampleNumberHandler(Long_t val) { 
+void PicoscopeControls::sampleIntervalHandler(Long_t val) { 
 
+  picoscope::samplingSettings s = _ps.sampling(); 
+  s.setTimebase(_sampleInterval->GetIntNumber()); 
+  _intervalLabel->SetText(prettyPrintInterval()); 
+  _windowLabel->SetText(prettyPrintWindow()); 
   //  std::cout << "number of samples to capture changed" << std::endl; 
 
 }
 
-void PicoscopeControls::timedivHandler(Int_t selection, Int_t widgetID) {
-  //I'm working off the assumption of capturing 10 divisions similar 
-  //to an oscilloscope. There's no reason to keep limited to this range
-  //so consider making this more adaptable in the future. 
 
-  unsigned int divisions = 10; 
-  
-  std::cout << timeDivs[selection].first << std::endl; 
-
+void PicoscopeControls::sampleNumberHandler(Long_t val) { 
+  picoscope::samplingSettings s = _ps.sampling(); 
+  s.setSampleNumber(_sampleNumber->GetIntNumber()); 
+  _windowLabel->SetText(prettyPrintWindow()); 
+  //  std::cout << "number of samples to capture changed" << std::endl; 
 
 }
+
+
 
 void PicoscopeControls::testRun() { 
-  int32_t sampleCount = 50000; 
+  
+  picoscope::samplingSettings &s = _ps.sampling(); 
+  s.setOversample(0); 
+  s.setTimebase(_sampleInterval->GetIntNumber()); 
+  s.setSegment(1); 
+  s.setSampleNumber(_sampleNumber->GetIntNumber()); 
+  
   std::cout << "Taking a run and then closing the picoscope." << std::endl; 
+  std::cout << "Timebase\tSampleNumber\n" << _sampleInterval->GetIntNumber() << "\t" << _sampleNumber->GetIntNumber() << std::endl; 
 
-  _ps.takeRun(sampleCount); 
+  std::function<void(std::vector < std::vector<int16_t> *>)> l = [=](std::vector < std::vector<int16_t> *> data) {
+      std::cout << "Called back with data. Generating ps buffers" << std::endl; 
+      PSbuffer *ps = new PSbuffer(); 
+      ps->SetT0(0); 
+      ps->SetDt(_ps.calculateTimebase(_ps.sampling().Timebase())); 
+      ps->InitWaveform(_ps.sampling().Samples()); 
+      TH1F* wave = ps->GetWaveform(); 
+      std::cout << "Data Size:" << data.size() << std::endl; 
+      std::vector<int16_t> *waveform = data.at(0);
+      std::vector<int16_t> *trigger = data.at(1);
+      Float_t dV = 1e12; 
+      float last = 0; 
+      std::cout << "Waveform Size:" << waveform->size(); 
+      std::cout << " Trigger Size:" << trigger->size() << std::endl; 
+      for (UInt_t i = 0; i < waveform->size(); i++) { 
+	//Note in adc counts need to convert later
+	wave->SetBinContent(i+1, waveform->at(i)*1000.0); 
+	//	float delta = TMatch::Abs(waveform[i]-last); 
+	//	if ( delta>1e-6 && delta<dV ) dV=delta;
+
+      }
+      ps->SetDV(dV); 
+
+      /*      // get channel B (trigger)
+      float min=1e12;
+      float max=-1e12;
+      vector<float> *vtrig=new vector<float>;
+    
+      // set trigger point and hysterisis
+      // WARNING!  This may fail in case of bad terminations
+      // *** TODO:  Use t0 vs t=0  to find 1st trigger bin and gte threshold there ***
+      Float_t onThreshold = max*0.5; 
+      Float_t offThreshold = max*0.3; 
+      std::cout << "On Threshold:"   << onThreshold 
+      << " Off Threshold:" << offThreshold << std::endl;
+
+      Bool_t fired = false;
+      // mark triggers
+      for (UInt_t i = 0; i < trigger->size(); i++) {
+      if (!fired && trigger->at(i)>onThreshold){
+	fired = true;
+	ps->AddTrig(i);
+	continue;
+      }
+      }
+      ps->Analyze();  // calculate DC offset, frequency spectrum, noise, etc*/
+      ps->Print();
+
+  };
+
+  _ps.setCallback(&l); 
+  _ps.takeRun();
 
 }
 
 
+
+
+TString PicoscopeControls::prettyPrintWindow() { 
+
+  float timebase = _ps.calculateTimebase(_sampleInterval->GetIntNumber()); 
+  float result = timebase*_sampleNumber->GetIntNumber(); 
+  double lg = TMath::Abs(TMath::Log10(result)); 
+  TString units = "";
+  bool set = false;  
+  float timebaseCorrected = result; 
+   if (lg > 9.0) { 
+     timebaseCorrected *= 1e12; 
+     units = "ps";
+     set = true; 
+   }
+   else if (lg > 6.0 && !set) { 
+     timebaseCorrected *= 1e9; 
+     units = "ns"; 
+     set = true; 
+   }
+   else if (lg > 3.0 && !set) { 
+     timebaseCorrected *= 1e6; 
+     units = "us"; 
+     set = true; 
+   }
+   else if (timebase < 1.0 && !set) { 
+     timebaseCorrected *= 1e3; 
+     units = "ms"; 
+     set = true; 
+   }
+   else { 
+     units = "seconds"; 
+     set = true; 
+   }
+
+
+   return TString::Format("%f %s", result,units.Data()); 
+
+}
+
+TString PicoscopeControls::prettyPrintInterval() { 
+
+   float timebase = _ps.calculateTimebase(_sampleInterval->GetIntNumber()); 
+   double lg = TMath::Abs(TMath::Log10(timebase)); 
+   TString units = ""; 
+   bool set = false; 
+   //   std::cout << "Original value:" << timebase << " Log value:" << lg << std::endl; 
+   float timebaseCorrected = timebase; 
+   if (lg > 9.0) { 
+     timebaseCorrected *= 1e12; 
+     units = "ps";
+     set = true; 
+   }
+   else if (lg > 6.0 && !set) { 
+     timebaseCorrected *= 1e9; 
+     units = "ns"; 
+     set = true; 
+   }
+   else if (lg > 3.0 && !set) { 
+     timebaseCorrected *= 1e6; 
+     units = "us"; 
+     set = true; 
+   }
+   else if (timebase < 1.0 && !set) { 
+     timebaseCorrected *= 1e3; 
+     units = "ms"; 
+     set = true; 
+   }
+   else { 
+     units = "seconds"; 
+     set = true; 
+   }
+
+   //   std::cout << TString::Format("%.1f %s \n", timebaseCorrected, units.Data()); 
+   
+   
+   return TString::Format("%.1f %s \n", timebaseCorrected, units.Data()); 
+
+ }
 
 
 
