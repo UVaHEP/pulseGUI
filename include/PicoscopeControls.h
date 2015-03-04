@@ -13,6 +13,8 @@
 #include "TGListView.h"
 #include "TGListBox.h"
 #include "TGComboBox.h" 
+#include "TGLabel.h"
+
 
 #ifndef __CINT__
 #include "../picoscopeDriver/picoscopeDriver.h"
@@ -47,9 +49,10 @@ private:
   TGComboBox *_timeB; 
   TGGroupFrame *_timeF; 
 
+  TGNumberEntry *_sampleNumber; 
 
   TGTextButton *_runBtn; 
-  
+
   
   TGMainFrame *_mf; 
   //  TGMainFrame *_otherApp; 
@@ -61,7 +64,7 @@ private:
   void channelHandler(Int_t selection, Int_t widgetID); 
   void voltageHandler(Int_t selection, Int_t widgetID); 
     
-
+  void sampleNumberHandler(Long_t val); 
   
   void couplingHandler(Int_t selection, Int_t widgetID);
 
