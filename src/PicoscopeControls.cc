@@ -266,6 +266,8 @@ void PicoscopeControls::sampleNumberHandler(Long_t val) {
 
 
 
+
+
 void PicoscopeControls::testRun() { 
   
   picoscope::samplingSettings &s = _ps.sampling(); 
@@ -275,32 +277,66 @@ void PicoscopeControls::testRun() {
   s.setSampleNumber(_sampleNumber->GetIntNumber()); 
   
   std::cout << "Taking a run and then closing the picoscope." << std::endl; 
+  std:: cout << "test Run ps address:" << &_ps << std::endl; 
   std::cout << "Timebase\tSampleNumber\n" << _sampleInterval->GetIntNumber() << "\t" << _sampleNumber->GetIntNumber() << std::endl; 
 
-  std::function<void(std::vector < std::vector<int16_t> *>)> l = [=](std::vector < std::vector<int16_t> *> data) {
+  _ps.setTrigger(500, PS6000_FALLING); 
+
+  std::function<void(picoscope::picoscopeData *)> l = [](picoscope::picoscopeData *data) {
       std::cout << "Called back with data. Generating ps buffers" << std::endl; 
+      
+
       PSbuffer *ps = new PSbuffer(); 
+
+      
+
+      //Most of these objects are probably getting copied around, so after you get it working think about what's going on and make it nicer!
+
+      picoscope::channel waveformSettings = data->first[PS6000_CHANNEL_A].second; 
+      picoscope::channel triggerSettings =  data->first[PS6000_CHANNEL_B].second; 
+      std::vector<int16_t> *waveform = data->first[PS6000_CHANNEL_A].first; 
+      std::vector<int16_t> *trigger = data->first[PS6000_CHANNEL_B].first; 
+      picoscope::samplingSettings timeSettings = data->second; 
+
+
+      std::cout << std::endl; 
+      for (unsigned int i = 0; i < 2000; i++) { 
+	int32_t mV = picoscope::adcToMv(waveform->at(i), waveformSettings.range()); 
+	if ((i % 20) == 0) 
+	  std::cout << std::endl; 
+
+	std::cout << mV << " "; 
+      }
+      std::cout << std::endl; 
+      std::cout << "Waveform count:" << waveform->size() << " Waveform Range:" << waveformSettings.range() << std::endl; 
+      std::cout << "Trigger count:" << trigger->size() << " Trigger Range:" << triggerSettings.range() << std::endl; 
+
+
       ps->SetT0(0); 
-      ps->SetDt(_ps.calculateTimebase(_ps.sampling().Timebase())); 
-      ps->InitWaveform(_ps.sampling().Samples()); 
+      ps->SetDt(timeSettings.TimeIntervalNS()); 
+      //Fill waveform with data 
+
+
+      ps->InitWaveform(waveform->size()); 
       TH1F* wave = ps->GetWaveform(); 
-      std::cout << "Data Size:" << data.size() << std::endl; 
-      std::vector<int16_t> *waveform = data.at(0);
-      std::vector<int16_t> *trigger = data.at(1);
+
       Float_t dV = 1e12; 
+      float delta = 0; 
       float last = 0; 
-      std::cout << "Waveform Size:" << waveform->size(); 
-      std::cout << " Trigger Size:" << trigger->size() << std::endl; 
-      for (UInt_t i = 0; i < waveform->size(); i++) { 
-	//Note in adc counts need to convert later
-	wave->SetBinContent(i+1, waveform->at(i)*1000.0); 
-	//	float delta = TMatch::Abs(waveform[i]-last); 
-	//	if ( delta>1e-6 && delta<dV ) dV=delta;
+      for (unsigned int i = 0; i < waveform->size(); i++) {
+
+	int32_t mV = picoscope::adcToMv(waveform->at(i), waveformSettings.range()); 
+	delta = TMath::Abs(mV-last); 
+
+	if (delta > 1e-6 && delta < dV) dV = delta; 
+
+	last = mV; 
+	wave->SetBinContent(i+1, mV); 
 
       }
-      ps->SetDV(dV); 
 
-      /*      // get channel B (trigger)
+      ps->SetDV(dV); 
+      // get channel B (trigger)
       float min=1e12;
       float max=-1e12;
       vector<float> *vtrig=new vector<float>;
@@ -316,14 +352,21 @@ void PicoscopeControls::testRun() {
       Bool_t fired = false;
       // mark triggers
       for (UInt_t i = 0; i < trigger->size(); i++) {
-      if (!fired && trigger->at(i)>onThreshold){
-	fired = true;
-	ps->AddTrig(i);
-	continue;
-      }
+	int32_t mV = picoscope::adcToMv(trigger->at(i), triggerSettings.range()); 
+	if (!fired && mV>onThreshold) {
+	  fired = true;
+	  ps->AddTrig(i);
+	  continue;
+	}
       }
       ps->Analyze();  // calculate DC offset, frequency spectrum, noise, etc*/
-      ps->Print();
+      ps->Print(); 
+
+
+      TFile f2("psbuffertest.root", "RECREATE");
+      ps->Write(); 
+      f2.Write(); 
+      f2.Close(); 
 
   };
 
