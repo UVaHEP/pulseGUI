@@ -19,7 +19,7 @@
 #include <functional>
 
 #ifndef __CINT__
-#include "../picoscopeDriver/picoscopeDriver.h"
+#include "picoscopeDriver.h"
 #else
 class picoscope; 
 #endif
