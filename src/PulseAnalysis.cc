@@ -14,37 +14,48 @@ using std::cerr;
 using std::endl;
 
 
-/*PulseAnalysis::PulseAnalysis(TString fName){ 
-  debug();
-  if (fName=="") return;
-  if (!fName.EndsWith(".root")) ConvertFile(fName);
-  else _currentTFile=fName;
-  LoadSpectrum();
-  }*/
-
 PulseAnalysis::PulseAnalysis(PSbuffer *buffer){
-  psbuffer=buffer;
-
+  SetBuffer(buffer);
 }
 
-PulseAnalysis::PulseAnalysis() { 
-
-
+PulseAnalysis::PulseAnalysis() {
 }
 
+void PulseAnalysis::Init(){
+  _hdt.SetName("hdt");
+  _hdt.SetTitle("Delta Time;Peak-to-peak time [ns];Entries");
+  _hph.SetName("hph");
+  _hph.SetTitle("Pulse Height;[mV];Entries");
+  _hpi.SetName("hpi");
+  _hpi.SetTitle("Pulse Integral;[V#cdot ns];Entries");
+  _hprms.SetName("hprms");
+  _hprms.SetTitle("Pulse RMW Width;[ns];Entries");
+}
 
 PulseAnalysis::~PulseAnalysis() { 
   debug();
-  //  if (_tf) _tf->Close(); 
+  AnaClean();
 } 
 
+void PulseAnalysis:: SetBuffer(PSbuffer *buffer){
+  debug();
+  Clear();
+  psbuffer=buffer;
+  double dT=psbuffer->Dt();
+  _hdt.SetBins(201,-dT/2,3/_pulseRate*1000+dT/2);
+  TH1F *waveBuffer=psbuffer->GetWaveform();
+  double pMax = waveBuffer->GetBinContent(waveBuffer->GetMaximumBin());
+  _hph.SetBins(100,0,pMax*1.1); 
+  _hprms.SetBins(100,0,50);  // up to 50 ns width [hack, fix later!]
+}
 
 void PulseAnalysis::AnaClean(){ 
   debug();
-  if (_hdt) _hdt = NULL; 
-  if (_hph) _hph = NULL; 
-  if (_hpi) _hpi = NULL;
-  if (_hprms) _hprms = NULL;
+  _hdt.Reset(); 
+  _hph.Reset(); 
+  _hpi.Reset();
+  _hprms.Reset();
+  debug();
 }
 
 void PulseAnalysis::Clear() {
@@ -54,10 +65,7 @@ void PulseAnalysis::Clear() {
   _pSigma=0;
   _pWidth=0;
   _pNFound=0;
-  _pulseRate=0;
-
-
-  
+  _pulseRate=0;  
   AnaClean();
 }
 
@@ -84,7 +92,7 @@ TString PulseAnalysis::SetWidth(Float_t w){
   debug();
  // set width in microseconds
   _pWidth = w; 
-  _pSigma = _pWidth/2/_dT;
+  _pSigma = _pWidth/2/psbuffer->Dt();
   TString s; 
   s.Form("Peak width (FWHM) set to: %e , half width in bins %d",
 	 _pWidth,TMath::Nint(_pSigma));

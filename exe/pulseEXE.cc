@@ -1,4 +1,5 @@
 #include "TApplication.h"
+//#include "TEnv.h"
 #include "TString.h"
 #include "PulseGUI.h"
 #include <iostream>
@@ -12,6 +13,9 @@ int main(int argc, char **argv) {
     fName=argv[1];
     cout << "Loading file: " << fName << endl;
   }
+  // highres linux display is a total clusterf**!  Some hack like this is needed
+  // but it's not results of this are also f****d up
+  //  gEnv->SetValue("Gui.DefaultFont", "-*-helvetica-medium-r-*-*-24-*-*-*-*-*-iso8859-1");
   TApplication theApp("App", &argc, argv);
 
   PulseGUI *pg=new PulseGUI(fName);

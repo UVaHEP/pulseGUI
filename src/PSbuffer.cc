@@ -49,7 +49,7 @@ void PSbuffer::Analyze(){
   min-=dcOffset;
   max-=dcOffset;
   int bins = (int)((max-min)/dV*1.01); // guard against rounding    
-  pHD = new TH1F("spectrum","Sample spectrum;Amplitude [mV];# samples",
+  pHD = new TH1F("spectrum","Pulse Height Spectrum;Amplitude [mV];# samples",
 		 bins,min-dV/2,max+dV/2);
   
   // remove DC offset, fill pulse height spectrum

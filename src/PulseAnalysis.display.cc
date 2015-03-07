@@ -4,7 +4,7 @@
 
 
 void PulseAnalysis::DrawSpectrum() { 
-  psbuffer->GetSpectrum()->Draw();
+  psbuffer->GetWaveform()->Draw();
 }
 
 void PulseAnalysis::SmoothHistogram() {

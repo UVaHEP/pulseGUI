@@ -17,12 +17,6 @@ using TMath::Sqrt;
 using std::vector;
 
 
-
-
-
-
-
-
 void PulseAnalysis::Analyze(){ 
   debug("");
   if (!_pNFound){
@@ -41,13 +35,6 @@ void PulseAnalysis::Analyze(){
   AnaClean();
 
   // Analysis of peak data
-  _hdt = new TH1F("hdt","Delta Time;Peak-to-peak time [ns];Entries",
-				   201,-_dT/2,3/_pulseRate*1000+_dT/2); 
-  // Pulse heights
-  _hph = new TH1F("hph","Pulse Height;[mV];Entries",100,0,_pMax*1.1); 
-  // Pulse RMS width
-  _hprms =  new TH1F("hprms","Pulse RMW Width;[ns];Entries",100,0,_pWidth*2);
-  //  debug("Pointer Values for histograms, _hdt:%p, _hph:%p, _hprms:%p", _hdt, _hph, _hprms); 
   Double_t maxInt=-1e-30;
 
   int count0=0, count1=0, count2=0, count3=0;
@@ -58,8 +45,8 @@ void PulseAnalysis::Analyze(){
   for(int i=0;i<_pNFound;++i) {
     if (i && i%fivepct==0) cerr << "*";
     // Fill Delta Time histogram with time between found peaks.
-    if (i<_pNFound-1) _hdt->Fill(pmarrayX[index[i+1]]-pmarrayX[index[i]]);
-    _hph->Fill(pmarrayY[i]);
+    if (i<_pNFound-1) _hdt.Fill(pmarrayX[index[i+1]]-pmarrayX[index[i]]);
+    _hph.Fill(pmarrayY[i]);
 
     // integrate the peaks, using a simple sum of bins 0.5 sigma above baseline noise
     double cut=_basePar[0]+_basePar[1]/2;
@@ -92,7 +79,7 @@ void PulseAnalysis::Analyze(){
       }
       else break;
     }
-    _pInteg[i]=sumv/_dT/1000;                                          // convert mV->V
+    _pInteg[i]=sumv/psbuffer->Dt()/1000;                                          // convert mV->V
     _pRMS[i]=Sqrt( TMath::Abs(sum2t/sumv - sumt*sumt/sumv/sumv) );     // RMS width of peak
     cout << _pRMS[i] << "  " << sum2t/sumv << "  "  << sumt*sumt/sumv/sumv << endl;
 
@@ -111,15 +98,15 @@ void PulseAnalysis::Analyze(){
 
   // Pulse integrals
   //  hpi=new TH1F("hpi","Pulse Integral;[mV][ns];Entries",200,0,maxInt*1.05);
-  _hpi = new TH1F("hpi","Pulse Integral;[Vns];Entries",100,0,maxInt*1.1);  // need to fix upper limit
+  _hpi.SetBins(100,0,maxInt*1.1);  // need to fix upper limit
   for(int i=0;i<_pNFound;i++) { 
-    _hpi->Fill(_pInteg[i]); 
-    _hprms->Fill(_pRMS[i]); 
+    _hpi.Fill(_pInteg[i]); 
+    _hprms.Fill(_pRMS[i]); 
   }
   TF1 *xtalball=new TF1("xtalball",XTLBall,0,maxInt*1.1,5);
-  xtalball->SetParameters(1,3,_hpi->GetMean(),_hpi->GetRMS(),_hpi->GetMaximum());
-  _hpi->Fit("gaus","0");
-  _hpi->Fit("xtalball","0");
+  xtalball->SetParameters(1,3,_hpi.GetMean(),_hpi.GetRMS(),_hpi.GetMaximum());
+  _hpi.Fit("gaus","0");
+  _hpi.Fit("xtalball","0");
 
   delete[] index;
 }
@@ -228,7 +215,7 @@ void PulseAnalysis::FindPeaksandReduce(Float_t window) {
   TPolyMarker *pm = (TPolyMarker*)functions->FindObject("TPolyMarker"); 
   Double_t *pmarrayX = pm->GetX(); 
 
-  Double_t halfWindow = _dT * window * 0.5; 
+  Double_t halfWindow = psbuffer->Dt() * window * 0.5; 
   std::cout << "halfWindow:" << halfWindow << std::endl; 
 
   Int_t *index=new Int_t[_pNFound]; 

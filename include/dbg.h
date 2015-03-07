@@ -11,14 +11,18 @@
 #include <string.h>
 
 #ifdef DODEBUG
-#define debug(M, ...) fprintf(stderr, "\e[1;34m[DEBUG] %s:%s:\e[0m " M "\n", __FILE__, __func__, ##__VA_ARGS__)
+#define debug(M, ...) fprintf(stderr, "\e[1;34m[DEBUG] %s:%s(%d):\e[0m " M "\n", __FILE__, __func__, __LINE__, ##__VA_ARGS__)
 #else
 #define debug(M, ...)
 #endif
 
+
+
 #define clean_errno() (errno == 0 ? "None" : strerror(errno))
 
-#define log_err(M, ...) fprintf(stderr, "[ERROR] (%s:%d: errno: %s) " M "\n", __FILE__, __LINE__, clean_errno(), ##__VA_ARGS__)
+//#define log_err(M, ...) fprintf(stderr, "\e[1;31m[ERROR] (%s:%d: errno: %s)\e[0m " M "\n", __FILE__, __LINE__, clean_errno(), ##__VA_ARGS__)
+
+#define log_err(M, ...) fprintf(stderr, "\e[1;31m[ERROR] (%s:%d:)\e[0m " M "\n", __FILE__, __LINE__, ##__VA_ARGS__)
 
 //#define log_err2(M, ...) fprintf(stderr, "[ERROR] (%s:%d) " M "\n", __PRETTY_FUNCTION__, ##__VA_ARGS__)
 

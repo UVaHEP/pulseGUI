@@ -44,11 +44,9 @@ class PicoReader{
   int ConvertMatFile(TString matfile, TString rootfile);
 
   void Print(){;}
-  // PicoScope Text File
-  int ConvertTXTFile(TString datfile, TString rootfile);
+
  private:
-  psdata* ReadMatFile(TString& filename);
-  PSbuffer* ReadMatFile2(TString& filename);
+  PSbuffer* ReadMatFile(TString& filename);
   bool LocateBlock(vector<psblock> &blocks, TString name, psblock &block);
   vector<psblock> ReadBlocks(fstream& fin);
 };

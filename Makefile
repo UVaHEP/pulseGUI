@@ -132,5 +132,5 @@ clean:
 
 cleanall: clean
 	rm -f python/*pyc python/gui/*pyc rootscript/*_C.d 
-	rm -f rootscript/*.so *~ */*~ 
+	rm -f rootscript/*.so *~ */*~ bin
 	rm -rf tmp build
