@@ -33,11 +33,6 @@ class PulseAnalysis {
   TH1F  _hpi;   // spectrum of peak integrals
   TH1F  _hprms; // RMS width of pulses
 
-  // Parameters for the current spectrum
-  Double_t _pMin; 
-  Int_t _nbins;
-  Double_t _xmin, _xmax;
-  
   // simple baseline and noise model
   Double_t _basePar[2];
 

@@ -23,7 +23,7 @@ void PulseAnalysis::Analyze(){
     std::cout << "Find peaks first." << std::endl;return;
   }
 
-  TList *functions = psbuffer->GetSpectrum()->GetListOfFunctions();
+  TList *functions = psbuffer->GetWaveform()->GetListOfFunctions();
   TPolyMarker *pm = (TPolyMarker*)functions->FindObject("TPolyMarker");
   Double_t *pmarrayX;
   Double_t *pmarrayY;
@@ -51,15 +51,15 @@ void PulseAnalysis::Analyze(){
     // integrate the peaks, using a simple sum of bins 0.5 sigma above baseline noise
     double cut=_basePar[0]+_basePar[1]/2;
     // locate bin corresponding to peak finder's result
-    int pBin=psbuffer->GetSpectrum()->FindBin(pmarrayX[index[i]]);
+    int pBin=psbuffer->GetWaveform()->FindBin(pmarrayX[index[i]]);
     _pInteg[i]=0;
     _pRMS[i]=0;
     sumv=0; sumt=0; sum2t=0;
     int ib=pBin;
     while (ib>0){                     // left side
-      if (psbuffer->GetSpectrum()->GetBinContent(ib)>cut){
-	double v=psbuffer->GetSpectrum()->GetBinContent(ib);
-	double t=psbuffer->GetSpectrum()->GetBinCenter(ib); 
+      if (psbuffer->GetWaveform()->GetBinContent(ib)>cut){
+	double v=psbuffer->GetWaveform()->GetBinContent(ib);
+	double t=psbuffer->GetWaveform()->GetBinCenter(ib); 
 	sumv+=v;
 	sumt+=t*v;
 	sum2t+=t*t*v;
@@ -68,10 +68,10 @@ void PulseAnalysis::Analyze(){
       else break;
     }
     ib=pBin+1;
-    while (ib<=psbuffer->GetSpectrum()->GetNbinsX()){  // right side
-      if (psbuffer->GetSpectrum()->GetBinContent(ib)>cut){
-	double v=psbuffer->GetSpectrum()->GetBinContent(ib);
-	double t=psbuffer->GetSpectrum()->GetBinCenter(ib);
+    while (ib<=psbuffer->GetWaveform()->GetNbinsX()){  // right side
+      if (psbuffer->GetWaveform()->GetBinContent(ib)>cut){
+	double v=psbuffer->GetWaveform()->GetBinContent(ib);
+	double t=psbuffer->GetWaveform()->GetBinCenter(ib);
 	sumv+=v;
 	sumt+=t*v;
 	sum2t+=t*t*v;	
@@ -120,14 +120,14 @@ int  PulseAnalysis::CountPeaksFast(double threshold) const{
   // scan for peaks > threshold
   int window=(int)(_pSigma*2);
   int nb=1;  // bin number
-  int nbins=psbuffer->GetSpectrum()->GetNbinsX();
+  int nbins=psbuffer->GetWaveform()->GetNbinsX();
   int lastWin=(nbins-window)+1;
   int count=0;
   while ( nb <= lastWin ){
       bool onPeak=true;
       for (int nw=0;nw<window;nw++){  // sliding search window for peak
 	nb++;
-	if (psbuffer->GetSpectrum()->GetBinContent(nb)<threshold){
+	if (psbuffer->GetWaveform()->GetBinContent(nb)<threshold){
 	  onPeak=false;
 	  break;
 	}
@@ -142,7 +142,7 @@ int  PulseAnalysis::CountPeaksFast(double threshold) const{
 void PulseAnalysis::ScanPeaksFast(int nsteps, 
 				   double *thresholds, double *count) const{
   double threshold0=_pThreshold/2;
-  double step=(psbuffer->GetSpectrum()->GetMaximum()*0.666-threshold0)/nsteps;
+  double step=(psbuffer->GetWaveform()->GetMaximum()*0.666-threshold0)/nsteps;
   for (int ns=0; ns<=nsteps; ns++){
     thresholds[ns]=threshold0+ns*step;
     cout << "Scanning thresold "<< thresholds[ns] << endl;
@@ -158,15 +158,10 @@ TString PulseAnalysis::FindPeaks(bool nodraw){
   // Search the data for amplitudes above a given threshold, diplay the peaks,
   // and display the pulse rate.
 
-  /*  if (!_hspect){
-    log_info("Load specturm first");
-    return TString("");
-    }*/
-
   debug("search parameters: threshold = %f , sigma(bins) = %f",
 	_pThreshold, _pSigma);
 
-  Double_t maxpeak=psbuffer->GetSpectrum()->GetBinContent(psbuffer->GetSpectrum()->GetMaximumBin());
+  Double_t maxpeak=psbuffer->GetWaveform()->GetBinContent(psbuffer->GetWaveform()->GetMaximumBin());
   //  float minpeak=State::_hspect->GetBinContent(State::_hspect->GetMinimumBin());
   Double_t thresFrac;
   if (_pThreshold<0){ // not initialized by user
@@ -176,21 +171,19 @@ TString PulseAnalysis::FindPeaks(bool nodraw){
   else {thresFrac=_pThreshold/maxpeak;}   // fix me?
 
   TSpectrum *s = new TSpectrum(MAXPEAKS,2);
-  // TH1 *hb = s->Background(State::_hspect,20,"same,kBackOrder8,kBackSmoothing15");
 
-  //  float _pThreshold=_pThreshold/maxpeak;  // fix me?
-  //  cout<<"thresholds: "<<threshold<<" "<<threshold<<endl;
   if (nodraw)
-    _pNFound = s->Search(psbuffer->GetSpectrum(), _pSigma, "nobackground,nomarkov,nodraw",thresFrac);
+    _pNFound = s->Search(psbuffer->GetWaveform(), _pSigma, "nobackground,nomarkov,nodraw",thresFrac);
   else
-    _pNFound = s->Search(psbuffer->GetSpectrum(),_pSigma,"nobackground,nomarkov",thresFrac);
+    _pNFound = s->Search(psbuffer->GetWaveform(),_pSigma,"nobackground,nomarkov",thresFrac);
 
   // http://root.cern.ch/root/htmldoc/TSpectrum.html#TSpectrum:Background
   // TH1 *hb = s->Background(_hspect,100,"same,kBackOrder8,kBackSmoothing15");
   // http://root.cern.ch/root/html/tutorials/spectrum/peaks.C.html
   cout << "Found " << _pNFound << " peaks" << endl;
   // rate of pulses
-  float rate=_pNFound/(_xmax-_xmin)*1000;  // in MHz, time scale is in [ns]
+  double sampleTime=psbuffer->Dt()*psbuffer->Samples();
+  float rate=_pNFound/sampleTime*1000;  // in MHz, time scale is in [ns]
   _pulseRate=rate;   // clean this up later!
   TString rateUnits = "MHz";
   // Adapt displayed units for easier reading 
@@ -211,7 +204,7 @@ TString PulseAnalysis::FindPeaks(bool nodraw){
 void PulseAnalysis::FindPeaksandReduce(Float_t window) { 
 // Find Peaks and then eliminate non-peak regions by converting to a zero bin 
   FindPeaks(true); 
-  TList *functions = psbuffer->GetSpectrum()->GetListOfFunctions(); 
+  TList *functions = psbuffer->GetWaveform()->GetListOfFunctions(); 
   TPolyMarker *pm = (TPolyMarker*)functions->FindObject("TPolyMarker"); 
   Double_t *pmarrayX = pm->GetX(); 
 
@@ -223,25 +216,18 @@ void PulseAnalysis::FindPeaksandReduce(Float_t window) {
   TMath::Sort(_pNFound, pmarrayX, index, kFALSE);  // index sort by timestamp
   bool inWindow = false; 
 
-  //Double_t start = 0.0; 
-  // Double_t end =  0.0; 
   UInt_t s = 0; 
-  //UInt_t c = 0; 
 
   for (int i = 0; i < _pNFound; i++) { 
     Double_t current = pmarrayX[index[i]];
     
     if (!inWindow) { 
-      //  start = current - halfWindow;
-      s = psbuffer->GetSpectrum()->GetBin(current-halfWindow); 
+      s = psbuffer->GetWaveform()->GetBin(current-halfWindow); 
     }
 
-    //c = _hspect->GetBin(current); 
-    
-    //end = current + halfWindow; 
     Double_t next = pmarrayX[index[i+1]]; 
     Double_t difference = next - current; 
-    std::cout << "Next:Current::" << next << " " << current << " Differece:" << difference << " I:" << i << std::endl; 
+    std::cout << "Next:Current::" << next << " " << current << " Difference:" << difference << " I:" << i << std::endl; 
     bool check = (difference < halfWindow) && ((i+1) < _pNFound); 
     if (check) {
       if (!inWindow) {
@@ -253,10 +239,9 @@ void PulseAnalysis::FindPeaksandReduce(Float_t window) {
     else {
       std::vector<UInt_t> startEndPair; 
       startEndPair.push_back(s); 
-      startEndPair.push_back(psbuffer->GetSpectrum()->GetBin(current+halfWindow)); 
+      startEndPair.push_back(psbuffer->GetWaveform()->GetBin(current+halfWindow)); 
       inWindow = false; 
-      startEndPairs.push_back(startEndPair); 
-
+      startEndPairs.push_back(startEndPair);
     }
     
   }
@@ -265,10 +250,8 @@ void PulseAnalysis::FindPeaksandReduce(Float_t window) {
   for (std::vector<vector<UInt_t> >::iterator it = startEndPairs.begin(); it != startEndPairs.end(); ++it) { 
     std::cout << "Start:End:Difference::" << (*it)[0] << ":" << (*it)[1] << ":" << (*it)[1] - (*it)[0] << std::endl; 
   }
-
-  //Double_t t0=((TH1D*)_tf->Get("T0"))->GetBinContent(1);
-  TH1F *reduced = new TH1F("_reduced","Pulse Spectrum;Time [ns];Amplitude [mV]",
-		    _nbins, _xmin, _xmax);
+  TH1F *reduced = (TH1F*)(psbuffer->GetWaveform()->Clone("_reduced"));
+  reduced->Reset();
 
   for (std::vector<vector<UInt_t> >::iterator it = startEndPairs.begin(); it != startEndPairs.end(); ++it) { 
     Double_t start = (*it)[0]; 
@@ -276,7 +259,7 @@ void PulseAnalysis::FindPeaksandReduce(Float_t window) {
     std::cout << "Setting Bins:" << start << ":" << end << std::endl; 
     UInt_t i = start; 
     do { 
-      reduced->SetBinContent(i,   psbuffer->GetSpectrum()->GetBinContent(i)); 
+      reduced->SetBinContent(i,   psbuffer->GetWaveform()->GetBinContent(i)); 
       i++; 
     }
     while (i < end); 

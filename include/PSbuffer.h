@@ -37,6 +37,7 @@ class PSbuffer : public TObject {
   Double_t DV() {return dV;}
   void SetDV(Double_t dv) {dV=dv;}
   Double_t DCoffset() const {return dcOffset;}
+  Double_t Samples() const {return waveBuffer->GetNbinsX();}
   /// default setting time does from 0..dT*nbins
   void InitWaveform(Int_t nbins, Float_t max=0, Float_t min=0);
   TH1F* GetWaveform() {return waveBuffer;}
