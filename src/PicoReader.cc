@@ -29,29 +29,25 @@ void psblock::Print(){
 }
 
 
-int PicoReader::Convert(TString infile, TString rootfile){
-
-  if (! infile.EndsWith(".mat") ) {
-    cout << "PicoReader::Convert : Unknown file type: "<<infile<<endl;
-    return 1;
-  }
-  cout << "Converting PicoScope data to ROOT file: " << infile << endl;
-
-  // slighty dangerous assumption about file name conventions
-  if (rootfile=="") {
-    rootfile=infile;
-    rootfile.ReplaceAll(".mat",".root");
-  }
-
-  return ConvertMatFile(infile,rootfile);
-}
-
 //----------------------------------------------------------------------
 // TMATLAB Files 
 //----------------------------------------------------------------------
 
 int PicoReader::ConvertMatFile(TString matfile, TString rootfile) { 
   debug("Converting %s",matfile.Data() );
+
+  if (! matfile.EndsWith(".mat") ) {
+    cout << "PicoReader::Convert : Unknown file type: "<<matfile<<endl;
+    return 1;
+  }
+  cout << "Converting PicoScope data to ROOT file: " << matfile << endl;
+
+  // slighty dangerous assumption about file name conventions
+  if (rootfile=="") {
+    rootfile=matfile;
+    rootfile.ReplaceAll(".mat",".root");
+  }
+
   TFile f(rootfile, "RECREATE"); 
 
   // new format

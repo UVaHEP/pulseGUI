@@ -31,12 +31,11 @@ static int callback(const char *fpath, const struct stat *sb, int typeflag) {
         for (unsigned i = 0; i < sizeof(filters) / sizeof(filters[0]); i++) {
             /* if the filename matches the filter, */
             if (fnmatch(filters[i], fpath, FNM_CASEFOLD) == 0) {
-	      reader.Convert(fpath);
+	      reader.ConvertMatFile(fpath);
 	      break;
             }
         }
     }
-
     /* tell ftw to continue */
     return 0;
 }
@@ -55,6 +54,6 @@ int main(int argc, char **argv) {
     ftw(argv[1], callback, 16);
   }
   else
-    return reader.Convert(argv[1]);
+    return reader.ConvertMatFile(argv[1]);
 }
 
