@@ -7,6 +7,7 @@
 #include "TH1F.h"
 #include "TFile.h"
 #include "TObject.h"
+#include "TCollection.h"
 
 
 #include <vector>
@@ -46,6 +47,7 @@ class PSbuffer : public TObject {
   void Analyze();
   void Print();
 };
+
 
 
 #endif

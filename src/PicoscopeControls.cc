@@ -48,42 +48,10 @@ static std::vector<std::pair<TString, PS6000_RANGE> > voltages = {
 };
 
 
-/*static std::vector<std::pair<TString, unsigned long> > timeDivs = { 
-  std::pair<TString, unsigned long>("1 ns", 1),
-  std::pair<TString, unsigned long>("2 ns", 2),
-  std::pair<TString, unsigned long>("5 ns", 5),
-  std::pair<TString, unsigned long>("10 ns", 10),
-  std::pair<TString, unsigned long>("20 ns", 20),
-  std::pair<TString, unsigned long>("50 ns", 50),
-  std::pair<TString, unsigned long>("100 ns", 100),
-  std::pair<TString, unsigned long>("200 ns", 200),
-  std::pair<TString, unsigned long>("500 ns", 500),
-  std::pair<TString, unsigned long>("1 us", 1000),
-  std::pair<TString, unsigned long>("2 us", 2e3),
-  std::pair<TString, unsigned long>("5 us", 5e3),
-  std::pair<TString, unsigned long>("10 us", 10e3),
-  std::pair<TString, unsigned long>("20 us", 20e3),
-  std::pair<TString, unsigned long>("50 us", 50e3),
-  std::pair<TString, unsigned long>("100 us",100e3),
-  std::pair<TString, unsigned long>("200 us",200e3),
-  std::pair<TString, unsigned long>("500 us",500e3),
-  std::pair<TString, unsigned long>("1 ms", 1e6),
-  std::pair<TString, unsigned long>("2 ms", 2e6),
-  std::pair<TString, unsigned long>("5 ms", 5e6),
-  std::pair<TString, unsigned long>("10 ms", 10e6),
-  std::pair<TString, unsigned long>("20 ms", 20e6),
-  std::pair<TString, unsigned long>("50 ms", 50e6),
-  std::pair<TString, unsigned long>("100 ms", 100e6),
-  std::pair<TString, unsigned long>("200 ms", 200e6),
-  std::pair<TString, unsigned long>("500 ms", 500e6)
-  }; */
-  
-  
-
 PicoscopeControls::PicoscopeControls() { 
 
   _ps.open(); 
-
+  _buffers = new TList(); 
 
   _hintsn = new TGLayoutHints(kLHintsNormal, 2,2,2,2); 
   _hintsy = new TGLayoutHints(kLHintsNormal|kLHintsExpandY, 2,2,2,2); 
@@ -91,13 +59,25 @@ PicoscopeControls::PicoscopeControls() {
 					     kLHintsExpandX | kLHintsExpandY, 
 					     5, 5, 5, 5); 
 
+
+
   TGDimension itemSize; 
   std::cout << "Initialising Window" << std::endl; 
   
   _mf = new TGMainFrame(NULL,win_x,win_y, kHorizontalFrame);
   _mf->SetWindowName("PicoScope Controls"); 
-  
 
+  //Would prefer to have colored text indicating connected/disconnected status
+  TGString connected = TGString("Picoscope\nNot connected"); 
+  _connectionStatus = new TGLabel(_mf, connected); 
+  _connectionStatus->SetTextColor(0xFF0000); 
+  if (_ps.connected()) {
+    _connectionStatus->SetText(TGString("Picoscope\nConnected")); 
+    _connectionStatus->SetTextColor(0x008000); 
+  }
+    
+
+  _mf->AddFrame(_connectionStatus, _hintse); 
   //Channel Frame
   _channelF = new TGGroupFrame(_mf, "Channels", kHorizontalFrame); 
   _channelB = new TGComboBox(_channelF, 100); 
@@ -143,21 +123,6 @@ PicoscopeControls::PicoscopeControls() {
 
   _mf->AddFrame(_couplingF,_hintse); 
 
-  /*
-  _timeF = new TGGroupFrame(_mf, "Time Div", kHorizontalFrame);
-  _timeB = new TGComboBox(_timeF, 100); 
-  _timeB->Connect("Selected(Int_t)", "PicoscopeControls", this, "timedivHandler(Int_t , Int_t)"); 
-  for (auto i = 0; i < timeDivs.size(); i++) { 
-
-    _timeB->AddEntry(timeDivs[i].first, i); 
-
-  }
-  _timeB->Resize(150, 20); 
-  _timeB->Select(1); 
-  _timeF->AddFrame(_timeB, _hintse); 
-  _mf->AddFrame(_timeF, _hintse); 
-  */
-
   //Sampling Interval
   _sampleInterval = new TGNumberEntry(_mf, 0, 5, 5, TGNumberFormat::kNESInteger); 
   _sampleInterval->Connect("ValueSet(Long_t)", "PicoscopeControls", this, "sampleIntervalHandler(Long_t)"); 
@@ -184,6 +149,18 @@ PicoscopeControls::PicoscopeControls() {
   // Test Run Button
   _runBtn = new TGTextButton(_mf, TGHotString("Capture Block!"), 5); 
   _runBtn->Connect("Clicked()", "PicoscopeControls", this, "testRun()"); 
+
+  //Trigger Button and Entry
+  _triggerLevel = new TGNumberEntry(_mf, 0, 5, 5, TGNumberFormat::kNESInteger); 
+  _triggerLevel->Connect("ValueSet(Long_t)", "PicoscopeControls", this, "triggerLevelHandler(Long_t)"); 
+  _mf->AddFrame(_triggerLevel, _hintse); 
+
+  _triggerLabel = new TGLabel(_mf, TGString("Trigger Level")); 
+  _mf->AddFrame(_triggerLabel, _hintse); 
+  _triggerEnableBtn = new TGTextButton(_mf, TGHotString("Trigger Off"), 5); 
+  _triggerEnableBtn->Connect("Clicked()", "PicoscopeControls", this, "triggerButton()"); 
+  _mf->AddFrame(_triggerEnableBtn, _hintse); 
+
   _mf->AddFrame(_runBtn, _hintse); 
   _mf->MapSubwindows(); 
   _mf->Resize(_mf->GetDefaultSize()); 
@@ -282,13 +259,23 @@ void PicoscopeControls::testRun() {
 
   _ps.setTrigger(500, PS6000_FALLING); 
 
-  std::function<void(picoscope::picoscopeData *)> l = [](picoscope::picoscopeData *data) {
-      std::cout << "Called back with data. Generating ps buffers" << std::endl; 
-      
+  
+
+  /*This is pretty ugly, here's an explanation: 
+    I need a pointer to a function to pass in as a callback, so I'm creating a simple lambda that calls the member function callBack of our 
+    local PicoscopeControls object. I have to wrap it in the std::function initializer so that it'll get allocated on the heap rather than 
+    on the stack. Hence the ugliness. 
+   */
+  std::function<void(picoscope::picoscopeData *)> *cB = new std::function<void(picoscope::picoscopeData *)>([this](picoscope::picoscopeData *d) { callBack(d);}); 
+  _ps.setCallback(cB); 
+  _ps.takeRun();
+
+}
+
+void PicoscopeControls::callBack(picoscope::picoscopeData *data) { 
+
 
       PSbuffer *ps = new PSbuffer(); 
-
-      
 
       //Most of these objects are probably getting copied around, so after you get it working think about what's going on and make it nicer!
 
@@ -299,15 +286,10 @@ void PicoscopeControls::testRun() {
       picoscope::samplingSettings timeSettings = data->second; 
 
 
-      std::cout << std::endl; 
-      for (unsigned int i = 0; i < 2000; i++) { 
+      /*      for (unsigned int i = 0; i < 2000; i++) { 
 	int32_t mV = picoscope::adcToMv(waveform->at(i), waveformSettings.range()); 
-	if ((i % 20) == 0) 
-	  std::cout << std::endl; 
+	}*/
 
-	std::cout << mV << " "; 
-      }
-      std::cout << std::endl; 
       std::cout << "Waveform count:" << waveform->size() << " Waveform Range:" << waveformSettings.range() << std::endl; 
       std::cout << "Trigger count:" << trigger->size() << " Trigger Range:" << triggerSettings.range() << std::endl; 
 
@@ -361,21 +343,22 @@ void PicoscopeControls::testRun() {
       }
       ps->Analyze();  // calculate DC offset, frequency spectrum, noise, etc*/
       ps->Print(); 
+      
 
+      _buffers->AddLast(ps); 
 
-      TFile f2("psbuffertest.root", "RECREATE");
+      delete data; 
+
+      /*      TFile f2("psbuffertest.root", "RECREATE");
       ps->Write(); 
       f2.Write(); 
-      f2.Close(); 
+      f2.Close(); */
 
-  };
 
-  _ps.setCallback(&l); 
-  _ps.takeRun();
+
+
 
 }
-
-
 
 
 TString PicoscopeControls::prettyPrintWindow() { 
@@ -457,9 +440,34 @@ TString PicoscopeControls::prettyPrintInterval() {
  }
 
 
+void PicoscopeControls::triggerButton() { 
 
 
 
+  TString btn = _triggerEnableBtn->GetString(); 
+  std::cout << "Trigger button text:" << btn << std::endl; 
+  if (btn.Contains("Trigger Off")) {
+    std::cout << "Enabling Trigger" << std::endl;     
+    _triggerEnableBtn->SetText("Trigger On"); 
+    _ps.setTrigger(_triggerLevel->GetIntNumber(), PS6000_FALLING); 
+
+  }
+  else {
+    std::cout << "Disabling Trigger" << std::endl;     
+    _triggerEnableBtn->SetText("Trigger Off"); 
+    _ps.disableTrigger(); 
+  }    
+  
+
+
+
+}
+
+void PicoscopeControls::triggerLevelHandler(Long_t val) {
+
+  std::cout << "Trigger Level:" << _triggerLevel->GetIntNumber() << std::endl; 
+
+}
 
 
 

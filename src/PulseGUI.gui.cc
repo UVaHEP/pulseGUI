@@ -41,6 +41,12 @@ void PulseGUI::MakeButtons(){
   loadBN->SetToolTipText("Select input ROOT file", 2000);
   vframe1->AddFrame(loadBN, new TGLayoutHints(kLHintsTop | kLHintsExpandX,
 					      2,0,2,2));
+  
+  captureBN = new TGTextButton(vframe1, "&Capture Block"); 
+  captureBN->SetTextColor(blue); 
+  captureBN->Connect("Clicked()", "PulseGUI", this, "OpenPicoscopeControls()"); 
+  captureBN->SetToolTipText("Capture a block from a connected Picoscope", 2000); 
+  vframe1->AddFrame(captureBN, new TGLayoutHints(kLHintsTop | kLHintsExpandX, 2,0,2,2)); 
   FButton->AddFrame(vframe1, new TGLayoutHints(kLHintsCenterX,2,2,5,1));
 
   /*  // Convert Data File

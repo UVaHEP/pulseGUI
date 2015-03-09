@@ -189,3 +189,12 @@ void PulseGUI::Analyze() {
   FMain->MapWindow(); 
 }
 
+
+void PulseGUI::OpenPicoscopeControls() { 
+
+  std::cout << "Opening picoscope controls" << std::endl; 
+
+
+
+
+}

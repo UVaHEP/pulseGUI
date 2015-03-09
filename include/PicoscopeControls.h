@@ -21,8 +21,11 @@
 #ifndef __CINT__
 #include "picoscopeDriver.h"
 #else
-class picoscope; 
+class picoscope { 
+  class picoscopeData; 
+};
 #endif
+
 
 
 class PicoscopeControls : public TQObject  { 
@@ -34,7 +37,7 @@ private:
   picoscope _ps; 
 
 
-
+  TGLabel *_connectionStatus; 
 
   TGLayoutHints *_hintsn; 
   TGLayoutHints *_hintsy; 
@@ -58,10 +61,17 @@ private:
   TGLabel *_windowLabel; 
 
   TGTextButton *_runBtn; 
-
+  
+  TGNumberEntry *_triggerLevel; 
+  TGLabel *_triggerLabel; 
+  //  TGPictureButton *_triggerEnableBtn; 
+  TGTextButton *_triggerEnableBtn; 
   
   TGMainFrame *_mf; 
   //  TGMainFrame *_otherApp; 
+
+  TList *_buffers; 
+
 
   public: 
 
@@ -79,12 +89,20 @@ private:
   void couplingHandler(Int_t selection, Int_t widgetID);
 
   void timedivHandler(Int_t selection, Int_t widgetID);
+  void triggerButton(); 
+  void triggerLevelHandler(Long_t val);
   void testRun(); 
+  TList* Buffers() { return _buffers; }; 
+
+  void callBack(picoscope::picoscopeData *data); 
 
 }; 
 
 
 #endif 
+
+
+
 
 
 

@@ -43,7 +43,7 @@ private:
   TGStatusBar           *SpectStatusBar;
   TGNumberEntry         *ThreshNum;
   TGNumberEntry         *WidthNum;
-
+  
   //Storage + Main root stuff 
   //  TCanvas *mainCanvas; 
   //  TCanvas *anaCanvas;
@@ -52,7 +52,7 @@ private:
   TGTextButton  *loadBN, *convertBN, *threshBN, *threshNumBN, *widthBN, *measureBN,
     *responseBN, *getBKGBN, *subBKGBN, *findPeaksBN, *analyzeBN,
     *writePeaksBN, *zoomOutBN,*UnZoomBN, *zoomInBN, *shiftLeftBN,
-    *shiftRightBN, *resetBN, *exitBN, *smoothBN;
+    *shiftRightBN, *resetBN, *exitBN, *smoothBN, *captureBN;
 
   TGTextButton  *ShowHideBN;
   Bool_t        show;
@@ -96,6 +96,7 @@ public:
 
   void OpenFileDialog(); 
   void LoadSpectrum(TString fName);
+  void OpenPicoscopeControls(); 
   void AnaClean();
   void CleanupAndClose(); 
   void setupInfoPad(); 
