@@ -39,7 +39,7 @@ void PulseAnalysis::Analyze(){
 
   int count0=0, count1=0, count2=0, count3=0;
   int fivepct=_pNFound/20;
-
+  
   debug("starting peak integrals");
   double sumv, sumt, sum2t;
   for(int i=0;i<_pNFound;++i) {
@@ -81,7 +81,7 @@ void PulseAnalysis::Analyze(){
     }
     _pInteg[i]=sumv/psbuffer->Dt()/1000;                                          // convert mV->V
     _pRMS[i]=Sqrt( TMath::Abs(sum2t/sumv - sumt*sumt/sumv/sumv) );     // RMS width of peak
-    cout << _pRMS[i] << "  " << sum2t/sumv << "  "  << sumt*sumt/sumv/sumv << endl;
+    //  cout << _pRMS[i] << "  " << sum2t/sumv << "  "  << sumt*sumt/sumv/sumv << endl;
 
     if (_pInteg[i]>maxInt) maxInt = _pInteg[i];
 

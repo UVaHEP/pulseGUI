@@ -16,9 +16,11 @@ using std::endl;
 
 PulseAnalysis::PulseAnalysis(PSbuffer *buffer){
   SetBuffer(buffer);
+  Init();
 }
 
 PulseAnalysis::PulseAnalysis() {
+  Init();
 }
 
 void PulseAnalysis::Init(){
@@ -27,7 +29,7 @@ void PulseAnalysis::Init(){
   _hph.SetName("hph");
   _hph.SetTitle("Pulse Height;[mV];Entries");
   _hpi.SetName("hpi");
-  _hpi.SetTitle("Pulse Integral;[V#cdot ns];Entries");
+  _hpi.SetTitle("Pulse Integral;[V#upoint ns];Entries");
   _hprms.SetName("hprms");
   _hprms.SetTitle("Pulse RMW Width;[ns];Entries");
 }
@@ -42,7 +44,7 @@ void PulseAnalysis:: SetBuffer(PSbuffer *buffer){
   Clear();
   psbuffer=buffer;
   double dT=psbuffer->Dt();
-  _hdt.SetBins(201,-dT/2,3/_pulseRate*1000+dT/2);
+  _hdt.SetBins(201,-dT/2,8000*dT+dT/2);
   TH1F *waveBuffer=psbuffer->GetWaveform();
   double pMax = waveBuffer->GetBinContent(waveBuffer->GetMaximumBin());
   _hph.SetBins(100,0,pMax*1.1); 
