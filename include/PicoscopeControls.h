@@ -15,12 +15,14 @@
 #include "TGComboBox.h" 
 #include "TGLabel.h"
 #include "TMath.h"
+#include "TGButtonGroup.h"
 #include "PSbuffer.h"
 #include <functional>
 
 #ifndef __CINT__
 #include "picoscopeDriver.h"
 #else
+#include 
 class picoscope { 
   class picoscopeData; 
 };
@@ -48,11 +50,12 @@ private:
   TGGroupFrame *_couplingF; 
   TGComboBox *_couplingB; 
 
-  TGGroupFrame *_channelF;
-  TGComboBox *_channelB; 
-  
-  //  TGComboBox *_timeB; 
-  //  TGGroupFrame *_timeF; 
+  TGVButtonGroup *_channels; 
+
+  TGGroupFrame *_timeSamplingF; 
+  TGGroupFrame *_voltageCouplingF; 
+  TGGroupFrame *_channelStatusF; 
+  TGGroupFrame *_triggerRunF; 
 
   TGNumberEntry *_sampleInterval; 
   TGLabel *_intervalLabel; 
@@ -64,14 +67,17 @@ private:
   
   TGNumberEntry *_triggerLevel; 
   TGLabel *_triggerLabel; 
-  //  TGPictureButton *_triggerEnableBtn; 
+
   TGTextButton *_triggerEnableBtn; 
+  TGTextButton *_writeBuffersBtn; 
   
   TGMainFrame *_mf; 
-  //  TGMainFrame *_otherApp; 
+
 
   TList *_buffers; 
-
+  #ifndef __CINT__
+  PS6000_CHANNEL _selectedChannel; 
+  #endif
 
   public: 
 
@@ -92,6 +98,8 @@ private:
   void triggerButton(); 
   void triggerLevelHandler(Long_t val);
   void testRun(); 
+  void writeBuffersToDisk();
+
   TList* Buffers() { return _buffers; }; 
 
   void callBack(picoscope::picoscopeData *data); 

@@ -7,8 +7,8 @@
 #include <utility> 
 
 
-static const unsigned int win_x = 800; 
-static const unsigned int win_y = 600; 
+static const unsigned int win_x = 900; 
+static const unsigned int win_y = 50; 
 
 static const unsigned int voltage_y = 100; 
 
@@ -67,34 +67,39 @@ PicoscopeControls::PicoscopeControls() {
   _mf = new TGMainFrame(NULL,win_x,win_y, kHorizontalFrame);
   _mf->SetWindowName("PicoScope Controls"); 
 
-  //Would prefer to have colored text indicating connected/disconnected status
+  _channelStatusF = new TGGroupFrame(_mf, "Status and Channels", kHorizontalFrame); 
+
   TGString connected = TGString("Picoscope\nNot connected"); 
-  _connectionStatus = new TGLabel(_mf, connected); 
+  _connectionStatus = new TGLabel(_channelStatusF, connected); 
   _connectionStatus->SetTextColor(0xFF0000); 
   if (_ps.connected()) {
     _connectionStatus->SetText(TGString("Picoscope\nConnected")); 
     _connectionStatus->SetTextColor(0x008000); 
   }
-    
 
-  _mf->AddFrame(_connectionStatus, _hintse); 
+  _channelStatusF->AddFrame(_connectionStatus, _hintse); 
+
+
   //Channel Frame
-  _channelF = new TGGroupFrame(_mf, "Channels", kHorizontalFrame); 
-  _channelB = new TGComboBox(_channelF, 100); 
 
+  _channels = new TGVButtonGroup(_channelStatusF, "Channels"); 
   for (auto i = 0; i < channels.size(); i++) { 
-    _channelB->AddEntry(channels[i].first, i); 
+    auto channel = new TGRadioButton(_channels, TGHotString(channels[i].first), i); 
   }
-
-  _channelB->Resize(150, 20); 
-  _channelB->Select(1); 
-  _channelB->Connect("Selected(Int_t)", "PicoscopeControls", this, "channelHandler(Int_t , Int_t)"); 
-  _channelF->AddFrame(_channelB, _hintse); 
-  _mf->AddFrame(_channelF,_hintse);  
+  _channels->SetButton(0); 
+  _selectedChannel = PS6000_CHANNEL_A; 
+  _channels->Connect("Clicked(Int_t)", "PicoscopeControls", this, "channelHandler(Int_t , Int_t)"); 
+  _channels->DrawBorder(); 
+  _channelStatusF->AddFrame(_channels, _hintsn); 
   
+  _channelStatusF->MapSubwindows(); 
+  _channelStatusF->Resize(_channelStatusF->GetDefaultSize()); 
+  _mf->AddFrame(_channelStatusF, _hintsn); 
+  
+  _voltageCouplingF = new TGGroupFrame(_mf, "Voltage and Coupling"); 
 
   // Voltage Frame 
-  _voltageF = new TGGroupFrame(_mf, "Voltages", kHorizontalFrame); 
+  _voltageF = new TGGroupFrame(_voltageCouplingF, "Voltages", kHorizontalFrame); 
   _voltageB = new TGComboBox(_voltageF, 100); 
   
   for (auto i = 0; i < voltages.size(); i++) { 
@@ -105,11 +110,11 @@ PicoscopeControls::PicoscopeControls() {
   _voltageB->Select(1); 
   _voltageB->Connect("Selected(Int_t)", "PicoscopeControls", this, "voltageHandler(Int_t , Int_t)"); 
   _voltageF->AddFrame(_voltageB, _hintse); 
-  _mf->AddFrame(_voltageF,_hintse);  
+  _voltageCouplingF->AddFrame(_voltageF,_hintse);  
 
   //Coupling Frame 
 
-  _couplingF = new TGGroupFrame(_mf, "Coupling", kHorizontalFrame);
+  _couplingF = new TGGroupFrame(_voltageCouplingF, "Coupling", kHorizontalFrame);
   _couplingB = new TGComboBox(_couplingF, 100);
   _couplingB->Connect("Selected(Int_t)", "PicoscopeControls", this, "couplingHandler(Int_t , Int_t)"); 
   for (auto i = 0; i < couplingTypes.size(); i++) { 
@@ -121,47 +126,60 @@ PicoscopeControls::PicoscopeControls() {
 
   _couplingF->AddFrame(_couplingB,_hintse); 
 
-  _mf->AddFrame(_couplingF,_hintse); 
+  _voltageCouplingF->AddFrame(_couplingF,_hintse); 
+
+  _mf->AddFrame(_voltageCouplingF, _hintsn); 
+
+  _timeSamplingF = new TGGroupFrame(_mf, "Time and Sampling"); 
 
   //Sampling Interval
-  _sampleInterval = new TGNumberEntry(_mf, 0, 5, 5, TGNumberFormat::kNESInteger); 
+  _sampleInterval = new TGNumberEntry(_timeSamplingF, 0, 5, 5, TGNumberFormat::kNESInteger); 
   _sampleInterval->Connect("ValueSet(Long_t)", "PicoscopeControls", this, "sampleIntervalHandler(Long_t)"); 
-  _mf->AddFrame(_sampleInterval, _hintse); 
+  _timeSamplingF->AddFrame(_sampleInterval, _hintsn); 
 
-  _intervalLabel = new TGLabel(_mf, TGString(prettyPrintInterval())); 
+  _intervalLabel = new TGLabel(_timeSamplingF, TGString(prettyPrintInterval())); 
   
-  _mf->AddFrame(_intervalLabel, _hintse); 
+  _timeSamplingF->AddFrame(_intervalLabel, _hintsn); 
   
 
   //Sampling Number
-  _sampleNumber = new TGNumberEntry(_mf, 1e4, 5, 5, TGNumberFormat::kNESInteger); 
+  _sampleNumber = new TGNumberEntry(_timeSamplingF, 1e4, 5, 5, TGNumberFormat::kNESInteger); 
   _sampleNumber->Connect("ValueSet(Long_t)", "PicoscopeControls", this, "sampleNumberHandler(Long_t)"); 
-  _mf->AddFrame(_sampleNumber, _hintse); 
+  _timeSamplingF->AddFrame(_sampleNumber, _hintsn); 
 
 
-  TGLabel *sampleLabel = new TGLabel(_mf, TGString("# Samples")); 
-  _mf->AddFrame(sampleLabel, _hintse); 
+  TGLabel *sampleLabel = new TGLabel(_timeSamplingF, TGString("# Samples")); 
+  _timeSamplingF->AddFrame(sampleLabel, _hintsn); 
 
-  _windowLabel = new TGLabel(_mf, TGString(prettyPrintWindow())); 
-  _mf->AddFrame(_windowLabel, _hintse); 
-  
+  _windowLabel = new TGLabel(_timeSamplingF, TGString(prettyPrintWindow())); 
+  _timeSamplingF->AddFrame(_windowLabel, _hintsn); 
 
+  _mf->AddFrame(_timeSamplingF, _hintsy); 
+
+
+  _triggerRunF = new TGGroupFrame(_mf, "Trigger and Run", kVerticalFrame); 
   // Test Run Button
-  _runBtn = new TGTextButton(_mf, TGHotString("Capture Block!"), 5); 
+  _runBtn = new TGTextButton(_triggerRunF, TGHotString("Capture Block!"), 4); 
   _runBtn->Connect("Clicked()", "PicoscopeControls", this, "testRun()"); 
 
   //Trigger Button and Entry
-  _triggerLevel = new TGNumberEntry(_mf, 0, 5, 5, TGNumberFormat::kNESInteger); 
+  _triggerLevel = new TGNumberEntry(_triggerRunF, 0, 5, 5, TGNumberFormat::kNESInteger); 
   _triggerLevel->Connect("ValueSet(Long_t)", "PicoscopeControls", this, "triggerLevelHandler(Long_t)"); 
-  _mf->AddFrame(_triggerLevel, _hintse); 
+  _triggerRunF->AddFrame(_triggerLevel, _hintsn); 
 
-  _triggerLabel = new TGLabel(_mf, TGString("Trigger Level")); 
-  _mf->AddFrame(_triggerLabel, _hintse); 
-  _triggerEnableBtn = new TGTextButton(_mf, TGHotString("Trigger Off"), 5); 
+  _triggerLabel = new TGLabel(_triggerRunF, TGString("Trigger Level")); 
+  _triggerRunF->AddFrame(_triggerLabel, _hintsn); 
+  _triggerEnableBtn = new TGTextButton(_triggerRunF, TGHotString("Trigger Off"), 5); 
   _triggerEnableBtn->Connect("Clicked()", "PicoscopeControls", this, "triggerButton()"); 
-  _mf->AddFrame(_triggerEnableBtn, _hintse); 
+  _triggerRunF->AddFrame(_triggerEnableBtn, _hintsn); 
 
-  _mf->AddFrame(_runBtn, _hintse); 
+  _triggerRunF->AddFrame(_runBtn, _hintsn); 
+
+  _writeBuffersBtn = new TGTextButton(_triggerRunF, TGHotString("Write Buffers to Disk"), 6); 
+  _writeBuffersBtn->Connect("Clicked()", "PicoscopeControls", this, "writeBuffersToDisk()"); 
+  _triggerRunF->AddFrame(_writeBuffersBtn, _hintsn); 
+  
+  _mf->AddFrame(_triggerRunF, _hintsy); 
   _mf->MapSubwindows(); 
   _mf->Resize(_mf->GetDefaultSize()); 
   _mf->MapWindow();
@@ -176,8 +194,13 @@ PicoscopeControls::~PicoscopeControls() {
 }
 
 void PicoscopeControls::channelHandler(Int_t selection, Int_t widgetID) {
-  PICO_STATUS status; 
-  TGLBEntry *box = _channelB->GetSelectedEntry(); 
+
+  //std::cout << "Channel Selection:" << selection << " Widget: " << widgetID << std::endl; 
+  _selectedChannel = channels[selection].second; 
+
+  /* 
+     PICO_STATUS status; 
+     TGLBEntry *box = _channelB->GetSelectedEntry(); 
   if (_ps.Channel(channels[selection].second).enabled()) {
     status = _ps.disableChannel(channels[selection].second); 
     box->SetBackgroundColor(0xffffff); 
@@ -189,20 +212,21 @@ void PicoscopeControls::channelHandler(Int_t selection, Int_t widgetID) {
 
   if (status  != PICO_OK) { 
     std::cout << "Channel failed to get enabled:" << channels[selection].first << std::endl; 
-  }
+    }*/
 
 }
 
 void PicoscopeControls::voltageHandler(Int_t selection, Int_t widgetID) { 
 
-  std::cout << voltages[selection].first << " " << _ps.Channel(channels[_channelB->GetSelected()].second).name() << std::endl; 
+  std::cout << voltages[selection].first << " " << _ps.Channel(channels[_selectedChannel].second).name() << std::endl; 
 
-  picoscope::channel ch = _ps.Channel(channels[_channelB->GetSelected()].second); 
-  ch.setChannelRange(voltages[selection].second); 
+  picoscope::channel ch = _ps.Channel(channels[_selectedChannel].second); 
+  ch.setRange(voltages[selection].second); 
 
-  PICO_STATUS status = _ps.setAndEnableChannel(ch); 
+  _ps.setChannelSettings(ch); 
+  PICO_STATUS status = _ps.enableChannel(ch.name()); 
   if (status != PICO_OK) 
-    std::cout << "Error setting or enabling channel " << channels[_channelB->GetSelected()].first << std::endl; 
+    std::cout << "Error setting or enabling channel " << channels[_selectedChannel].first << std::endl; 
 
 
   
@@ -210,12 +234,12 @@ void PicoscopeControls::voltageHandler(Int_t selection, Int_t widgetID) {
 
 void PicoscopeControls::couplingHandler(Int_t selection, Int_t widgetID)  {
   std::cout << couplingTypes[selection].first << std::endl; 
-  picoscope::channel ch = _ps.Channel(channels[_channelB->GetSelected()].second); 
-  ch.setChannelCoupling(couplingTypes[selection].second); 
-  PICO_STATUS status = _ps.setAndEnableChannel(ch); 
-
+  picoscope::channel ch = _ps.Channel(channels[_selectedChannel].second); 
+  ch.setCoupling(couplingTypes[selection].second); 
+  _ps.setChannelSettings(ch); 
+  PICO_STATUS status = _ps.enableChannel(ch.name()); 
   if (status  != PICO_OK) { 
-    std::cout << "Failed enabling channel:" << channels[_channelB->GetSelected()].first << std::endl; 
+    std::cout << "Failed enabling channel:" << channels[_selectedChannel].first << std::endl; 
   }
 
 
@@ -256,10 +280,8 @@ void PicoscopeControls::testRun() {
   std::cout << "Taking a run and then closing the picoscope." << std::endl; 
   std:: cout << "test Run ps address:" << &_ps << std::endl; 
   std::cout << "Timebase\tSampleNumber\n" << _sampleInterval->GetIntNumber() << "\t" << _sampleNumber->GetIntNumber() << std::endl; 
-
-  _ps.setTrigger(500, PS6000_FALLING); 
-
-  
+  _ps.enableBandwidthLimit(PS6000_CHANNEL_A); 
+  _ps.enableChannel(PS6000_CHANNEL_A); 
 
   /*This is pretty ugly, here's an explanation: 
     I need a pointer to a function to pass in as a callback, so I'm creating a simple lambda that calls the member function callBack of our 
@@ -295,7 +317,7 @@ void PicoscopeControls::callBack(picoscope::picoscopeData *data) {
 
 
       ps->SetT0(0); 
-      ps->SetDt(timeSettings.TimeIntervalNS()); 
+      ps->SetDt(timeSettings.timeIntervalNS()); 
       //Fill waveform with data 
 
 
@@ -326,15 +348,27 @@ void PicoscopeControls::callBack(picoscope::picoscopeData *data) {
       // set trigger point and hysterisis
       // WARNING!  This may fail in case of bad terminations
       // *** TODO:  Use t0 vs t=0  to find 1st trigger bin and gte threshold there ***
+
+
+      // mark triggers
+      Float_t mV; 
+      for (UInt_t i = 0; i < trigger->size(); i++) {
+
+	mV = picoscope::adcToMv(trigger->at(i), triggerSettings.range()); 
+	min = TMath::Min(min, mV); 
+	max = TMath::Max(max, mV); 
+      }
+
+
+      Bool_t fired = false;
       Float_t onThreshold = max*0.5; 
       Float_t offThreshold = max*0.3; 
       std::cout << "On Threshold:"   << onThreshold 
       << " Off Threshold:" << offThreshold << std::endl;
 
-      Bool_t fired = false;
-      // mark triggers
-      for (UInt_t i = 0; i < trigger->size(); i++) {
-	int32_t mV = picoscope::adcToMv(trigger->at(i), triggerSettings.range()); 
+
+      for (UInt_t i = 0; i < trigger->size(); i++) { 
+	mV = picoscope::adcToMv(trigger->at(i), triggerSettings.range()); 
 	if (!fired && mV>onThreshold) {
 	  fired = true;
 	  ps->AddTrig(i);
@@ -348,13 +382,6 @@ void PicoscopeControls::callBack(picoscope::picoscopeData *data) {
       _buffers->AddLast(ps); 
 
       delete data; 
-
-      /*      TFile f2("psbuffertest.root", "RECREATE");
-      ps->Write(); 
-      f2.Write(); 
-      f2.Close(); */
-
-
 
 
 
@@ -449,7 +476,10 @@ void PicoscopeControls::triggerButton() {
   if (btn.Contains("Trigger Off")) {
     std::cout << "Enabling Trigger" << std::endl;     
     _triggerEnableBtn->SetText("Trigger On"); 
-    _ps.setTrigger(_triggerLevel->GetIntNumber(), PS6000_FALLING); 
+    _ps.setTriggerLevel(_triggerLevel->GetIntNumber()); 
+    _ps.setTriggerDirection(PS6000_RISING); 
+    _ps.setTriggerChannel(PS6000_CHANNEL_B); 
+    _ps.enableTrigger(); 
 
   }
   else {
@@ -467,8 +497,34 @@ void PicoscopeControls::triggerLevelHandler(Long_t val) {
 
   std::cout << "Trigger Level:" << _triggerLevel->GetIntNumber() << std::endl; 
 
+  _ps.setTriggerLevel(_triggerLevel->GetIntNumber()); 
+
 }
 
+void PicoscopeControls::writeBuffersToDisk() { 
 
+  TGFileInfo *fileInfo = new TGFileInfo; 
+  TGFileDialog *dialog = new TGFileDialog(gClient->GetRoot(), _mf, kFDOpen, fileInfo); 
+
+  if (fileInfo->fFilename == NULL) {
+    std::cout << "File selection cancelled." << std::endl; 
+    return; 
+  }
+  
+
+  if (_buffers && _buffers->First()) { 
+    TFile *f = new TFile(fileInfo->fFilename, "RECREATE"); 
+    _buffers->Write("PSbufferlist", 1); 
+    f->Write(); 
+    f->Close(); 
+  }
+  else 
+    std::cout << "No buffers to write!" << std::endl; 
+    
+
+
+
+
+}
 
 
