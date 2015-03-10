@@ -32,9 +32,17 @@ void PulseGUI::LoadSpectrum(TString fName){
     dataFile->Close(); 
     buffer = NULL; 
   }
+  if ( ! fName.EndsWith(".root") ){
+    log_warn("Only ROOT files accepted.  Convert your Picoscope buffer data first.");
+    return;
+  }
   
   dataFile = TFile::Open(fName); 
   buffer = (PSbuffer *) dataFile->Get("PSbuffer"); 
+  if (!buffer){
+    log_warn("No PSbuffer found.");
+    return;
+  }
   _analysis = new PulseAnalysis(buffer); 
 
   ConnectButtons(); 

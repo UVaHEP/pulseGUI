@@ -38,17 +38,13 @@ class PSBlock {
 
 class PicoReader{
  public:
-  //  PicoReader(){;}
-  int Convert(TString infile, TString rootfile="");
-  // PicoScope Binary MATLAB File
-  int ConvertMatFile(TString matfile, TString rootfile);
 
+  // PicoScope Binary MATLAB File
+  int ConvertMatFile(TString matfile, TString rootfile="");
+  PSbuffer* ReadMatFile(TString& filename);
   void Print(){;}
-  // PicoScope Text File
-  int ConvertTXTFile(TString datfile, TString rootfile);
+
  private:
-  psdata* ReadMatFile(TString& filename);
-  PSbuffer* ReadMatFile2(TString& filename);
   bool LocateBlock(vector<psblock> &blocks, TString name, psblock &block);
   vector<psblock> ReadBlocks(fstream& fin);
 };

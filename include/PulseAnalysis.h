@@ -18,7 +18,7 @@ class PulseAnalysis {
   const static  Int_t MAXPEAKS = 100000;  // max peaks considered in spectrum
   const  static double NSIGMA = 3.5;      // #_pSigma > noise for peak search threshold
   const static  double DEFAULT_ZOOM=1e4;  // default (minimum) zoom [ns]
-  #else
+#else
   constexpr static  Int_t MAXPEAKS = 100000;  // max peaks considered in spectrum
   constexpr  static double NSIGMA = 3.5;      // #_pSigma > noise for peak search threshold
   constexpr static  double DEFAULT_ZOOM=1e4;  // default (minimum) zoom [ns]
@@ -28,18 +28,11 @@ class PulseAnalysis {
   PSbuffer *psbuffer; // pico scope data buffer
   
   // Analysis Histograms
-  TH1F  *_hdt;   // delta time between peaks
-  TH1F  *_hph;   // spectrum of peak heights
-  TH1F  *_hpi;   // spectrum of peak integrals
-  TH1F  *_hprms; // RMS width of pulses
+  TH1F  _hdt;   // delta time between peaks
+  TH1F  _hph;   // spectrum of peak heights
+  TH1F  _hpi;   // spectrum of peak integrals
+  TH1F  _hprms; // RMS width of pulses
 
-  // Parameters for the current spectrum
-  Double_t _pMax; 
-  Double_t _pMin; 
-  Double_t _dT; 
-  Int_t _nbins;
-  Double_t _xmin, _xmax;
-  
   // simple baseline and noise model
   Double_t _basePar[2];
 
@@ -56,14 +49,15 @@ class PulseAnalysis {
 
 public:
   PulseAnalysis(); 
-  //  PulseAnalysis(TString fName=""); 
   PulseAnalysis(PSbuffer *buffer);
+  void Init();
   virtual ~PulseAnalysis(); 
 
-  void Clear();        // clear internal analysis data
-  void AnaClean();     // clear peak analysis histograms
-  void Reset();        // reset analysis for current spectrum
-
+  void Clear();        /// clear internal analysis data
+  void AnaClean();     /// clear peak analysis histograms
+  void Reset();        /// reset analysis for current spectrum
+  void SetBuffer(PSbuffer *buffer);  /// 
+  
   // Analysis tools
   void Analyze();
   TString FindPeaks(bool nodraw=false);
@@ -97,11 +91,11 @@ public:
   Double_t GetThreshold() { return _pThreshold;}
  
 
-
-  TH1F* Hdt() {return _hdt;}
-  TH1F* Hph() {return _hph;}
-  TH1F* Hpi() {return _hpi;}
-  TH1F* Hprms() {return _hprms;}
+  // derived histograms
+  TH1F* Hdt() {return &_hdt;}
+  TH1F* Hph() {return &_hph;}
+  TH1F* Hpi() {return &_hpi;}
+  TH1F* Hprms() {return &_hprms;}
 
 
 

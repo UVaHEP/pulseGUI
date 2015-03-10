@@ -4,8 +4,7 @@
 
 
 void PulseAnalysis::DrawSpectrum() { 
-  //Think this should be the waveform not the frequency spectrum
-  //  psbuffer->GetSpectrum()->Draw();
+
   psbuffer->GetWaveform()->Draw();
 }
 
@@ -65,7 +64,6 @@ void PulseAnalysis::leftShift(){
 void PulseAnalysis::rightShift(){ 
   debug();
   // Shift the spectrum viewport range to the left.
-
 
   int nbins=psbuffer->GetWaveform()->GetNbinsX();
   int first=psbuffer->GetWaveform()->GetXaxis()->GetFirst();
