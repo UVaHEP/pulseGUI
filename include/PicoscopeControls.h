@@ -4,6 +4,7 @@
 
 #include "RQ_OBJECT.h"
 #include "TGCanvas.h"
+#include "TCanvas.h"
 #include "TGFrame.h"
 #include "TGFileDialog.h"
 #include "TGNumberEntry.h"
@@ -16,6 +17,8 @@
 #include "TGLabel.h"
 #include "TMath.h"
 #include "TGButtonGroup.h"
+#include "TRootEmbeddedCanvas.h"
+#include "TTimer.h"
 #include "PSbuffer.h"
 #include <functional>
 
@@ -72,8 +75,16 @@ private:
   TGTextButton *_writeBuffersBtn; 
   
   TGMainFrame *_mf; 
+  
+  TGTextButton *_previewBtn; 
+  TGMainFrame *_previewF;
+
+  TListIter *_iter; 
+  TTimer *_timer; 
+  TRootEmbeddedCanvas *_canvas; 
 
 
+  TGTextButton *_playBtn; 
   TList *_buffers; 
   #ifndef __CINT__
   PS6000_CHANNEL _selectedChannel; 
@@ -98,6 +109,12 @@ private:
   void triggerButton(); 
   void triggerLevelHandler(Long_t val);
   void testRun(); 
+  void preview(); 
+  void previewCleanup();
+  void Play(); 
+  void Stop(); 
+  void NextWaveform(); 
+
   void writeBuffersToDisk();
 
   TList* Buffers() { return _buffers; }; 

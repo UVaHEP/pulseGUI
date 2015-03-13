@@ -36,12 +36,19 @@ void PulseGUI::LoadSpectrum(TString fName){
     log_warn("Only ROOT files accepted.  Convert your Picoscope buffer data first.");
     return;
   }
-  
+
+
   dataFile = TFile::Open(fName); 
-  buffer = (PSbuffer *) dataFile->Get("PSbuffer"); 
-  if (!buffer){
-    log_warn("No PSbuffer found.");
-    return;
+  TList *lst = (TList *) dataFile->Get("PSbufferlist"); 
+  if (lst) { 
+    buffer = (PSbuffer *) lst->First(); 
+  }
+  else {
+    buffer = (PSbuffer *) dataFile->Get("PSbuffer"); 
+    if (!buffer){
+      log_warn("No PSbuffer found.");
+      return;
+    }
   }
   _analysis = new PulseAnalysis(buffer); 
 
@@ -201,7 +208,12 @@ void PulseGUI::Analyze() {
 void PulseGUI::OpenPicoscopeControls() { 
 
   std::cout << "Opening picoscope controls" << std::endl; 
-
+  if (!_pscontrols)
+    _pscontrols = new PicoscopeControls; 
+  else {
+    delete _pscontrols; 
+    _pscontrols = new PicoscopeControls; 
+  }
 
 
 

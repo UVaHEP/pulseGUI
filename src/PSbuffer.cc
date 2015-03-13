@@ -60,7 +60,10 @@ void PSbuffer::Analyze(){
     meanHeight+=v;
   }
   meanHeight/=waveBuffer->GetNbinsX();
-  if (meanHeight<0) {
+  TString minMax = TString::Format("min:%f, max:%f\n", min, max); 
+  std::cout << minMax << std::endl; 
+  if (-1*min > max) { 
+  //if (meanHeight<0) {
     log_info("Negative pulses detected, inverting waveform.");
     waveBuffer->Scale(-1);  // invert negative pulses here
   }

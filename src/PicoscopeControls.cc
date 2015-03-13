@@ -52,6 +52,11 @@ PicoscopeControls::PicoscopeControls() {
 
   _ps.open(); 
   _buffers = new TList(); 
+  _previewF = NULL; 
+  _playBtn = NULL; 
+  _iter = NULL; 
+  _timer = NULL; 
+
 
   _hintsn = new TGLayoutHints(kLHintsNormal, 2,2,2,2); 
   _hintsy = new TGLayoutHints(kLHintsNormal|kLHintsExpandY, 2,2,2,2); 
@@ -102,6 +107,8 @@ PicoscopeControls::PicoscopeControls() {
   _voltageF = new TGGroupFrame(_voltageCouplingF, "Voltages", kHorizontalFrame); 
   _voltageB = new TGComboBox(_voltageF, 100); 
   
+  _voltageB->AddEntry("Off", -1); 
+  
   for (auto i = 0; i < voltages.size(); i++) { 
     _voltageB->AddEntry(voltages[i].first, i); 
   }
@@ -133,7 +140,7 @@ PicoscopeControls::PicoscopeControls() {
   _timeSamplingF = new TGGroupFrame(_mf, "Time and Sampling"); 
 
   //Sampling Interval
-  _sampleInterval = new TGNumberEntry(_timeSamplingF, 0, 5, 5, TGNumberFormat::kNESInteger); 
+  _sampleInterval = new TGNumberEntry(_timeSamplingF, 2, 5, 5, TGNumberFormat::kNESInteger); 
   _sampleInterval->Connect("ValueSet(Long_t)", "PicoscopeControls", this, "sampleIntervalHandler(Long_t)"); 
   _timeSamplingF->AddFrame(_sampleInterval, _hintsn); 
 
@@ -179,10 +186,17 @@ PicoscopeControls::PicoscopeControls() {
   _writeBuffersBtn->Connect("Clicked()", "PicoscopeControls", this, "writeBuffersToDisk()"); 
   _triggerRunF->AddFrame(_writeBuffersBtn, _hintsn); 
   
+  _previewBtn = new TGTextButton(_triggerRunF, TGHotString("Preview Buffers"), 7); 
+  _previewBtn->Connect("Clicked()", "PicoscopeControls", this, "preview()"); 
+  _triggerRunF->AddFrame(_previewBtn, _hintsn); 
+  
   _mf->AddFrame(_triggerRunF, _hintsy); 
   _mf->MapSubwindows(); 
   _mf->Resize(_mf->GetDefaultSize()); 
   _mf->MapWindow();
+
+
+
 
 }
 
@@ -217,14 +231,24 @@ void PicoscopeControls::channelHandler(Int_t selection, Int_t widgetID) {
 }
 
 void PicoscopeControls::voltageHandler(Int_t selection, Int_t widgetID) { 
+  PICO_STATUS status; 
+  if (selection == -1) { 
+    //Off case 
+    status = _ps.disableChannel(channels[_selectedChannel].second); 
+    if (status != PICO_OK) 
+      std::cout << "Error disabling channel " << channels[_selectedChannel].first << std::endl; 
 
+    return; 
+
+  }
   std::cout << voltages[selection].first << " " << _ps.Channel(channels[_selectedChannel].second).name() << std::endl; 
 
   picoscope::channel ch = _ps.Channel(channels[_selectedChannel].second); 
+
   ch.setRange(voltages[selection].second); 
 
   _ps.setChannelSettings(ch); 
-  PICO_STATUS status = _ps.enableChannel(ch.name()); 
+  status = _ps.enableChannel(ch.name()); 
   if (status != PICO_OK) 
     std::cout << "Error setting or enabling channel " << channels[_selectedChannel].first << std::endl; 
 
@@ -392,26 +416,31 @@ TString PicoscopeControls::prettyPrintWindow() {
 
   float timebase = _ps.calculateTimebase(_sampleInterval->GetIntNumber()); 
   float result = timebase*_sampleNumber->GetIntNumber(); 
+  std::cout << "timebase * sampleNumber =" << timebase << "*" << _sampleNumber->GetIntNumber() << "=" << result << std::endl; 
   double lg = TMath::Abs(TMath::Log10(result)); 
   TString units = "";
   bool set = false;  
   float timebaseCorrected = result; 
    if (lg > 9.0) { 
+     std::cout << "9" << std::endl; 
      timebaseCorrected *= 1e12; 
      units = "ps";
      set = true; 
    }
    else if (lg > 6.0 && !set) { 
+     std::cout << "6" << std::endl; 
      timebaseCorrected *= 1e9; 
      units = "ns"; 
      set = true; 
    }
    else if (lg > 3.0 && !set) { 
+     std::cout << "3" << std::endl; 
      timebaseCorrected *= 1e6; 
      units = "us"; 
      set = true; 
    }
    else if (timebase < 1.0 && !set) { 
+     std::cout << "1" << std::endl; 
      timebaseCorrected *= 1e3; 
      units = "ms"; 
      set = true; 
@@ -422,7 +451,7 @@ TString PicoscopeControls::prettyPrintWindow() {
    }
 
 
-   return TString::Format("%f %s", result,units.Data()); 
+   return TString::Format("%4.2f %s", timebaseCorrected,units.Data()); 
 
 }
 
@@ -520,11 +549,99 @@ void PicoscopeControls::writeBuffersToDisk() {
   }
   else 
     std::cout << "No buffers to write!" << std::endl; 
-    
-
-
-
 
 }
 
 
+
+void PicoscopeControls::preview() { 
+
+  std::cout << "Preview!" << std::endl; 
+  if (_previewF == NULL) { 
+    _previewF = new TGMainFrame(NULL, 500, 500, kVerticalFrame); 
+    _previewF->SetWindowName("Buffers"); 
+
+    TGHorizontalFrame *buttonF = new TGHorizontalFrame(_previewF, 500, 50); 
+    _playBtn = new TGTextButton(buttonF, TGHotString("Play")); 
+     _playBtn->Connect("Clicked()", "PicoscopeControls", this, "Play()"); 
+     buttonF->AddFrame(_playBtn, _hintsn); 
+    TGHorizontalFrame *waveFormF = new TGHorizontalFrame(_previewF, 500, 450); 
+    _canvas = new TRootEmbeddedCanvas("Preview Canvas", waveFormF, 500, 450); 
+    waveFormF->AddFrame(_canvas, _hintsn); 
+    _previewF->AddFrame(buttonF, new TGLayoutHints(kLHintsBottom, 2,2,2,2)); 
+    _previewF->AddFrame(waveFormF, new TGLayoutHints(kLHintsTop|kLHintsExpandY, 2,2,2,2)); 
+   
+
+
+    _previewF->MapSubwindows(); 
+    _previewF->Resize(_previewF->GetDefaultSize()); 
+    _previewF->MapWindow(); 
+    _previewF->Connect("CloseWindow()", "PicoscopeControls", this, "previewCleanup()"); 
+  }
+  
+
+}
+
+void PicoscopeControls::previewCleanup() { 
+
+
+  if (_previewF)
+    delete _canvas; 
+    delete _previewF; 
+  _previewF = nullptr; 
+
+}
+
+void PicoscopeControls::Play() { 
+  PSbuffer *b = (PSbuffer *) _buffers->First(); 
+  if (b != NULL) { 
+    _timer = new TTimer(); 
+    _timer->Connect("Timeout()", "PicoscopeControls", this, "NextWaveform()"); 
+    _iter = new TListIter(_buffers); 
+    _iter->Next(); 
+    TCanvas *c = _canvas->GetCanvas(); 
+    c->cd(); 
+    b->GetWaveform()->Draw(); 
+    c->Update(); 
+    _playBtn->ChangeText("Stop"); 
+    _playBtn->Disconnect("Clicked()"); 
+    _playBtn->Connect("Clicked()", "PicoscopeControls", this, "Stop()"); 
+    std::cout << "Starting to step through waveforms." << std::endl; 
+    _timer->Start(1000, kFALSE); 
+
+  }
+  else { 
+    std::cout << "No Available Waveforms" << std::endl; 
+  }
+
+}
+
+void PicoscopeControls::NextWaveform() { 
+  _timer->Stop(); 
+  PSbuffer *b = (PSbuffer *) _iter->Next(); 
+  if (b != NULL) { 
+    _timer->Start(1000, kFALSE); 
+    _canvas->GetCanvas()->cd(); 
+    b->GetWaveform()->Draw(); 
+    _canvas->GetCanvas()->Update(); 
+
+  }
+  else {
+    _timer->Stop(); 
+    std::cout << "Finished stepping through waveforms." << std::endl; 
+    delete _iter; 
+    _iter = NULL; 
+    _playBtn->SetText("Play"); 
+    _playBtn->Disconnect("Clicked()"); 
+    _playBtn->Connect("Clicked()", "PicoscopeControls", this, "Play()"); 
+  }
+
+}
+
+
+void PicoscopeControls::Stop() { 
+  _timer->Stop(); 
+  _playBtn->SetText("Cont"); 
+  _playBtn->Disconnect("Clicked()"); 
+  _playBtn->Connect("Clicked()", "PicoscopeControls", this, "NextWaveform()"); 
+}
