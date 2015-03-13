@@ -15,7 +15,11 @@
 #include "TPaveText.h"
 #include "TRootEmbeddedCanvas.h"
 #include "TString.h"
-//#include "PicoscopeControls.h"
+
+#ifdef CONTROLS
+#include "PicoscopeControls.h"
+#endif 
+
 
 class PulseGUI : public TQObject { 
   RQ_OBJECT("PulseGUI"); 
@@ -84,7 +88,10 @@ private:
   PulseAnalysis *_analysis; 
 
   PSbuffer * buffer; 
-  //  PicoscopeControls *_pscontrols; 
+
+#ifdef CONTROLS
+  PicoscopeControls *_pscontrols; 
+#endif
   // member functions 
 public:
   PulseGUI(TString fName="");

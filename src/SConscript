@@ -1,8 +1,16 @@
 include = Dir('#/include')
+
+
+
+vars = Variables(None, ARGUMENTS)
+vars.Add('CONTROLS', 'Set to 1 for PicoscopeControls', 0)
+
+
+
 picoscopeInclude = Dir('/opt/picoscope/include')
 env = Environment(LIBS=['MathMore', 'Spectrum'], CCFLAGS='-ggdb -std=c++11 ', CPPPATH=[include, picoscopeInclude, '#'])
 env.ParseConfig("root-config --cflags --glibs")
-
+env['variables'] = vars
 print env['CPPPATH']	
 #
 
@@ -11,8 +19,6 @@ cintBuilder = Builder(action = 'rootcint -f $TARGET -c $SOURCES')
 env.Append(BUILDERS= {'cint': cintBuilder})
 
 pGDict = env.cint('PulseGUIDict.cxx', ['#/include/PulseGUI.h'])
-#PSControlsDict = env.cint('PicoscopeControlsDict.cxx', ['#/include/PicoscopeControls.h'])
-#Clean(PSControlsDict, 'PicoscopeControlsDict.h')
 
 pADict = env.cint('PulseAnalysisDict.cxx', ['#/include/PulseAnalysis.h', '#/include/PulseAnalysisLinkDef.h'])
 
@@ -21,7 +27,7 @@ Clean(pGDict, 'PulseGUIDict.h')
 Clean(pADict, 'PulseAnalysisDict.h')
 Clean(PSbufferDict, 'PSbufferDict.h')
 
-#psControlsDictObj = env.SharedLibrary(PSControlsDict)
+
 paDictObj = env.SharedLibrary(pADict)
 pgDictObj = env.SharedLibrary(pGDict)
 PSbufferDictObj = env.SharedLibrary(PSbufferDict)
@@ -32,12 +38,25 @@ pR = env.SharedLibrary('picoReader', ['PicoReader.cc'])
 PSBuffer = env.SharedLibrary('PSbuffer',['PSbuffer.cc', 'fourier.cc', PSbufferDictObj])
 pA = env.SharedLibrary('PulseAnalysis', ['PulseAnalysis.cc', 'PulseAnalysis.analysis.cc', 'PulseAnalysis.display.cc', paDictObj, pR, PSbufferDictObj])
 env['STATIC_AND_SHARED_OBJECTS_ARE_THE_SAME']=1
-#psControls = env.SharedLibrary('PicoscopeControls', ['PicoscopeControls.cc', psControlsDictObj, pR, PSBuffer, PSbufferDictObj, '#/build/lib/libpicoscopeDriver.so'])
+
 
 env.Install('#/exe', [pA, paDictObj])
-#pG = env.SharedLibrary('PulseGUI', ['PulseGUI.cc', 'PulseGUI.actions.cc', 'PulseGUI.gui.cc', pgDictObj, pA, pR, PSbufferDictObj, psControls])
-pG = env.SharedLibrary('PulseGUI', ['PulseGUI.cc', 'PulseGUI.actions.cc', 'PulseGUI.gui.cc', pgDictObj, pA, pR, PSbufferDictObj])
+print vars.args.has_key('CONTROLS')
+if vars.args.has_key('CONTROLS'): 
+    print "Building with Picoscope Controls"
+    env['CPPDEFINES'] = {'CONTROLS' : vars.args['CONTROLS']}
+    PSControlsDict = env.cint('PicoscopeControlsDict.cxx', ['#/include/PicoscopeControls.h'])
+    Clean(PSControlsDict, 'PicoscopeControlsDict.h')
+    psControlsDictObj = env.SharedLibrary(PSControlsDict)
+
+    psControls = env.SharedLibrary('PicoscopeControls', ['PicoscopeControls.cc', psControlsDictObj, pR, PSBuffer, PSbufferDictObj, '#/build/lib/libpicoscopeDriver.so'])
+
+
+    pG = env.SharedLibrary('PulseGUI', ['PulseGUI.cc', 'PulseGUI.actions.cc', 'PulseGUI.gui.cc', pgDictObj, pA, pR, PSbufferDictObj, psControls])
+    env.Install('#/exe', [psControls])
+    env.Install('#/exe', [psControlsDictObj])
+else:
+    pG = env.SharedLibrary('PulseGUI', ['PulseGUI.cc', 'PulseGUI.actions.cc', 'PulseGUI.gui.cc', pgDictObj, pA, pR, PSbufferDictObj])
+
 env.Install('#/exe', [pG, pgDictObj])
 env.Install('#/exe', [PSbufferDictObj])
-#env.Install('#/exe', [psControls])
-#env.Install('#/exe', [psControlsDictObj])

@@ -208,13 +208,15 @@ void PulseGUI::Analyze() {
 void PulseGUI::OpenPicoscopeControls() { 
 
   std::cout << "Opening picoscope controls" << std::endl; 
-  /*  if (!_pscontrols)
+
+#ifdef CONTROLS
+  if (!_pscontrols)
     _pscontrols = new PicoscopeControls; 
   else {
     delete _pscontrols; 
     _pscontrols = new PicoscopeControls; 
-    }*/
-
+    }
+#endif
 
 
 }
