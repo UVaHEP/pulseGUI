@@ -92,13 +92,16 @@ say 	:= $(shell echo "LIBS:     $(LIBS)\n" >& 2)
 endif
 
 # ----------------------------------------------------------------------------
-all: $(LIBRARY) bin/pulseEXE bin/convertPS
+all: $(LIBRARY) bin/pulseEXE bin/convertPS bin/wavePlayer
 
 bin/pulseEXE: exe/pulseEXE.cc 
 	g++ $(CXXFLAGS) $(CPPFLAGS) -o bin/pulseEXE exe/pulseEXE.cc -L$(LIBDIR) -l$(NAME) $(ROOTLIBS)
 
 bin/convertPS: exe/convertPS.cc 
 	g++ $(CXXFLAGS) $(CPPFLAGS) -o bin/convertPS exe/convertPS.cc -L$(LIBDIR) -l$(NAME) $(ROOTLIBS)
+
+bin/wavePlayer: exe/wavePlayer.cc 
+	g++ $(CXXFLAGS) $(CPPFLAGS) -o bin/wavePlayer exe/wavePlayer.cc -L$(LIBDIR) -l$(NAME) $(ROOTLIBS)
 
 $(LIBRARY)	: $(OBJECTS)
 	@echo "===> Linking shared library $@"

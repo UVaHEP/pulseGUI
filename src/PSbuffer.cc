@@ -1,6 +1,7 @@
 #include "fourier.h"
 #include "PSbuffer.h"
-
+#include "TText.h"
+#include "TGraph.h"
 #include "TF1.h"
 
 #include <iostream>
@@ -14,9 +15,9 @@ void PSbuffer::InitWaveform(Int_t nbins, Float_t max, Float_t min){
   waveBuffer=new TH1F("waveform","Waveform;t [ns];V [mV]",nbins,min,max);
 }
 
-Int_t PSbuffer::GetTrig(Int_t ntrig) const{
- if (! trigs.size() ) return 0;
-  return trigs[ntrig];
+Double_t PSbuffer::GetTrig(Int_t ntrig) const{
+  if ( trigs.size()==0  ) return 0;
+  return waveBuffer->GetBinLowEdge(trigs[ntrig]);
 }
 
 void PSbuffer::AddTrig(Int_t trigBin){
@@ -60,10 +61,7 @@ void PSbuffer::Analyze(){
     meanHeight+=v;
   }
   meanHeight/=waveBuffer->GetNbinsX();
-  TString minMax = TString::Format("min:%f, max:%f\n", min, max); 
-  std::cout << minMax << std::endl; 
-  if (-1*min > max) { 
-  //if (meanHeight<0) {
+  if (meanHeight<0) {
     log_info("Negative pulses detected, inverting waveform.");
     waveBuffer->Scale(-1);  // invert negative pulses here
   }
@@ -77,3 +75,24 @@ void PSbuffer::Analyze(){
   noise=g2->GetParameter(1);
 }
 
+
+void PSbuffer::Draw(TString options){
+  options.ToLower();
+  bool showTrigs = false;
+  if (options.Contains("trigs")){
+    showTrigs=true;
+    options.ReplaceAll("trigs","");
+  }
+  waveBuffer->Draw(options);
+
+  if (showTrigs){
+    TGraph gr(trigs.size());
+    TText t;
+    t.SetTextAlign(23);
+    t.SetTextColor(kRed);
+    for (unsigned i=0; i<trigs.size(); i++){
+      t.DrawText(GetTrig(i),0,"T");
+    }
+  }
+
+}

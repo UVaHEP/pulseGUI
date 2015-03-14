@@ -12,8 +12,9 @@
 class PulseAnalysis {
 
  private: 
-  //c++11 uses constexpr for calculated values in classes rather than const static, CINT doesn't support constexpr so this is a quick
-  //hack to work around the incompatibility 
+  // c++11 uses constexpr for calculated values in classes rather than const static
+  // CINT doesn't support constexpr so this is a quick
+  // hack to work around the incompatibility 
 #if (__cplusplus <= 199711L) || defined (__CINT__)
   const static  Int_t MAXPEAKS = 100000;  // max peaks considered in spectrum
   const  static double NSIGMA = 3.5;      // #_pSigma > noise for peak search threshold
@@ -64,10 +65,6 @@ public:
   void ScanPeaksFast(int nsteps, double *thresholds, double *count) const;
   int CountPeaksFast(double threshold=0) const;
   void FindPeaksandReduce(Float_t window); 
-
-
-  // February 03, 2015 To Do: Remove the drawing functionality, most of this needs to get moved to the gui 
-
   void SmoothHistogram(); 
   void SubBkg(); // tbd
 
@@ -87,17 +84,13 @@ public:
   void GetBkg(); // tbd
   Double_t GetPulseRate() { return _pulseRate; }
   Double_t GetPulseWidth() { return _pWidth; }
-  //  TString GetSpectName() { if (_tf) return _tf->GetName(); else return "none";}
   Double_t GetThreshold() { return _pThreshold;}
  
-
   // derived histograms
   TH1F* Hdt() {return &_hdt;}
   TH1F* Hph() {return &_hph;}
   TH1F* Hpi() {return &_hpi;}
   TH1F* Hprms() {return &_hprms;}
-
-
 
   // various setters
   void SetResponse();

@@ -1,3 +1,5 @@
+#ifdef CONTROLS
+
 #include "PicoscopeControls.h"
 
 
@@ -27,8 +29,6 @@ static std::vector<std::pair<TString, PS6000_CHANNEL> > channels = {
   std::pair<TString, PS6000_CHANNEL>("D", PS6000_CHANNEL_D)
 }; 
  
-
-
 
 
 static std::vector<std::pair<TString, PS6000_RANGE> > voltages = { 
@@ -645,3 +645,5 @@ void PicoscopeControls::Stop() {
   _playBtn->Disconnect("Clicked()"); 
   _playBtn->Connect("Clicked()", "PicoscopeControls", this, "NextWaveform()"); 
 }
+
+#endif

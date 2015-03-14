@@ -28,12 +28,16 @@ add_to_envVar () {
   export ${VAR}=${ADDPATH}:${PVAR}
 }
 
-export PULSGUIDIR=$PWD
+export PULSEGUI_DIR=$PWD
+export PULSEGUI_INC=${PULSEGUI_DIR}/include
+export PULSEGUI_LIBDIR=${PULSEGUI_DIR}/build/lib
 
-add_to_envVar ${PULSGUIDIR}/bin       PATH
-add_to_envVar ${PULSGUIDIR}/python    PATH
-add_to_envVar ${PULSGUIDIR}/python   PYTHONPATH
-add_to_envVar ${PULSGUIDIR}/build/lib  LD_LIBRARY_PATH
+
+
+add_to_envVar ${PULSEGUI_DIR}/bin       PATH
+add_to_envVar ${PULSEGUI_DIR}/python    PATH
+add_to_envVar ${PULSEGUI_DIR}/python   PYTHONPATH
+add_to_envVar ${PULSEGUI_DIR}/build/lib  LD_LIBRARY_PATH
 
 
 # hack until someone figures out how to check for root-config in the Makefile

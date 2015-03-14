@@ -7,8 +7,7 @@
 #include "TH1F.h"
 #include "TFile.h"
 #include "TObject.h"
-#include "TCollection.h"
-
+#include "TString.h"
 
 #include <vector>
 
@@ -26,29 +25,42 @@ class PSbuffer : public TObject {
   Double_t dT;
   Double_t dV;
   Double_t dcOffset;
-  Double_t noise;  /// gaussian fit to ~+- 2 sigma around 0
+  Double_t noise;  /// sigma of gaussian fit to ~+- 2 sigma around 0
   TH1F *pHD;   /// pulse height distribution
 
  public:
   Double_t T0() const {return t0;}
+  /// Return time of first sample
   void SetT0(Double_t t) {t0=t;}
+  /// Return time resolution
   Double_t Dt() const {return dT;}
   void SetDt(Double_t dt) {dT=dt;}
-  /// return voltage resolution
+  /// Return voltage resolution
   Double_t DV() {return dV;}
   void SetDV(Double_t dv) {dV=dv;}
   Double_t DCoffset() const {return dcOffset;}
+  /// Return number of samples in signal trace
   Double_t Samples() const {return waveBuffer->GetNbinsX();}
+  Double_t Noise() const {return noise;}
   /// default setting time does from 0..dT*nbins
   void InitWaveform(Int_t nbins, Float_t max=0, Float_t min=0);
+  /// Return scope trace 
   TH1F* GetWaveform() {return waveBuffer;}
+  /// Return spectrum of voltage samples 
   TH1F* GetSpectrum() {return pHD;}
-  Int_t GetTrig(Int_t ntrig=0) const; 
+  Int_t GetNtrig() const {return trigs.size();}
+  /// Return time corresponding to nth trigger
+  Double_t GetTrig(Int_t ntrig=0) const; 
   void AddTrig(Int_t trigBin);
+  /// Calculate and store derived quantities from signal and trigger traces
   void Analyze();
+  /// Draw Options
+  /// Pass any standard histogram drawing options
+  /// Additional options supported:
+  /// TRIGS : draw marks for trigger locations
+  void Draw(TString options="");
   void Print();
 };
-
 
 
 #endif

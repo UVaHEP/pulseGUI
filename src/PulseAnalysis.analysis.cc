@@ -25,10 +25,8 @@ void PulseAnalysis::Analyze(){
 
   TList *functions = psbuffer->GetWaveform()->GetListOfFunctions();
   TPolyMarker *pm = (TPolyMarker*)functions->FindObject("TPolyMarker");
-  Double_t *pmarrayX;
-  Double_t *pmarrayY;
-  pmarrayX=pm->GetX();
-  pmarrayY=pm->GetY();
+  Double_t *pmarrayX=pm->GetX();
+  Double_t *pmarrayY=pm->GetY();
   
   Int_t *index=new Int_t[PulseAnalysis::MAXPEAKS];
   TMath::Sort(_pNFound, pmarrayX, index, kFALSE);  // index sort by timestamp
@@ -39,9 +37,9 @@ void PulseAnalysis::Analyze(){
 
   int count0=0, count1=0, count2=0, count3=0;
   int fivepct=_pNFound/20;
+  double sumv, sumt, sum2t;
   
   debug("starting peak integrals");
-  double sumv, sumt, sum2t;
   for(int i=0;i<_pNFound;++i) {
     if (i && i%fivepct==0) cerr << "*";
     // Fill Delta Time histogram with time between found peaks.
@@ -95,9 +93,7 @@ void PulseAnalysis::Analyze(){
   cout << "cross talk (2x)" << (float)count2/count0 << endl;
   cout << "cross talk (3x)" << (float)count3/count0 << endl;
 
-
   // Pulse integrals
-  //  hpi=new TH1F("hpi","Pulse Integral;[mV][ns];Entries",200,0,maxInt*1.05);
   _hpi.SetBins(100,0,maxInt*1.1);  // need to fix upper limit
   for(int i=0;i<_pNFound;i++) { 
     _hpi.Fill(_pInteg[i]); 
@@ -110,7 +106,6 @@ void PulseAnalysis::Analyze(){
 
   delete[] index;
 }
-
 
 
 // simple peak counter
@@ -166,8 +161,9 @@ TString PulseAnalysis::FindPeaks(bool nodraw){
   //  float minpeak=State::_hspect->GetBinContent(State::_hspect->GetMinimumBin());
   Double_t thresFrac;
   if (_pThreshold<0){ // not initialized by user
-    log_info("Threshold not set, using 0.20 * maximum voltage");
-    thresFrac=0.20;  // 20% of max peak
+    psbuffer->Print();
+    thresFrac=3*psbuffer->Noise()/maxpeak;
+    log_info("Threshold not set, 3 sigma noise cut %f",thresFrac);
   }
   else {thresFrac=_pThreshold/maxpeak;}   // fix me?
 
