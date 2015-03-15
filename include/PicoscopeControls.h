@@ -19,8 +19,11 @@
 #include "TGButtonGroup.h"
 #include "TRootEmbeddedCanvas.h"
 #include "TTimer.h"
+#include "TUnixSystem.h"
 #include "PSbuffer.h"
 #include <functional>
+#include <unistd.h> 
+
 
 #ifndef __CINT__
 #include "picoscopeDriver.h"
@@ -60,6 +63,7 @@ private:
   TGGroupFrame *_channelStatusF; 
   TGGroupFrame *_triggerRunF; 
 
+
   TGNumberEntry *_sampleInterval; 
   TGLabel *_intervalLabel; 
 
@@ -67,6 +71,8 @@ private:
   TGLabel *_windowLabel; 
 
   TGTextButton *_runBtn; 
+  TGNumberEntry *_numberRuns; 
+  TGLabel *_numberRunsLabel; 
   
   TGNumberEntry *_triggerLevel; 
   TGLabel *_triggerLabel; 
@@ -81,6 +87,7 @@ private:
 
   TListIter *_iter; 
   TTimer *_timer; 
+  TTimer *_cbTimer; 
   TRootEmbeddedCanvas *_canvas; 
 
 
@@ -89,6 +96,8 @@ private:
   #ifndef __CINT__
   PS6000_CHANNEL _selectedChannel; 
   #endif
+
+  unsigned int _runs; 
 
   public: 
 
@@ -105,9 +114,12 @@ private:
   TString prettyPrintWindow();   
   void couplingHandler(Int_t selection, Int_t widgetID);
 
-  void timedivHandler(Int_t selection, Int_t widgetID);
+  void FinishedCallBack(); 
+
+
   void triggerButton(); 
   void triggerLevelHandler(Long_t val);
+  void runNumberHandler(Long_t val);
   void testRun(); 
   void preview(); 
   void previewCleanup();
