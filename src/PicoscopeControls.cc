@@ -204,7 +204,7 @@ PicoscopeControls::PicoscopeControls() {
   _mf->Resize(_mf->GetDefaultSize()); 
   _mf->MapWindow();
 
-  //  Connect("FinishedCallBack()", "PicoscopeControls", this, "FinishedCallBack()"); 
+
 
 
 }
@@ -311,9 +311,9 @@ void PicoscopeControls::testRun() {
   s.setSegment(1); 
   s.setSampleNumber(_sampleNumber->GetIntNumber()); 
   
-  std::cout << "Taking a run and then closing the picoscope." << std::endl; 
+  /*  std::cout << "Taking a run and then closing the picoscope." << std::endl; 
   std:: cout << "test Run ps address:" << &_ps << std::endl; 
-  std::cout << "Timebase\tSampleNumber\n" << _sampleInterval->GetIntNumber() << "\t" << _sampleNumber->GetIntNumber() << std::endl; 
+  std::cout << "Timebase\tSampleNumber\n" << _sampleInterval->GetIntNumber() << "\t" << _sampleNumber->GetIntNumber() << std::endl; */
   _ps.enableBandwidthLimit(PS6000_CHANNEL_A); 
   _ps.enableChannel(PS6000_CHANNEL_A); 
 
@@ -355,7 +355,7 @@ void PicoscopeControls::callBack(picoscope::picoscopeData *data) {
 
   ps->InitWaveform(waveform->size()); 
   TH1F* wave = ps->GetWaveform(); 
-  std::cout << "Entries in wave before filling:" <<   wave->GetEntries() << std::endl; 
+
   Float_t dV = 1e12; 
   float delta = 0; 
   float last = 0; 
@@ -370,7 +370,7 @@ void PicoscopeControls::callBack(picoscope::picoscopeData *data) {
     wave->SetBinContent(i+1, mV); 
 
   }
-  std::cout << "Entries in wave after filling:" <<   wave->GetEntries() << std::endl; 
+
   ps->SetDV(dV); 
   // get channel B (trigger)
   float min=1e12;
@@ -411,7 +411,7 @@ void PicoscopeControls::callBack(picoscope::picoscopeData *data) {
   ps->Analyze();  // calculate DC offset, frequency spectrum, noise, etc*/
   ps->Print(); 
 
-  std::cout << "Entries when we're done:" <<   wave->GetEntries() << std::endl; 
+
   _buffers->AddLast(ps); 
 
   delete data; 
@@ -515,9 +515,9 @@ void PicoscopeControls::triggerButton() {
   TString btn = _triggerEnableBtn->GetString(); 
   //  std::cout << "Trigger button text:" << btn << std::endl; 
   if (btn.Contains("Trigger Off")) {
-    std::cout << "Enabling Trigger" << std::endl;     
+    //    std::cout << "Enabling Trigger" << std::endl;     
     _triggerEnableBtn->SetText("Trigger On"); 
-    std::cout << "Trigger Level:" << _triggerLevel->GetIntNumber() << std::endl; 
+    //    std::cout << "Trigger Level:" << _triggerLevel->GetIntNumber() << std::endl; 
     _ps.setTriggerLevel(_ps.mvToAdc(_triggerLevel->GetIntNumber(), _ps.Channel(PS6000_CHANNEL_B).range())); 
     _ps.setTriggerDirection(PS6000_RISING); 
     _ps.setTriggerChannel(PS6000_CHANNEL_B); 
@@ -527,7 +527,7 @@ void PicoscopeControls::triggerButton() {
 
   }
   else {
-    std::cout << "Disabling Trigger" << std::endl;     
+    //    std::cout << "Disabling Trigger" << std::endl;     
     _triggerEnableBtn->SetText("Trigger Off"); 
     _ps.disableTrigger(); 
   }    
@@ -539,7 +539,7 @@ void PicoscopeControls::triggerButton() {
 
 void PicoscopeControls::triggerLevelHandler(Long_t val) {
 
-  std::cout << "Trigger Level ADC:" << _ps.mvToAdc(_triggerLevel->GetIntNumber(), _ps.Channel(PS6000_CHANNEL_B).range()) << std::endl; 
+  //  std::cout << "Trigger Level ADC:" << _ps.mvToAdc(_triggerLevel->GetIntNumber(), _ps.Channel(PS6000_CHANNEL_B).range()) << std::endl; 
 
   _ps.setTriggerLevel(_ps.mvToAdc(_triggerLevel->GetIntNumber(), _ps.Channel(PS6000_CHANNEL_B).range())); 
 

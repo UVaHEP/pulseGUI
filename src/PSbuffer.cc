@@ -53,6 +53,7 @@ void PSbuffer::Analyze(){
 		 bins,min-dV/2,max+dV/2);
   
   // remove DC offset, fill pulse height spectrum
+
   double meanHeight=0;
   for (int i=1; i<=waveBuffer->GetNbinsX(); i++){
     double v=waveBuffer->GetBinContent(i)-dcOffset;
@@ -60,11 +61,12 @@ void PSbuffer::Analyze(){
     pHD->Fill(v);
     meanHeight+=v;
   }
-  meanHeight/=waveBuffer->GetNbinsX();
+  waveBuffer->Scale(-1);  // invert negative pulses here
+  /*  meanHeight/=waveBuffer->GetNbinsX();
   if (meanHeight<0) {
     log_info("Negative pulses detected, inverting waveform.");
     waveBuffer->Scale(-1);  // invert negative pulses here
-  }
+    }*/
   TF1 *g2=new TF1("g2","[0]*exp(-0.5*x*x/[1]/[1])",min-dV/2,max+dV/2);
   g2->SetParameters(pHD->GetMaximum(),pHD->GetRMS());
   pHD->Fit("g2","0");
