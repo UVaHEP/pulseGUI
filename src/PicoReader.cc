@@ -313,7 +313,7 @@ PSbuffer* PicoReader::ReadMatFile(TString& filename){
     fired = !(channelData < offThreshold); 
   }
 
-  ps->Analyze();  // calculate DC offset, frequency spectrum, noise, etc
+  // ps->Analyze();  // calculate DC offset, frequency spectrum, noise, etc
   ps->Print();
   return ps;  // picoscope data structure
 }

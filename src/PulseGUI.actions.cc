@@ -121,9 +121,6 @@ void PulseGUI::SetXMarks() {
   marks[1].x = marks[0].x+WidthNum->GetNumberEntry()->GetNumber(); 
   std::cout << "X-start:" << marks[0].x << 
     " X-End:" << marks[1].x << std::endl; 
-
-  SetWidth(); 
-
 }
 
 
@@ -132,7 +129,8 @@ void PulseGUI::SetWidth(){
   // set width in microseconds
 
   cout << "x1:" << marks[0].x << " x2:" << marks[1].x << endl; 
-  SetWidth(TMath::Abs(marks[0].x-marks[1].x));
+  double width=TMath::Abs(marks[0].x-marks[1].x);
+  SetWidth(width);
   return;
 }
 

@@ -81,7 +81,7 @@ void PulseGUI::MakeButtons(){
   TGCompositeFrame *cframe1 = new TGCompositeFrame(FButton, WIDTH, HEIGHT,
 						   kHorizontalFrame | kFixedWidth);
   // Set Width
-  widthBN = new TGTextButton(cframe1, "Set &Width");
+  widthBN = new TGTextButton(cframe1, "Set &Width (ns)");
 
   cframe1->AddFrame(widthBN, new TGLayoutHints(kLHintsTop | kLHintsExpandX,
 					       2,2,2,2));
