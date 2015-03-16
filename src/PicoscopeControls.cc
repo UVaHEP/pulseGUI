@@ -408,7 +408,7 @@ void PicoscopeControls::callBack(picoscope::picoscopeData *data) {
     }
   }
 
-  ps->Analyze();  // calculate DC offset, frequency spectrum, noise, etc*/
+  //  ps->Analyze();  // calculate DC offset, frequency spectrum, noise, etc*/
   ps->Print(); 
 
   std::cout << "Entries when we're done:" <<   wave->GetEntries() << std::endl; 
