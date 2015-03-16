@@ -93,9 +93,9 @@ void PulseAnalysis::SubBkg(){
 
 TString PulseAnalysis::SetWidth(Float_t w){
   debug();
- // set width in microseconds
+  // set width in nanoseconds
   _pWidth = w; 
-  _pSigma = _pWidth/2/psbuffer->Dt();
+  _pSigma = _pWidth/2/psbuffer->Dt();  // half width in bins
   TString s; 
   s.Form("Peak width (FWHM) set to: %e , half width in bins %d",
 	 _pWidth,TMath::Nint(_pSigma));

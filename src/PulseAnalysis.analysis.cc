@@ -36,12 +36,12 @@ void PulseAnalysis::Analyze(){
   Double_t maxInt=-1e-30;
 
   int count0=0, count1=0, count2=0, count3=0;
-  int fivepct=_pNFound/20;
+  //  int fivepct=_pNFound/20;
   double sumv, sumt, sum2t;
   
   debug("starting peak integrals");
   for(int i=0;i<_pNFound;++i) {
-    if (i && i%fivepct==0) cerr << "*";
+    //if (i && i%fivepct==0) cerr << "*";
     // Fill Delta Time histogram with time between found peaks.
     if (i<_pNFound-1) _hdt.Fill(pmarrayX[index[i+1]]-pmarrayX[index[i]]);
     _hph.Fill(pmarrayY[i]);
@@ -167,7 +167,7 @@ TString PulseAnalysis::FindPeaks(bool nodraw){
   }
   else {thresFrac=_pThreshold/maxpeak;}   // fix me?
 
-  TSpectrum *s = new TSpectrum(MAXPEAKS,2);
+  TSpectrum *s = new TSpectrum(MAXPEAKS);
 
   if (nodraw)
     _pNFound = s->Search(psbuffer->GetWaveform(), _pSigma, "nobackground,nomarkov,nodraw",thresFrac);
@@ -180,17 +180,17 @@ TString PulseAnalysis::FindPeaks(bool nodraw){
   cout << "Found " << _pNFound << " peaks" << endl;
   // rate of pulses
   double sampleTime=psbuffer->Dt()*psbuffer->Samples();
-  float rate=_pNFound/sampleTime*1000;  // in MHz, time scale is in [ns]
-  _pulseRate=rate;   // clean this up later!
+  _pulseRate=_pNFound/sampleTime*1000;  // in MHz, time scale is in [ns]
   TString rateUnits = "MHz";
+  double rateScale=1;
   // Adapt displayed units for easier reading 
-  if (rate <= 1e-2){    // If rate under 10 kHz display in kHz
-    rate = rate*1e3;
+  if (_pulseRate <= 1e-2){    // If rate under 10 kHz display in kHz
+    rateScale=1e3;
     rateUnits.Form("kHz");
   }
-  printf("Rate of pulses = %6.2e %s\n",rate, rateUnits.Data());
+  printf("Rate of pulses = %6.2e %s\n",_pulseRate*rateScale, rateUnits.Data());
   TString msg;
-  msg.Form("Pulse Rate: %6.2e %s",rate, rateUnits.Data());
+  msg.Form("Pulse Rate: %6.2e %s",_pulseRate*rateScale, rateUnits.Data());
 
   TPaveLabel *tp=new TPaveLabel(0.75,0.85,0.95,0.95,msg,"NDC");
   tp->Draw();  

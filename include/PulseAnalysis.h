@@ -44,7 +44,7 @@ class PulseAnalysis {
 
   // Analysis of found peaks
   Int_t _pNFound;          // peaks found by TSpectrum
-  Double_t _pulseRate;     
+  Double_t _pulseRate;     // in MHz 
   Double_t _pInteg[MAXPEAKS];  // integrals of pulse areas
   Double_t _pRMS[MAXPEAKS];    // RMS width of pulses
 
