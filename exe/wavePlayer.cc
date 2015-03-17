@@ -31,8 +31,11 @@ void wavePlayer(TString fdat){
   TCanvas *c=new TCanvas();
   gStyle->SetOptStat(0);
   c->Draw();
+  PSbuffer *psb;
   while ((object = next())) {
-    ((PSbuffer*)object)->Draw("trigs");
+    psb = (PSbuffer*)object;
+    psb->Draw("trigs");
+    psb->Print();
     c->Update();
     gSystem->Sleep(1000);
   }
