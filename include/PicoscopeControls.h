@@ -21,6 +21,7 @@
 #include "TTimer.h"
 #include "TUnixSystem.h"
 #include "PSbuffer.h"
+#include "fourier.h"
 #include <functional>
 #include <unistd.h> 
 
@@ -48,6 +49,7 @@ private:
   TGLabel *_connectionStatus; 
 
   TGLayoutHints *_hintsn; 
+  TGLayoutHints *_hintsx; 
   TGLayoutHints *_hintsy; 
 
   TGGroupFrame *_voltageF; 
@@ -67,18 +69,26 @@ private:
   TGNumberEntry *_sampleInterval; 
   TGLabel *_intervalLabel; 
 
-  TGNumberEntry *_sampleNumber; 
+  TGNumberEntry *_preTriggerNumber; 
+  TGLabel *_preTrigLabel; 
+
+  TGNumberEntry *_postTriggerNumber; 
   TGLabel *_windowLabel; 
+
+  TGNumberEntry *_DCOffset; 
+  TGTextButton *_captureBaseline; 
 
   TGTextButton *_runBtn; 
   TGNumberEntry *_numberRuns; 
   TGLabel *_numberRunsLabel; 
-  
+
   TGNumberEntry *_triggerLevel; 
   TGLabel *_triggerLabel; 
 
   TGTextButton *_triggerEnableBtn; 
   TGTextButton *_writeBuffersBtn; 
+  TGTextButton *_clearBtn; 
+
   
   TGMainFrame *_mf; 
   
@@ -107,16 +117,18 @@ private:
   
   void channelHandler(Int_t selection, Int_t widgetID); 
   void voltageHandler(Int_t selection, Int_t widgetID); 
-    
-  void sampleNumberHandler(Long_t val); 
+  void postTriggerHandler(Long_t val);
+  void preTriggerHandler(Long_t val);
+
   void sampleIntervalHandler(Long_t val); 
   TString prettyPrintInterval();   
   TString prettyPrintWindow();   
   void couplingHandler(Int_t selection, Int_t widgetID);
 
   void FinishedCallBack(); 
-
-
+  void clearBuffers(); 
+  void DCOffsetHandler(Long_t); 
+  void captureBaseline(); 
   void triggerButton(); 
   void triggerLevelHandler(Long_t val);
   void runNumberHandler(Long_t val);
@@ -126,12 +138,17 @@ private:
   void Play(); 
   void Stop(); 
   void NextWaveform(); 
-
   void writeBuffersToDisk();
+  #ifndef __CINT__
+  PSbuffer * bufferBuilder(int16_t *waveform, int16_t *trigger, uint32_t nsamples, PS6000_RANGE waverange, PS6000_RANGE trigRange, Double_t t0, Double_t dT, Double_t dcOffset); 
+
+  #endif
+
 
   TList* Buffers() { return _buffers; }; 
 
   void callBack(picoscope::picoscopeData *data); 
+  void bufferCallBack(picoscope::picoscopeData *data); 
 
 }; 
 

@@ -11,6 +11,7 @@ using std::endl;
 
 
 void PSbuffer::InitWaveform(Int_t nbins, Float_t max, Float_t min){
+  dcOffset = 0.0; 
   if (max==min) max=dT*nbins;
   waveBuffer=new TH1F("waveform","Waveform;t [ns];V [mV]",nbins,min,max);
 }
@@ -43,7 +44,10 @@ void PSbuffer::Print(){
 
 void PSbuffer::Analyze(){
   // consider replacing w/ ROOT FFT
-  dcOffset=calcDCoffset(waveBuffer);
+  if (dcOffset == 0) { 
+    dcOffset=calcDCoffset(waveBuffer);
+    std::cout << "DC Offset set to zero...calculating " << std::endl; 
+  }
   double min=waveBuffer->GetBinContent(waveBuffer->GetMinimumBin());  // min/max voltage
   double max=waveBuffer->GetBinContent(waveBuffer->GetMaximumBin());
   min-=dcOffset;

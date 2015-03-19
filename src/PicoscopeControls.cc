@@ -60,6 +60,7 @@ PicoscopeControls::PicoscopeControls() {
   _runs = 1; 
 
   _hintsn = new TGLayoutHints(kLHintsNormal, 2,2,2,2); 
+  _hintsx = new TGLayoutHints(kLHintsExpandX, 0,2,2,2); 
   _hintsy = new TGLayoutHints(kLHintsNormal|kLHintsExpandY, 2,2,2,2); 
   TGLayoutHints *_hintse = new TGLayoutHints(kLHintsTop | kLHintsLeft |
 					     kLHintsExpandX | kLHintsExpandY, 
@@ -141,7 +142,7 @@ PicoscopeControls::PicoscopeControls() {
   _timeSamplingF = new TGGroupFrame(_mf, "Time and Sampling"); 
 
   //Sampling Interval
-  _sampleInterval = new TGNumberEntry(_timeSamplingF, 2, 5, 5, TGNumberFormat::kNESInteger); 
+  _sampleInterval = new TGNumberEntry(_timeSamplingF, 2, 8, 5, TGNumberFormat::kNESInteger); 
   _sampleInterval->Connect("ValueSet(Long_t)", "PicoscopeControls", this, "sampleIntervalHandler(Long_t)"); 
   _timeSamplingF->AddFrame(_sampleInterval, _hintsn); 
 
@@ -151,18 +152,39 @@ PicoscopeControls::PicoscopeControls() {
   
 
   //Sampling Number
-  _sampleNumber = new TGNumberEntry(_timeSamplingF, 1e4, 5, 5, TGNumberFormat::kNESInteger); 
-  _sampleNumber->Connect("ValueSet(Long_t)", "PicoscopeControls", this, "sampleNumberHandler(Long_t)"); 
-  _timeSamplingF->AddFrame(_sampleNumber, _hintsn); 
+
+  _preTriggerNumber = new TGNumberEntry(_timeSamplingF, 0, 8, 5, TGNumberFormat::kNESInteger); 
+  _preTriggerNumber->Connect("ValueSet(Long_t)", "PicoscopeControls", this, "preTriggerHandler(Long_t)"); 
+  _timeSamplingF->AddFrame(_preTriggerNumber, _hintsn); 
+  TGLabel *preTrigLabel = new TGLabel(_timeSamplingF, TGString("Pre-trigger Samples")); 
+  _timeSamplingF->AddFrame(preTrigLabel, _hintsn); 
+
+  _postTriggerNumber = new TGNumberEntry(_timeSamplingF, 1e4, 8, 5, TGNumberFormat::kNESInteger); 
+  _postTriggerNumber->Connect("ValueSet(Long_t)", "PicoscopeControls", this, "postTriggerHandler(Long_t)"); 
+  _timeSamplingF->AddFrame(_postTriggerNumber, _hintsn); 
 
 
-  TGLabel *sampleLabel = new TGLabel(_timeSamplingF, TGString("# Samples")); 
-  _timeSamplingF->AddFrame(sampleLabel, _hintsn); 
+
+
+  TGLabel *sampleLabel = new TGLabel(_timeSamplingF, TGString("Post-Trigger Samples")); 
+  _timeSamplingF->AddFrame(sampleLabel, _hintsx); 
 
   _windowLabel = new TGLabel(_timeSamplingF, TGString(prettyPrintWindow())); 
   _timeSamplingF->AddFrame(_windowLabel, _hintsn); 
 
+
+  //Baseline capture 
+  _DCOffset = new TGNumberEntry(_timeSamplingF, 0.0, 8, 20, TGNumberFormat::kNESReal); 
+  _DCOffset->Connect("ValueSet(Long_t)", "PicoscopeControls", this, "DCOffsetHandler(Long_t)"); 
+  _timeSamplingF->AddFrame(_DCOffset, _hintsn); 
+  _captureBaseline = new TGTextButton(_timeSamplingF, TGHotString("Capture Baseline"), 4); 
+  _captureBaseline->Connect("Clicked()", "PicoscopeControls", this, "captureBaseline()"); 
+  _timeSamplingF->AddFrame(_captureBaseline, _hintsx); 
+
   _mf->AddFrame(_timeSamplingF, _hintsy); 
+
+
+
 
 
   _triggerRunF = new TGGroupFrame(_mf, "Trigger and Run", kVerticalFrame); 
@@ -194,16 +216,21 @@ PicoscopeControls::PicoscopeControls() {
   _writeBuffersBtn = new TGTextButton(_triggerRunF, TGHotString("Write Buffers to Disk"), 6); 
   _writeBuffersBtn->Connect("Clicked()", "PicoscopeControls", this, "writeBuffersToDisk()"); 
   _triggerRunF->AddFrame(_writeBuffersBtn, _hintsn); 
+
+
+  _clearBtn = new TGTextButton(_triggerRunF, TGHotString("Clear Buffers"), 10); 
+  _clearBtn->Connect("Clicked()", "PicoscopeControls", this, "clearBuffers()"); 
+  _triggerRunF->AddFrame(_clearBtn, _hintsn); 
   
   _previewBtn = new TGTextButton(_triggerRunF, TGHotString("Preview Buffers"), 7); 
   _previewBtn->Connect("Clicked()", "PicoscopeControls", this, "preview()"); 
   _triggerRunF->AddFrame(_previewBtn, _hintsn); 
+
   
   _mf->AddFrame(_triggerRunF, _hintsy); 
-  _mf->MapSubwindows(); 
   _mf->Resize(_mf->GetDefaultSize()); 
+  _mf->MapSubwindows(); 
   _mf->MapWindow();
-
 
 
 
@@ -291,15 +318,22 @@ void PicoscopeControls::sampleIntervalHandler(Long_t val) {
 }
 
 
-void PicoscopeControls::sampleNumberHandler(Long_t val) { 
+void PicoscopeControls::postTriggerHandler(Long_t val) { 
   picoscope::samplingSettings s = _ps.sampling(); 
-  s.setSampleNumber(_sampleNumber->GetIntNumber()); 
+  s.setPostTriggerSamples(_postTriggerNumber->GetIntNumber()); 
   _windowLabel->SetText(prettyPrintWindow()); 
   //  std::cout << "number of samples to capture changed" << std::endl; 
 
 }
 
+void PicoscopeControls::preTriggerHandler(Long_t val) { 
+  picoscope::samplingSettings s = _ps.sampling(); 
+  s.setPreTriggerSamples(_preTriggerNumber->GetIntNumber()); 
+  _windowLabel->SetText(prettyPrintWindow()); 
 
+
+
+}
 
 
 
@@ -309,7 +343,8 @@ void PicoscopeControls::testRun() {
   s.setOversample(0); 
   s.setTimebase(_sampleInterval->GetIntNumber()); 
   s.setSegment(1); 
-  s.setSampleNumber(_sampleNumber->GetIntNumber()); 
+  s.setPostTriggerSamples(_postTriggerNumber->GetIntNumber()); 
+  s.setPreTriggerSamples(_preTriggerNumber->GetIntNumber()); 
   
   /*  std::cout << "Taking a run and then closing the picoscope." << std::endl; 
   std:: cout << "test Run ps address:" << &_ps << std::endl; 
@@ -329,41 +364,26 @@ void PicoscopeControls::testRun() {
 
 }
 
-void PicoscopeControls::callBack(picoscope::picoscopeData *data) { 
 
-  _runs--; 
+PSbuffer *PicoscopeControls::bufferBuilder(int16_t *waveform, int16_t *trigger, uint32_t nsamples, PS6000_RANGE waverange, PS6000_RANGE trigRange, Double_t t0, Double_t dT, Double_t dcOffset) { 
+
   PSbuffer *ps = new PSbuffer(); 
 
-  //Most of these objects are probably getting copied around, so after you get it working think about what's going on and make it nicer!
 
-  picoscope::channel waveformSettings = data->first[PS6000_CHANNEL_A].second; 
-  picoscope::channel triggerSettings =  data->first[PS6000_CHANNEL_B].second; 
-  std::vector<int16_t> *waveform = data->first[PS6000_CHANNEL_A].first; 
-  std::vector<int16_t> *trigger = data->first[PS6000_CHANNEL_B].first; 
-  picoscope::samplingSettings timeSettings = data->second; 
+  ps->SetT0(t0); 
+  std::cout << "Time interval ns: " << dT << std::endl; 
+  ps->SetDt(dT); 
 
-
-  std::cout << "Waveform count:" << waveform->size() << " Waveform Range:" << waveformSettings.range() << std::endl; 
-  std::cout << "Trigger count:" << trigger->size() << " Trigger Range:" << triggerSettings.range() << std::endl; 
-
-
-  ps->SetT0(0); 
-  std::cout << "Time interval ns: " << timeSettings.timeIntervalNS() << std::endl; 
-  ps->SetDt(timeSettings.timeIntervalNS()); 
-  //Fill waveform with data 
-
-
-  ps->InitWaveform(waveform->size()); 
+  ps->InitWaveform(nsamples); 
   TH1F* wave = ps->GetWaveform(); 
-
   Float_t dV = 1e12; 
+  ps->SetDCOffset(dcOffset); 
   float delta = 0; 
   float last = 0; 
-  for (unsigned int i = 0; i < waveform->size(); i++) {
+  for (unsigned int i = 0; i < nsamples; i++) {
 
-    int32_t mV = picoscope::adcToMv(waveform->at(i), waveformSettings.range()); 
+    int32_t mV = picoscope::adcToMv(waveform[i], waverange); 
     delta = TMath::Abs(mV-last); 
-
     if (delta > 1e-6 && delta < dV) dV = delta; 
 
     last = mV; 
@@ -372,63 +392,151 @@ void PicoscopeControls::callBack(picoscope::picoscopeData *data) {
   }
 
   ps->SetDV(dV); 
+
+
   // get channel B (trigger)
-  float min=1e12;
-  float max=-1e12;
-  vector<float> *vtrig=new vector<float>;
+  if (trigger) { 
+    float min=1e12;
+    float max=-1e12;
+    vector<float> *vtrig=new vector<float>;
     
-  // set trigger point and hysterisis
-  // WARNING!  This may fail in case of bad terminations
-  // *** TODO:  Use t0 vs t=0  to find 1st trigger bin and gte threshold there ***
+    // set trigger point and hysterisis
+    // WARNING!  This may fail in case of bad terminations
+    // *** TODO:  Use t0 vs t=0  to find 1st trigger bin and gte threshold there ***
 
 
-  // mark triggers
-  Float_t mV; 
-  for (UInt_t i = 0; i < trigger->size(); i++) {
+    // mark triggers
+    Float_t mV; 
+    for (UInt_t i = 0; i < nsamples; i++) {
 
-    mV = picoscope::adcToMv(trigger->at(i), triggerSettings.range()); 
-    min = TMath::Min(min, mV); 
-    max = TMath::Max(max, mV); 
-  }
-
-
-  Bool_t fired = false;
-  Float_t onThreshold = max*0.5; 
-  Float_t offThreshold = max*0.3; 
-  std::cout << "On Threshold:"   << onThreshold 
-	    << " Off Threshold:" << offThreshold << std::endl;
-
-
-  for (UInt_t i = 0; i < trigger->size(); i++) { 
-    mV = picoscope::adcToMv(trigger->at(i), triggerSettings.range()); 
-    if (!fired && mV>onThreshold) {
-      fired = true;
-      ps->AddTrig(i);
-      continue;
+      mV = picoscope::adcToMv(trigger[i], trigRange); 
+      min = TMath::Min(min, mV); 
+      max = TMath::Max(max, mV); 
     }
+
+
+    Bool_t fired = false;
+    Float_t onThreshold = max*0.5; 
+    Float_t offThreshold = max*0.3; 
+    std::cout << "On Threshold:"   << onThreshold 
+	      << " Off Threshold:" << offThreshold << std::endl;
+
+
+    for (UInt_t i = 0; i < nsamples; i++) { 
+      mV = picoscope::adcToMv(trigger[i], trigRange); 
+      if (!fired && mV>onThreshold) {
+	fired = true;
+	ps->AddTrig(i);
+	continue;
+      }
+    }
+
   }
+  ps->Analyze(); 
+  ps->Print(); 
+  
+  return ps; 
+
+}
+
+//Callback for getting an individual Picoscope data buffer 
+void PicoscopeControls::bufferCallBack(picoscope::picoscopeData *data) {
+  PSbuffer *ps; 
+  std::map<PS6000_CHANNEL, std::pair<PS6000_RANGE, int16_t **> > buffers = std::get<0>(*data); 
+  uint32_t nsamples = std::get<1>(*data); 
+  uint32_t captures = std::get<2>(*data); 
+  picoscope::samplingSettings s = std::get<3>(*data); 
+  Double_t dT = s.timeIntervalNS(); 
+  Double_t t0 = 0; 
+  std::cout << "Waveform count:" << nsamples << " Waveform Range:" << buffers[PS6000_CHANNEL_A].first  << std::endl; 
+  std::cout << "Trigger count:" << nsamples << " Trigger Range:" << buffers[PS6000_CHANNEL_B].first << std::endl; 
+
+  int16_t **chABuffer = buffers[PS6000_CHANNEL_A].second; 
+  int16_t **chBBuffer = NULL; 
+  if (buffers.count(PS6000_CHANNEL_B) != 0) 
+    chBBuffer = buffers[PS6000_CHANNEL_B].second; 
+  
+
+  //Only have one buffer 
+  if (chBBuffer) { 
+    ps = bufferBuilder(chABuffer[0], chBBuffer[0], nsamples, buffers[PS6000_CHANNEL_A].first, buffers[PS6000_CHANNEL_B].first, t0, dT,0.0); 
+    delete[] chBBuffer[0]; 
+  }
+  else {
+    ps =bufferBuilder(chABuffer[0], NULL, nsamples, buffers[PS6000_CHANNEL_A].first, buffers[PS6000_CHANNEL_B].first, t0, dT, 0.0); 
+  }
+  delete[] chABuffer[0]; 
+  delete[] chABuffer; 
+  delete[] chBBuffer; 
+  delete data; 
+
+  _DCOffset->SetNumber(ps->DCoffset()); 
+  delete ps; 
+
+}
+
+
+void PicoscopeControls::callBack(picoscope::picoscopeData *data) { 
+
+  
+
+  std::map<PS6000_CHANNEL, std::pair<PS6000_RANGE, int16_t **> > buffers = std::get<0>(*data); 
+  uint32_t nsamples = std::get<1>(*data); 
+  uint32_t captures = std::get<2>(*data); 
+  picoscope::samplingSettings s = std::get<3>(*data); 
+  Double_t dT = s.timeIntervalNS(); 
+  Double_t t0 = 0; 
+  std::cout << "Waveform count:" << nsamples << " Waveform Range:" << buffers[PS6000_CHANNEL_A].first  << std::endl; 
+  std::cout << "Trigger count:" << nsamples << " Trigger Range:" << buffers[PS6000_CHANNEL_B].first << std::endl; 
+
+  int16_t **chABuffer = buffers[PS6000_CHANNEL_A].second; 
+  int16_t **chBBuffer = NULL; 
+  if (buffers.count(PS6000_CHANNEL_B) != 0) 
+    chBBuffer = buffers[PS6000_CHANNEL_B].second; 
+  Double_t dcOffset = _DCOffset->GetNumber(); 
+  std::cout << "DC Offset set to:" << dcOffset << std::endl; 
+  PSbuffer *ps; 
+  for (int i = 0; i < captures; i++) { 
+    if (chBBuffer) {
+      ps = bufferBuilder(chABuffer[i], chBBuffer[i], nsamples, buffers[PS6000_CHANNEL_A].first, buffers[PS6000_CHANNEL_B].first, t0, dT, dcOffset);
+      delete[] chBBuffer[i]; 
+    }
+    else { 
+      ps = bufferBuilder(chABuffer[i], NULL, nsamples, buffers[PS6000_CHANNEL_A].first, buffers[PS6000_CHANNEL_B].first, t0, dT, dcOffset); 
+    }
+    _buffers->AddLast(ps); 
+    delete[] chABuffer[i]; 
+    
+  }
+  delete[] chABuffer; 
+  delete[] chBBuffer; 
+
+  delete data;
 
   //  ps->Analyze();  // calculate DC offset, frequency spectrum, noise, etc*/
-  ps->Print(); 
+  /*  ps->Print(); 
 
 
   _buffers->AddLast(ps); 
 
-  delete data; 
 
-  _cbTimer->SetTime(30); 
+
+  /*  _cbTimer->SetTime(30); 
   _cbTimer->Connect("Timeout()", "PicoscopeControls", this, "FinishedCallBack()"); 
-  _cbTimer->Start(); 
+  _cbTimer->Start(); */
   
 
 }
 
 
+
 TString PicoscopeControls::prettyPrintWindow() { 
 
+  Long_t samples = _preTriggerNumber->GetIntNumber()+_postTriggerNumber->GetIntNumber(); 
+  std::cout << "Samples: " << samples << std::endl; 
   float timebase = _ps.calculateTimebase(_sampleInterval->GetIntNumber()); 
-  float result = timebase*_sampleNumber->GetIntNumber(); 
-  std::cout << "timebase * sampleNumber =" << timebase << "*" << _sampleNumber->GetIntNumber() << "=" << result << std::endl; 
+  float result = timebase*samples; 
+  std::cout << "timebase * sampleNumber =" << timebase << "*" << samples << "=" << result << std::endl; 
   double lg = TMath::Abs(TMath::Log10(result)); 
   TString units = "";
   bool set = false;  
@@ -653,7 +761,10 @@ void PicoscopeControls::NextWaveform() {
 }
 
 void PicoscopeControls::runNumberHandler(Long_t val) { 
-  _runs = _numberRuns->GetIntNumber(); 
+  unsigned long maxSamples = _ps.setCaptures(_numberRuns->GetIntNumber()); 
+
+  
+  _runs = 1; //_numberRuns->GetIntNumber(); 
   if (_runs <= 0)
     _runs = 1; 
 
@@ -677,6 +788,56 @@ void PicoscopeControls::Stop() {
   _playBtn->Disconnect("Clicked()"); 
   _playBtn->Connect("Clicked()", "PicoscopeControls", this, "NextWaveform()"); 
 }
+
+
+void PicoscopeControls::DCOffsetHandler(Long_t) { 
+
+  std::cout << "DC offset changed value" << std::endl;  
+
+}
+void PicoscopeControls::captureBaseline() { 
+
+  std::cout << "capturing baseline" << std::endl;  
+  unsigned long maxSamples = _ps.setCaptures(1); 
+
+  picoscope::samplingSettings &s = _ps.sampling(); 
+  s.setOversample(0); 
+  s.setTimebase(_sampleInterval->GetIntNumber()); 
+  s.setSegment(1); 
+  s.setPostTriggerSamples(_postTriggerNumber->GetIntNumber()); 
+  s.setPreTriggerSamples(_preTriggerNumber->GetIntNumber()); 
+
+  _ps.enableBandwidthLimit(PS6000_CHANNEL_A); 
+  _ps.enableChannel(PS6000_CHANNEL_A); 
+
+  std::function<void(picoscope::picoscopeData *)> *cB = new std::function<void(picoscope::picoscopeData *)>([this](picoscope::picoscopeData *d) { bufferCallBack(d);}); 
+  _ps.setCallback(cB); 
+
+  _ps.takeRun();
+
+
+
+}
+
+
+void PicoscopeControls::clearBuffers()  {
+
+  _buffers->SetOwner(true); 
+  _buffers->Delete(); 
+  /*    TList iter = new TListIter(_buffers);   
+    PSbuffer *b = (PSbuffer *) iter->Next(); 
+    while (b != NULL) { 
+      delete b; 
+      b = (PSbuffer *) iter->Next(); 
+    }
+
+    delete iter; */
+
+
+}
+
+
+
 
 #endif
 

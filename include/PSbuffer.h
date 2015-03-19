@@ -39,6 +39,7 @@ class PSbuffer : public TObject {
   Double_t DV() {return dV;}
   void SetDV(Double_t dv) {dV=dv;}
   Double_t DCoffset() const {return dcOffset;}
+  void SetDCOffset(Double_t offset) { dcOffset = offset;};
   /// Return number of samples in signal trace
   Double_t Samples() const {return waveBuffer->GetNbinsX();}
   Double_t Noise() const {return noise;}
