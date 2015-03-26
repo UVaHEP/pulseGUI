@@ -38,15 +38,17 @@ class PulseAnalysis {
   Double_t _basePar[2];
 
   // Peak finder variables
-  Double_t _pThreshold;    // threshold voltage
-  Double_t _pWidth;        // width of pulse in nanoseconds
-  Double_t _pSigma;        // half width of pulse in units of bins
-
+  Double_t _pThreshold;    /// threshold voltage
+  Double_t _pWidth;        /// width of pulse in nanoseconds
+  Double_t _pSigma;        /// half width of pulse in units of bins
+  // Fixed Integration Window
+  Int_t _intWindow[2];  /// define bins for fixed integration window
+  
   // Analysis of found peaks
-  Int_t _pNFound;          // peaks found by TSpectrum
-  Double_t _pulseRate;     // in MHz 
-  Double_t _pInteg[MAXPEAKS];  // integrals of pulse areas
-  Double_t _pRMS[MAXPEAKS];    // RMS width of pulses
+  Int_t _pNFound;          /// peaks found by TSpectrum
+  Double_t _pulseRate;     /// in MHz 
+  Double_t _pInteg[MAXPEAKS];  /// integrals of pulse areas
+  Double_t _pRMS[MAXPEAKS];    /// RMS width of pulses
 
 public:
   PulseAnalysis(); 
@@ -67,9 +69,15 @@ public:
   void FindPeaksandReduce(Float_t window); 
   void SmoothHistogram(); 
   void SubBkg(); // tbd
-
+  void SetIntegrationWindow(Double_t xmin, Double_t xmax);
+  void SetWindow(Int_t imin, Int_t imax) {
+    _intWindow[0]=imin;
+    _intWindow[1]=imax; }
+  void SetIntegrationFromTrigger(Double_t width, Double_t offset=0);
+  Double_t FixedIntegral() const;
+  
   // manipulate spectrum view
-  void DrawSpectrum();
+  void DrawSpectrum(TString options="");
   void ZoomIn(); 
   void UnZoom(); 
   void ZoomOut(); 
@@ -99,6 +107,7 @@ public:
   void SetXMarks();
   void SetYMarks();
 
+  void Dump() const;  // Print information about this instance
 }; 
 
 #endif

@@ -15,9 +15,14 @@ void PSbuffer::InitWaveform(Int_t nbins, Float_t max, Float_t min){
   waveBuffer=new TH1F("waveform","Waveform;t [ns];V [mV]",nbins,min,max);
 }
 
-Double_t PSbuffer::GetTrig(Int_t ntrig) const{
+Double_t PSbuffer::GetTrigT(Int_t ntrig) const{
   if ( trigs.size()==0  ) return 0;
   return waveBuffer->GetBinLowEdge(trigs[ntrig]);
+}
+
+Int_t PSbuffer::GetTrigBin(Int_t ntrig) const{
+  if ( trigs.size()==0  ) return 0;
+  return trigs[ntrig];
 }
 
 void PSbuffer::AddTrig(Int_t trigBin){
@@ -91,7 +96,7 @@ void PSbuffer::Draw(TString options){
     t.SetTextAlign(23);
     t.SetTextColor(kRed);
     for (unsigned i=0; i<trigs.size(); i++){
-      t.DrawText(GetTrig(i),0,"T");
+      t.DrawText(GetTrigT(i),0,"T");
     }
   }
 

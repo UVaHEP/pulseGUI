@@ -50,7 +50,9 @@ class PSbuffer : public TObject {
   TH1F* GetSpectrum() {return pHD;}
   Int_t GetNtrig() const {return trigs.size();}
   /// Return time corresponding to nth trigger
-  Double_t GetTrig(Int_t ntrig=0) const; 
+  Double_t GetTrigT(Int_t ntrig=0) const; 
+  /// Return bin corresponding to nth trigger
+  Int_t GetTrigBin(Int_t ntrig=0) const; 
   void AddTrig(Int_t trigBin);
   /// Calculate and store derived quantities from signal and trigger traces
   void Analyze();
