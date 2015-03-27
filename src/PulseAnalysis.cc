@@ -94,9 +94,13 @@ void PulseAnalysis::SetIntegrationFromTrigger(Double_t width, Double_t offset){
     log_warn("No trigger data present.");
      return;
   }
-  // base integration window on position of trigger
+  // for now base integration window on position of 1st trigger
   _intWindow[0]=psbuffer->GetTrigBin() + (int) (offset/psbuffer->Dt());
+  if (_intWindow[0]<1) (_intWindow[0])=1;
   _intWindow[1]=_intWindow[0] + (int) (width/psbuffer->Dt());
+  if (_intWindow[1]>psbuffer->GetWaveform()->GetNbinsX())
+    _intWindow[1]=psbuffer->GetWaveform()->GetNbinsX();
+  log_info("Set Integration Window (%d:%d)",_intWindow[0],_intWindow[1]);
 }
 
 
