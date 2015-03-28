@@ -112,7 +112,7 @@ void PSbuffer::Analyze(Double_t scale){
   // after 1st fit, set fit range to +- 2sigma around 0 and refit
   double sigma=g2->GetParameter(1); 
   g2->SetRange(-2*sigma,2*sigma);
-  pHD->Fit("g2","0R");
+  pHD->Fit("g2","0QR");
   noise=g2->GetParameter(1);
 }
 
