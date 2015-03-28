@@ -46,8 +46,8 @@ class PSbuffer : public TObject {
   void InitWaveform(Int_t nbins, Float_t max=0, Float_t min=0);
   /// Return scope trace 
   TH1F* GetWaveform() {return waveBuffer;}
-  /// Return spectrum of voltage samples 
-  TH1F* GetSpectrum() {return pHD;}
+  /// Return pule height distribution of voltage samples 
+  TH1F* GetPulseHeights() {return pHD;}
   Int_t GetNtrig() const {return trigs.size();}
   /// Return time corresponding to nth trigger
   Double_t GetTrigT(Int_t ntrig=0) const; 
@@ -55,13 +55,16 @@ class PSbuffer : public TObject {
   Int_t GetTrigBin(Int_t ntrig=0) const; 
   void AddTrig(Int_t trigBin);
   /// Calculate and store derived quantities from signal and trigger traces
-  void Analyze();
+  void AnalyzeOld(Double_t scale=-1);
+  void Analyze(Double_t scale=-1);
   /// Draw Options
   /// Pass any standard histogram drawing options
   /// Additional options supported:
   /// TRIGS : draw marks for trigger locations
   void Draw(TString options="");
   void Print();
+  /// copy this to psb
+  void Copy(PSbuffer& psb);
 };
 
 

@@ -46,7 +46,7 @@ void PSbuffer::Print(){
 }
 
 
-void PSbuffer::Analyze(){
+void PSbuffer::AnalyzeOld(Double_t scale){
   // consider replacing w/ ROOT FFT
   dcOffset=calcDCoffset(waveBuffer);
   double min=waveBuffer->GetBinContent(waveBuffer->GetMinimumBin());  // min/max voltage
@@ -66,10 +66,11 @@ void PSbuffer::Analyze(){
     meanHeight+=v;
   }
   meanHeight/=waveBuffer->GetNbinsX();
-  if (meanHeight<0) {
-    log_info("Negative pulses detected, inverting waveform.");
-    waveBuffer->Scale(-1);  // invert negative pulses here
-  }
+  waveBuffer->Scale(scale);
+  // if (meanHeight<0) {
+  //   log_info("Negative pulses detected, inverting waveform.");
+  //   waveBuffer->Scale(-1);  // invert negative pulses here
+  // }
   TF1 *g2=new TF1("g2","[0]*exp(-0.5*x*x/[1]/[1])",min-dV/2,max+dV/2);
   g2->SetParameters(pHD->GetMaximum(),pHD->GetRMS());
   pHD->Fit("g2","0");
@@ -80,6 +81,40 @@ void PSbuffer::Analyze(){
   noise=g2->GetParameter(1);
 }
 
+
+void PSbuffer::Analyze(Double_t scale){
+  waveBuffer->Scale(scale);
+  double min=waveBuffer->GetBinContent(waveBuffer->GetMinimumBin());  // min/max voltage
+  double max=waveBuffer->GetBinContent(waveBuffer->GetMaximumBin());
+  int bins = (int)((max-min)/dV*1.01); // guard against rounding
+  // possible memory leak if Analyze called repeatedly
+  pHD = new TH1F("spectrum","Pulse Height Spectrum;Amplitude [mV];# samples",
+		 bins,min-dV/2,max+dV/2);
+  for (int i=1; i<=waveBuffer->GetNbinsX(); i++){
+    pHD->Fill( waveBuffer->GetBinContent(i) );
+  }
+  dcOffset=pHD->GetBinCenter(pHD->GetMaximumBin());
+  min-=dcOffset;
+  max-=dcOffset;
+  bins = (int)((max-min)/dV*1.01); // guard against rounding  
+  pHD->SetBins(bins,min-dV/2,max+dV/2);
+  
+  // remove DC offset, fill pulse height spectrum
+  for (int i=1; i<=waveBuffer->GetNbinsX(); i++){
+    double v=waveBuffer->GetBinContent(i)-dcOffset;
+    waveBuffer->SetBinContent( i , v );
+    pHD->Fill(v);
+  }
+
+  TF1 *g2=new TF1("g2","[0]*exp(-0.5*x*x/[1]/[1])",min-dV/2,max+dV/2);
+  g2->SetParameters(pHD->GetMaximum(),pHD->GetRMS());
+  pHD->Fit("g2","0");
+  // after 1st fit, set fit range to +- 2sigma around 0 and refit
+  double sigma=g2->GetParameter(1); 
+  g2->SetRange(-2*sigma,2*sigma);
+  pHD->Fit("g2","0R");
+  noise=g2->GetParameter(1);
+}
 
 void PSbuffer::Draw(TString options){
   options.ToLower();
@@ -100,4 +135,10 @@ void PSbuffer::Draw(TString options){
     }
   }
 
+}
+
+void PSbuffer::Copy(PSbuffer& psb){
+  psb=*this;
+  psb.waveBuffer=new TH1F(*(psb.waveBuffer));
+  psb.pHD=new TH1F(*(psb.pHD));
 }
