@@ -87,9 +87,11 @@ void PSbuffer::Analyze(Double_t scale){
   double min=waveBuffer->GetBinContent(waveBuffer->GetMinimumBin());  // min/max voltage
   double max=waveBuffer->GetBinContent(waveBuffer->GetMaximumBin());
   int bins = (int)((max-min)/dV*1.01); // guard against rounding
-  // possible memory leak if Analyze called repeatedly
-  pHD = new TH1F("spectrum","Pulse Height Spectrum;Amplitude [mV];# samples",
-		 bins,min-dV/2,max+dV/2);
+
+  if (pHD) pHD->SetBins(bins,min-dV/2,max+dV/2);
+  else
+    pHD = new TH1F("spectrum","Pulse Height Spectrum;Amplitude [mV];# samples",
+		   bins,min-dV/2,max+dV/2);
   for (int i=1; i<=waveBuffer->GetNbinsX(); i++){
     pHD->Fill( waveBuffer->GetBinContent(i) );
   }
@@ -108,7 +110,7 @@ void PSbuffer::Analyze(Double_t scale){
 
   TF1 *g2=new TF1("g2","[0]*exp(-0.5*x*x/[1]/[1])",min-dV/2,max+dV/2);
   g2->SetParameters(pHD->GetMaximum(),pHD->GetRMS());
-  pHD->Fit("g2","0");
+  pHD->Fit("g2","0Q");
   // after 1st fit, set fit range to +- 2sigma around 0 and refit
   double sigma=g2->GetParameter(1); 
   g2->SetRange(-2*sigma,2*sigma);
@@ -140,5 +142,5 @@ void PSbuffer::Draw(TString options){
 void PSbuffer::Copy(PSbuffer& psb){
   psb=*this;
   psb.waveBuffer=new TH1F(*(psb.waveBuffer));
-  psb.pHD=new TH1F(*(psb.pHD));
+  psb.pHD=(TH1F*) psb.pHD->Clone();
 }
