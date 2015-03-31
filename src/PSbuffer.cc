@@ -11,14 +11,18 @@ using std::endl;
 
 
 void PSbuffer::InitWaveform(Int_t nbins, Float_t max, Float_t min){
-  dcOffset = 0.0; 
   if (max==min) max=dT*nbins;
   waveBuffer=new TH1F("waveform","Waveform;t [ns];V [mV]",nbins,min,max);
 }
 
-Double_t PSbuffer::GetTrig(Int_t ntrig) const{
+Double_t PSbuffer::GetTrigT(Int_t ntrig) const{
   if ( trigs.size()==0  ) return 0;
   return waveBuffer->GetBinLowEdge(trigs[ntrig]);
+}
+
+Int_t PSbuffer::GetTrigBin(Int_t ntrig) const{
+  if ( trigs.size()==0  ) return 0;
+  return trigs[ntrig];
 }
 
 void PSbuffer::AddTrig(Int_t trigBin){
@@ -42,12 +46,9 @@ void PSbuffer::Print(){
 }
 
 
-void PSbuffer::Analyze(){
+void PSbuffer::AnalyzeOld(Double_t scale){
   // consider replacing w/ ROOT FFT
-  if (dcOffset == 0) { 
-    dcOffset=calcDCoffset(waveBuffer);
-    std::cout << "DC Offset set to zero...calculating " << std::endl; 
-  }
+  dcOffset=calcDCoffset(waveBuffer);
   double min=waveBuffer->GetBinContent(waveBuffer->GetMinimumBin());  // min/max voltage
   double max=waveBuffer->GetBinContent(waveBuffer->GetMaximumBin());
   min-=dcOffset;
@@ -57,7 +58,6 @@ void PSbuffer::Analyze(){
 		 bins,min-dV/2,max+dV/2);
   
   // remove DC offset, fill pulse height spectrum
-
   double meanHeight=0;
   for (int i=1; i<=waveBuffer->GetNbinsX(); i++){
     double v=waveBuffer->GetBinContent(i)-dcOffset;
@@ -65,12 +65,12 @@ void PSbuffer::Analyze(){
     pHD->Fill(v);
     meanHeight+=v;
   }
-  waveBuffer->Scale(-1);  // invert negative pulses here
-  /*  meanHeight/=waveBuffer->GetNbinsX();
-  if (meanHeight<0) {
-    log_info("Negative pulses detected, inverting waveform.");
-    waveBuffer->Scale(-1);  // invert negative pulses here
-    }*/
+  meanHeight/=waveBuffer->GetNbinsX();
+  waveBuffer->Scale(scale);
+  // if (meanHeight<0) {
+  //   log_info("Negative pulses detected, inverting waveform.");
+  //   waveBuffer->Scale(-1);  // invert negative pulses here
+  // }
   TF1 *g2=new TF1("g2","[0]*exp(-0.5*x*x/[1]/[1])",min-dV/2,max+dV/2);
   g2->SetParameters(pHD->GetMaximum(),pHD->GetRMS());
   pHD->Fit("g2","0");
@@ -81,6 +81,42 @@ void PSbuffer::Analyze(){
   noise=g2->GetParameter(1);
 }
 
+
+void PSbuffer::Analyze(Double_t scale){
+  waveBuffer->Scale(scale);
+  double min=waveBuffer->GetBinContent(waveBuffer->GetMinimumBin());  // min/max voltage
+  double max=waveBuffer->GetBinContent(waveBuffer->GetMaximumBin());
+  int bins = (int)((max-min)/dV*1.01); // guard against rounding
+
+  if (pHD) pHD->SetBins(bins,min-dV/2,max+dV/2);
+  else
+    pHD = new TH1F("spectrum","Pulse Height Spectrum;Amplitude [mV];# samples",
+		   bins,min-dV/2,max+dV/2);
+  for (int i=1; i<=waveBuffer->GetNbinsX(); i++){
+    pHD->Fill( waveBuffer->GetBinContent(i) );
+  }
+  dcOffset=pHD->GetBinCenter(pHD->GetMaximumBin());
+  min-=dcOffset;
+  max-=dcOffset;
+  bins = (int)((max-min)/dV*1.01); // guard against rounding  
+  pHD->SetBins(bins,min-dV/2,max+dV/2);
+  
+  // remove DC offset, fill pulse height spectrum
+  for (int i=1; i<=waveBuffer->GetNbinsX(); i++){
+    double v=waveBuffer->GetBinContent(i)-dcOffset;
+    waveBuffer->SetBinContent( i , v );
+    pHD->Fill(v);
+  }
+
+  TF1 *g2=new TF1("g2","[0]*exp(-0.5*x*x/[1]/[1])",min-dV/2,max+dV/2);
+  g2->SetParameters(pHD->GetMaximum(),pHD->GetRMS());
+  pHD->Fit("g2","0Q");
+  // after 1st fit, set fit range to +- 2sigma around 0 and refit
+  double sigma=g2->GetParameter(1); 
+  g2->SetRange(-2*sigma,2*sigma);
+  pHD->Fit("g2","0QR");
+  noise=g2->GetParameter(1);
+}
 
 void PSbuffer::Draw(TString options){
   options.ToLower();
@@ -97,8 +133,14 @@ void PSbuffer::Draw(TString options){
     t.SetTextAlign(23);
     t.SetTextColor(kRed);
     for (unsigned i=0; i<trigs.size(); i++){
-      t.DrawText(GetTrig(i),0,"T");
+      t.DrawText(GetTrigT(i),0,"T");
     }
   }
 
+}
+
+void PSbuffer::Copy(PSbuffer& psb){
+  psb=*this;
+  psb.waveBuffer=new TH1F(*(psb.waveBuffer));
+  psb.pHD=(TH1F*) psb.pHD->Clone();
 }

@@ -6,12 +6,15 @@ void test(TString file){
   cout << "Found list with " << tl->GetEntries() << " PSbuffers" << endl;
  
   PulseAnalysis *pA=new PulseAnalysis();
-  //  pA->SetWidth(30e-9);
   
   TIter next(tl);
   TObject* object = 0;
-  TCanvas *c=new TCanvas();
+
   gStyle->SetOptStat(0);
+  TCanvas *c=new TCanvas("testCan","test",1000,600);
+  TCanvas *c2=new TCanvas("testCan2","PulseHeights",1000,600);
+  c->Divide(2,1);
+  c->cd(1);
   c->Draw();
 
   TH1F *pulseHeights=new TH1F();
@@ -24,23 +27,24 @@ void test(TString file){
     cout << "Processing buffer " << nbuf << endl;
     PSbuffer *psb=(PSbuffer*)object;
     pA->SetBuffer(psb);
-
-    cout << "Set Width " << pA->SetWidth(30) << endl;
+    pA->SetWidth(30);
+    
     pA->FindPeaks();
     pA->Analyze();
-    pA->DrawSpectrum(); c->Update();
-    gSystem->Sleep(1000);  
-    //    psb->Draw("trigs");
+    c->cd(1);
+    pA->DrawSpectrum();
+    //c->Update();
     if (nbuf==0) *pulseHeights=*(pA->Hph());
     else pulseHeights->Add(pA->Hph());
+    c->cd(2);
     pulseHeights->Draw();
-    c->Update();
-    gSystem->Sleep(100);
+    //   c->Update();
+    //gSystem->Sleep(1000);
     nbuf++;
   }
-
+  c2->cd();
   pulseHeights->Draw();
-  c->Update();
+  
 
 }
 

@@ -3,9 +3,9 @@
 #include <iostream> 
 
 
-void PulseAnalysis::DrawSpectrum() { 
+void PulseAnalysis::DrawSpectrum(TString options) { 
 
-  psbuffer->GetWaveform()->Draw();
+  psbuffer->GetWaveform()->Draw(options);
 }
 
 void PulseAnalysis::SmoothHistogram() {

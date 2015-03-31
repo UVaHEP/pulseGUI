@@ -101,8 +101,8 @@ void PulseAnalysis::Analyze(){
   }
   TF1 *xtalball=new TF1("xtalball",XTLBall,0,maxInt*1.1,5);
   xtalball->SetParameters(1,3,_hpi.GetMean(),_hpi.GetRMS(),_hpi.GetMaximum());
-  _hpi.Fit("gaus","0");
-  _hpi.Fit("xtalball","0");
+  _hpi.Fit("gaus","0q");
+  _hpi.Fit("xtalball","0q");
 
   delete[] index;
 }
@@ -258,16 +258,19 @@ void PulseAnalysis::FindPeaksandReduce(Float_t window) {
     std::cout << "Setting Bins:" << start << ":" << end << std::endl; 
     UInt_t i = start; 
     do { 
-      reduced->SetBinContent(i,   psbuffer->GetWaveform()->GetBinContent(i)); 
+      reduced->SetBinContent(i, psbuffer->GetWaveform()->GetBinContent(i)); 
       i++; 
     }
     while (i < end); 
   }
     
   reduced->Draw(); 
-  
-
 }
- 
+
+
+Double_t PulseAnalysis::FixedIntegral() const{
+  // Dump();
+  return psbuffer->GetWaveform()->Integral(_intWindow[0],_intWindow[1]);
+}
 
 

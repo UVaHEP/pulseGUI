@@ -45,7 +45,7 @@ void PulseAnalysis:: SetBuffer(PSbuffer *buffer){
   psbuffer=buffer;
   double dT=psbuffer->Dt();
   _hdt.SetBins(201,-dT/2,8000*dT+dT/2);
-  TH1F *waveBuffer=psbuffer->GetWaveform();
+  //TH1F *waveBuffer=psbuffer->GetWaveform();
   //  double pMax = waveBuffer->GetBinContent(waveBuffer->GetMaximumBin());
   //  _hph.SetBins(100,0,pmax);
   _hph.SetBins(100,0,50);
@@ -69,6 +69,8 @@ void PulseAnalysis::Clear() {
   _pWidth=0;
   _pNFound=0;
   _pulseRate=0;  
+  _intWindow[0]=2;
+  _intWindow[1]=1;
   AnaClean();
 }
 
@@ -78,7 +80,28 @@ void PulseAnalysis::Reset() {
   //  if (_tf) LoadSpectrum(); 
 }
 
+void PulseAnalysis::SetIntegrationWindow(Double_t xmin, Double_t xmax){
+  if (!psbuffer){
+     log_warn("No PSbuffer defined.");
+     return;
+  }
+  _intWindow[0]=psbuffer->GetWaveform()->FindBin(xmin);
+  _intWindow[1]=psbuffer->GetWaveform()->FindBin(xmax);
+}
 
+void PulseAnalysis::SetIntegrationFromTrigger(Double_t width, Double_t offset){
+  if (! psbuffer->GetNtrig() ){
+    log_warn("No trigger data present.");
+     return;
+  }
+  // for now base integration window on position of 1st trigger
+  _intWindow[0]=psbuffer->GetTrigBin() + (int) (offset/psbuffer->Dt());
+  if (_intWindow[0]<1) (_intWindow[0])=1;
+  _intWindow[1]=_intWindow[0] + (int) (width/psbuffer->Dt());
+  if (_intWindow[1]>psbuffer->GetWaveform()->GetNbinsX())
+    _intWindow[1]=psbuffer->GetWaveform()->GetNbinsX();
+  log_info("Set Integration Window (%d:%d)",_intWindow[0],_intWindow[1]);
+}
 
 
 void PulseAnalysis::DumpPeaks(){
@@ -135,3 +158,13 @@ void PulseAnalysis::WriteHists(){
   tf->Close();
   delete tf;*/
 }
+
+void PulseAnalysis::Dump() const{
+  cout << "*** PulseAnalysis ***" << endl;
+  cout << "Integration Window Setting (" << _intWindow[0] << ","
+       << _intWindow[1] << ") : ("
+       << psbuffer->GetWaveform()->GetBinCenter(_intWindow[0]) << ","
+       << psbuffer->GetWaveform()->GetBinCenter(_intWindow[1]) << ")" << endl;
+  cout << "*********************" << endl;  
+}
+
