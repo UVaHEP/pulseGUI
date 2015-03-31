@@ -39,9 +39,14 @@ void PulseGUI::LoadSpectrum(TString fName){
 
 
   dataFile = TFile::Open(fName); 
-  TList *lst = (TList *) dataFile->Get("PSbufferlist"); 
-  if (lst) { 
-    buffer = (PSbuffer *) lst->First(); 
+  bufferList = (TList *) dataFile->Get("PSbufferlist"); 
+
+  if (bufferList) { 
+    buffer = (PSbuffer *) bufferList->First(); 
+    bufferNum->SetNumAttr( TGNumberFormat::kNEANonNegative);     
+    bufferNum->SetNumLimits(TGNumberFormat::kNELLimitMax); 
+    bufferNum->SetLimitValues(0, bufferList->GetSize()-1); 
+
   }
   else {
     buffer = (PSbuffer *) dataFile->Get("PSbuffer"); 
@@ -218,3 +223,149 @@ void PulseGUI::OpenPicoscopeControls() {
 
 
 }
+
+
+void PulseGUI::NextBuffer() { 
+
+  if (!bufferList) {
+    std::cout << "No buffers!" << std::endl; 
+    return; 
+  }
+
+  if (_bufferLink == NULL) 
+    _bufferLink = bufferList->FirstLink()->Next(); 
+  else 
+    if (_bufferLink->Next() != NULL) {
+      _bufferLink = _bufferLink->Next(); 
+      Long_t count = bufferNum->GetIntNumber(); 
+      count++; 
+      bufferNum->SetIntNumber(count);
+    }
+  
+  if (_bufferLink == bufferList->LastLink()) {
+    std::cout << "At end" << std::endl; 
+    bufferNum->SetIntNumber(bufferList->GetSize()); 
+  }
+
+  PSbuffer *b = (PSbuffer *) _bufferLink->GetObject(); 
+  if (b != NULL) { 
+    //    std::cout << "Next Buffer" << std::endl; 
+    if(FAna) { 
+      AnaClean();
+    }
+    _analysis->SetBuffer(b); 
+    ThreshNum->SetNumber(_analysis->GetThreshold()); 
+    WidthNum->SetNumber(_analysis->GetPulseWidth()); 
+    DrawSpectrum(); 
+  }
+    
+}
+
+void PulseGUI::PrevBuffer() { 
+  if (!bufferList) {
+    std::cout << "No buffers!" << std::endl; 
+    return; 
+  }
+  
+  if ( _bufferLink == NULL) { // start from the end 
+    _bufferLink = bufferList->LastLink(); 
+    bufferNum->SetIntNumber(bufferList->GetSize()); 
+  }
+  else 
+    if (_bufferLink->Prev() != NULL) {
+      _bufferLink = _bufferLink->Prev(); 
+      Long_t count = bufferNum->GetIntNumber(); 
+      count--; 
+      bufferNum->SetIntNumber(count); 
+    }
+
+  if (_bufferLink == bufferList->FirstLink()) {
+    std::cout << "At start" << std::endl; 
+    bufferNum->SetIntNumber(0); 
+  }
+  PSbuffer *b = (PSbuffer *) _bufferLink->GetObject(); 
+  if (b != NULL) { 
+    //    std::cout << "Prev Buffer" << std::endl;     
+    if(FAna) { 
+      AnaClean();
+    }
+    _analysis->SetBuffer(b); 
+    ThreshNum->SetNumber(_analysis->GetThreshold()); 
+    WidthNum->SetNumber(_analysis->GetPulseWidth()); 
+    DrawSpectrum(); 
+  }
+
+
+}
+
+void PulseGUI::PlayBack() { 
+  std::cout << "Playback" << std::endl; 
+  if (!bufferList) {
+    std::cout << "No buffers!" << std::endl; 
+    return; 
+  }
+  _timer->Connect("Timeout()", "PulseGUI", this, "NextBuffer()"); 
+  playbackBN->ChangeText("Stop Playback"); 
+  playbackBN->Disconnect("Clicked()"); 
+  playbackBN->Connect("Clicked()", "PulseGUI", this, "StopPlayback()"); 
+  std::cout << "Starting to step through waveforms." << std::endl; 
+  _timer->Start(1000, kFALSE); 
+
+}
+
+
+void PulseGUI::StopPlayback() { 
+  _timer->Stop(); 
+  playbackBN->SetText("Continue"); 
+  playbackBN->Disconnect("Clicked()"); 
+  playbackBN->Connect("Clicked()", "PulseGUI", this, "PlayBack()"); 
+
+
+}
+
+void PulseGUI::SetBufferNumber(Long_t bufferN) { 
+  if (!bufferList) { 
+    std::cout << "No buffers!" << std::endl; 
+    return; 
+  }
+
+  Int_t bufferNumber = bufferNum->GetIntNumber(); 
+  TObjLink *curLink = _bufferLink; 
+
+  _bufferLink = bufferList->FirstLink(); 
+  int i = 0; 
+  while (i < bufferNumber) { 
+    if (_bufferLink == bufferList->LastLink()) { 
+      std::cout << "Last Link" << std::endl; 
+      _bufferLink = curLink; 
+      return; 
+    }
+    _bufferLink = _bufferLink->Next(); 
+    i++; 
+  }
+
+  PSbuffer *b = (PSbuffer *) _bufferLink->GetObject(); 
+  if (b != NULL) { 
+    //    std::cout << "Prev Buffer" << std::endl;     
+    if(FAna) { 
+      AnaClean();
+    }
+    _analysis->SetBuffer(b); 
+    ThreshNum->SetNumber(_analysis->GetThreshold()); 
+    WidthNum->SetNumber(_analysis->GetPulseWidth()); 
+    DrawSpectrum(); 
+  }
+      
+
+
+  
+
+
+}
+
+
+
+
+
+
+

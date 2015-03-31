@@ -18,6 +18,10 @@ PulseGUI::PulseGUI(TString fName) {
   cout << "Creating PulseGUI " << endl;
   dataFile = NULL; 
   FAna = NULL; 
+  _bufferLink = NULL; 
+  _analysis = NULL; 
+  buffer = NULL; 
+  _timer = new TTimer(); 
   InitWindow();
   if (fName!="") LoadSpectrum(fName);
 }

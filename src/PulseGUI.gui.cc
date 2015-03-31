@@ -34,6 +34,23 @@ void PulseGUI::MakeButtons(){
   //Create and connect buttons
   //Load Spectrum
   TGVerticalFrame *vframe1 = new TGVerticalFrame(FButton, WIDTH, HEIGHT, kFixedWidth);
+  bufferNum = new TGNumberEntry(vframe1, 0, 5,25, TGNumberFormat::kNESInteger); 
+  bufferNum->Connect("ValueSet(Long_t)", "PulseGUI", this, "SetBufferNumber(Long_t)"); 
+  vframe1->AddFrame(bufferNum, new TGLayoutHints(kLHintsTop | kLHintsExpandX, 2,0,2,2)); 
+  
+  playbackBN = new TGTextButton(vframe1, "Start Playback"); 
+  playbackBN->Connect("Clicked()", "PulseGUI", this, "PlayBack()"); 
+
+  vframe1->AddFrame(playbackBN, new TGLayoutHints(kLHintsTop | kLHintsExpandX, 2,0,2,2)); 
+  TGHorizontalFrame *playbackButtons = new TGHorizontalFrame(vframe1, WIDTH, HEIGHT, kFixedWidth); 
+  prevBN = new TGTextButton(playbackButtons, "Prev Buffer");
+  nextBN = new TGTextButton(playbackButtons, "Next Buffer");
+  nextBN->Connect("Clicked()", "PulseGUI", this, "NextBuffer()"); 
+  prevBN->Connect("Clicked()", "PulseGUI", this, "PrevBuffer()"); 
+  playbackButtons->AddFrame(prevBN, new TGLayoutHints(kLHintsTop|kLHintsExpandX, 2,0,2,2)); 
+  playbackButtons->AddFrame(nextBN, new TGLayoutHints(kLHintsTop|kLHintsExpandX, 2,0,2,2)); 
+  vframe1->AddFrame(playbackButtons, new TGLayoutHints(kLHintsTop, 2,0,2,2)); 
+
   loadBN = new TGTextButton(vframe1, "&Load Spectrum");
   loadBN->SetTextColor(blue);
   loadBN->Connect("Clicked()", "PulseGUI", this, "OpenFileDialog()");

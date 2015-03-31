@@ -17,7 +17,7 @@
 #include "TString.h"
 
 #ifdef CONTROLS
-#include "PicoscopeControls.h"
+#include "PicoscopeControls5000a.h"
 #endif 
 
 
@@ -33,6 +33,7 @@ class PulseGUI : public TQObject {
 private: 
   // Class global objects
   TFile                 *dataFile; 
+  TList                 *bufferList; 
   TGMainFrame           *FMain;
   TGHorizontalFrame     *FControl;
   TGVerticalFrame       *FButton;
@@ -47,13 +48,13 @@ private:
   TGStatusBar           *SpectStatusBar;
   TGNumberEntry         *ThreshNum;
   TGNumberEntry         *WidthNum;
-  
+  TGNumberEntry         *bufferNum;
   //Storage + Main root stuff 
   //  TCanvas *mainCanvas; 
   //  TCanvas *anaCanvas;
 
   // Button Frame and buttons
-  TGTextButton  *loadBN, *convertBN, *threshBN, *threshNumBN, *widthBN, *measureBN,
+  TGTextButton  *loadBN, *convertBN, *playbackBN, *prevBN, *nextBN, *threshBN, *threshNumBN, *widthBN, *measureBN,
     *responseBN, *getBKGBN, *subBKGBN, *findPeaksBN, *analyzeBN,
     *writePeaksBN, *zoomOutBN,*UnZoomBN, *zoomInBN, *shiftLeftBN,
     *shiftRightBN, *resetBN, *exitBN, *smoothBN, *captureBN;
@@ -86,8 +87,9 @@ private:
 
   //Analysis object accesses/manages data 
   PulseAnalysis *_analysis; 
-
+  TObjLink *_bufferLink; 
   PSbuffer * buffer; 
+  TTimer *_timer; 
 
 #ifdef CONTROLS
   PicoscopeControls *_pscontrols; 
@@ -124,7 +126,14 @@ public:
   void SetXMarks();
   void SetYMarks();
   void printState(); 
-  
+
+  void NextBuffer(); 
+  void PrevBuffer(); 
+  void PlayBack(); 
+  void StopPlayback(); 
+  void SetBufferNumber(Long_t bufferN); 
+
+
   void FindPeaks();
   void Analyze(); 
 

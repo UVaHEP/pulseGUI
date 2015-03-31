@@ -139,6 +139,9 @@ private:
   void Stop(); 
   void NextWaveform(); 
   void writeBuffersToDisk();
+  void saveSettings(); 
+  void loadSettings();
+
   #ifndef __CINT__
   PSbuffer * bufferBuilder(int16_t *waveform, int16_t *trigger, uint32_t nsamples, PS6000_RANGE waverange, PS6000_RANGE trigRange, Double_t t0, Double_t dT, Double_t dcOffset); 
 
