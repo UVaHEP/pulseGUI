@@ -3,6 +3,7 @@
 
 #include "TCanvas.h"
 #include "TStyle.h"
+#include "TTimer.h"
 
 #include <iostream>
 #include <vector>

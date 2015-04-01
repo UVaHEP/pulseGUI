@@ -1,6 +1,7 @@
 #include "PulseGUI.h"
 
 #include "TCanvas.h"
+#include "TTimer.h"
 
 #include <iostream>
 using std::cout;
