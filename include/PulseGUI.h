@@ -9,6 +9,7 @@
 #include "TGFrame.h"
 #include "TGFileDialog.h"
 #include "TGNumberEntry.h"
+#include "TGLabel.h"
 #include "TGStatusBar.h"
 #include "TPad.h"
 #include "TPaveLabel.h"
@@ -49,6 +50,7 @@ private:
   TGNumberEntry         *ThreshNum;
   TGNumberEntry         *WidthNum;
   TGNumberEntry         *bufferNum;
+  TGLabel               *bufferCount; 
   //Storage + Main root stuff 
   //  TCanvas *mainCanvas; 
   //  TCanvas *anaCanvas;

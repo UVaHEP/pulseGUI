@@ -46,6 +46,9 @@ void PulseGUI::LoadSpectrum(TString fName){
     bufferNum->SetNumAttr( TGNumberFormat::kNEANonNegative);     
     bufferNum->SetNumLimits(TGNumberFormat::kNELLimitMax); 
     bufferNum->SetLimitValues(0, bufferList->GetSize()-1); 
+    TString count = TString::Format(" /%d",bufferList->GetSize()-1); 
+    bufferCount->SetText(count); 
+    FMain->Layout(); 
 
   }
   else {

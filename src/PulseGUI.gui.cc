@@ -34,9 +34,16 @@ void PulseGUI::MakeButtons(){
   //Create and connect buttons
   //Load Spectrum
   TGVerticalFrame *vframe1 = new TGVerticalFrame(FButton, WIDTH, HEIGHT, kFixedWidth);
-  bufferNum = new TGNumberEntry(vframe1, 0, 5,25, TGNumberFormat::kNESInteger); 
+  TGHorizontalFrame *bufferNumberFrame = new TGHorizontalFrame(FButton, WIDTH, HEIGHT, kFixedWidth); 
+  
+  bufferNum = new TGNumberEntry(bufferNumberFrame, 0, 5,25, TGNumberFormat::kNESInteger); 
+  bufferNum->SetNumLimits(TGNumberFormat::kNELLimitMax); 
+  bufferNum->SetLimitValues(0, 0); 
   bufferNum->Connect("ValueSet(Long_t)", "PulseGUI", this, "SetBufferNumber(Long_t)"); 
-  vframe1->AddFrame(bufferNum, new TGLayoutHints(kLHintsTop | kLHintsExpandX, 2,0,2,2)); 
+  bufferNumberFrame->AddFrame(bufferNum, new TGLayoutHints(kLHintsTop, 2,0,2,2)); 
+  bufferCount = new TGLabel(bufferNumberFrame, TGHotString(" /0")); 
+  bufferNumberFrame->AddFrame(bufferCount, new TGLayoutHints(kLHintsTop ,2,0,2,2)); 
+  vframe1->AddFrame(bufferNumberFrame, new TGLayoutHints(kLHintsTop | kLHintsExpandX, 2,0,2,2)); 
   
   playbackBN = new TGTextButton(vframe1, "Start Playback"); 
   playbackBN->Connect("Clicked()", "PulseGUI", this, "PlayBack()"); 
