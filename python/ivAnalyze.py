@@ -41,7 +41,7 @@ class ivAnalyze():
         self.Reset()
         self.fnIV=fnIV    # dark I-V data
         self.fnLIV=fnLIV  # light I-V data
-        self.doLightAnalysis= not (fnLIV is None)
+        self.doLightAnalysis = not (fnLIV is None)
     def SetData(self,fnIV,fnLIV=None):
         self.Reset()
         self.fnIV=fnIV  
@@ -52,8 +52,8 @@ class ivAnalyze():
         # read dark I-V data and estimate Vbr
         readVIfile(self.fnIV,self.V,self.I,self.VMIN)
         calc_dLogIdV(self.V,self.I,self.dLogIdV,self.Vbar)
-        if self.doLightAnalysis: self.AnalyzeLight()
         self.vPeak=getMaxXY(self.Vbar,self.dLogIdV)[0]  # estimate of Vbr from peak
+        if self.doLightAnalysis: self.AnalyzeLight()
         self.gIV=TGraph(len(self.V), self.V, self.I)
         self.gDV=TGraph(len(self.Vbar), self.Vbar, self.dLogIdV)
         fitFcn=TF1("fitFcn","[0]+exp(-[1]*(x-[2]))",-80,80)
@@ -78,18 +78,20 @@ class ivAnalyze():
 
         dV=999
         iMid=0
+        print "Seeking current at VPeak*0.3:",self.vPeak*0.3
         for i in range(len(self.V)):
             r=self.LI[i]/self.I[i]
             if (r) > self.ratioMax[1]:
                 self.ratioMax = [self.V[i], r]
             self.rLD.append(r)
-            if abs(self.V[i]-self.vPeak*0.5) < dV:
-                dV=abs(self.V[i]-self.vPeak*0.5)
+            #print self.V[i],self.LI[i]-self.I[i]
+            if abs(self.V[i]-self.vPeak*0.3) < dV:
+                dV=abs(self.V[i]-self.vPeak*0.3)
                 iMid=self.I[i]
+                #print self.V[i],self.I[i]
         self.gRatio = TGraph(len(self.V), self.V, self.rLD)
         # gain analysis
         # (I_light-I_dark) / (I_light-I_dark)@Vbr/2 [iMid]
         for i in range(len(self.V)):
             self.G.append( (self.LI[i]-self.I[i])/iMid )
         self.gGain=TGraph(len(self.V), self.V, self.G)
-        
