@@ -47,6 +47,8 @@ parser.add_option('-p', '--png', dest='png', action="store_true")
 parser.add_option('-b', '--batch', dest='batch', action="store_true")
 parser.add_option('-f', '--darkfn', dest='dfn', default=None)
 parser.add_option('-l', '--lightfn', dest='lfn', default=None)
+parser.add_option('-g', '--gainPoint', dest='gPoint', default=None)
+
 
 (options, args) = parser.parse_args()
 dfn=None
@@ -167,6 +169,10 @@ if doLightAnalysis:
     labRat.AddText(msg)
     labRat.Draw()
     canvas.Update()
+    if options.gPoint:
+        gPoint=options.gPoint
+        gPoint=float(gPoint) # voltage to calculate gain
+        gPointGain=gGain.Eval(gPoint)
     plot,axis=scaleToPad(gGain)
     plot.Draw("L")
     axis.SetTitleOffset(1.3)
@@ -179,7 +185,12 @@ canvas.Update()
 print "=== I-V Analysis ==="
 printf("Peak dLogI/DV: %4.2f\n",vPeak)
 printf("Knee dLogI/DV: %4.2f\n",vKnee)
-if doLightAnalysis: printf("Peak light/dark: %4.2f\n",ratioMax[0])
+if doLightAnalysis:
+    printf("Peak light/dark: %4.2f\n",ratioMax[0])
+    if options.gPoint:
+        gPoint=options.gPoint
+        gPoint=float(gPoint) # voltage to calculate gain
+        printf("Gain at %4.1f V: %6.0f\n",gPoint,gPointGain)
 print "===================="
 
 #os.system('sleep 2')
