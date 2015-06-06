@@ -3,7 +3,6 @@
 # analyze forward bias I-V data
 #######################################################
 
-
 import sys, os, commands
 import getopt, string
 from array import array
@@ -18,117 +17,70 @@ parser.add_argument('-f', metavar='--filename', type=str, nargs=1, default=None,
                     help="I-V data file to process")
 parser.add_argument('-n', default=1,
                     help="Number of SPADs in device")
-parser.add_argument('-a', '--auto',
+parser.add_argument('-s', '--rs', default=0,
+                    help="Series resistance in device circuit")
+parser.add_argument('-a', '--auto', action="store_true",
                     help="Run and exit w/o user interaction")
 args = parser.parse_args()
-
-
-# ROOT messes with arg parsing, to wait to import
-rootlibs=commands.getoutput("root-config --libdir")
-sys.path.append(rootlibs)
-from ROOT import Double, kRed, kBlue
-from ROOT import gStyle, TString, TCanvas, TGraph, TLine, TF1, TH2F
-from ivtools import *
-
 
 if args.f is None: 
     print 'No I-V data file to process...quitting'
     exit(0)
 
 nSPADs=int(args.n)
+rSeries=float(args.rs)/1000  # series resistance in kOhm
+
+# ROOT messes with arg parsing, import after instantiating parser
+rootlibs=commands.getoutput("root-config --libdir")
+sys.path.append(rootlibs)
+from ROOT import Double, kRed, kBlue
+from ROOT import TString, TCanvas, TGraph, TLine, TF1, TH2F
+from plotStyle import *
+from ivtools import *
+
+SetPlotStyle() # pretty up plots
 
 # variables for analysis of IV data
 V=array("d")
 I=array("d")
 readVIfile(args.f[0],V,I)
+for i in range(len(I)): I[i]=I[i]*1000 # convert to mA for nicer y-axis in graph
 
-Vsample=array("d")
-R=array("d")
-
-for i in range(len(V)):
-    if abs(I[i])<1e-9: continue
-    r=abs(V[i]/I[i])
-    Vsample.append(abs(V[i]))
-    R.append(r)
-
-# graphs
-gRV=TGraph(len(Vsample), Vsample, R)
-gRV.SetName("IV")
-gRV.SetTitle("Resistance Curve;Volts;Resistance [Ohms]");
-gRV.SetLineWidth(2)
 gIV=TGraph(len(V), V, I)
+gIV.SetTitle("Current vs. voltage;V;I [mA]")
+
+# analysis, fit for resistance
+xmin=Double(); xmax=Double(); ymin=Double(); ymax=Double()
+gIV.ComputeRange(xmin,ymin,xmax,ymax)
+fitFcn=TF1("Rfit","[0]+x/[1]",1.5,xmax)
+fitFcn.SetParameters(0,(ymax-ymin)/(xmax-xmin)) # guess at starting params
+gIV.Fit(fitFcn,"R")
+QR=(fitFcn.GetParameter(1)-rSeries)*1000 # convert to Ohms
+
 
 # plotting
-canvas = TCanvas("cR","Resistance",800,800)
-canvas.Divide(1,2)
-
-canvas.cd(1).SetLogy()
-gRV.Draw("APL")
-
-canvas.cd(2)
-# make subsample in range of higher voltages
-xmin=Double(); xmax=Double(); ymin=Double(); ymax=Double()
-gRV.ComputeRange(xmin,ymin,xmax,ymax)
-V2=array("d")
-R2=array("d")
-
-for i in range(len(Vsample)):
-    if R[i]<ymin*2: 
-        V2.append(Vsample[i])
-        R2.append(R[i])
-
-gRV2=TGraph(len(V2), V2, R2)
-
-gRV2.Draw("APL")
-gRV2.SetName("IV2")
-gRV2.SetTitle("Resistance Curve;Volts;Resistance [Ohms]");
-gRV2.SetLineWidth(3)
-gRV2.ComputeRange(xmin,ymin,xmax,ymax)
-
-fitFcn=TF1("fitFcn","[0]+exp([1])*exp(-(x*[2]))",xmin,xmax)
-print xmin,ymin,xmax,ymax
-fitFcn.SetParameters(ymin,log(ymax),1) # guess at starting params
-gRV2.Fit(fitFcn,"0")
+c_IV = TCanvas("cIV","I-V",800,800)
+gIV.Draw("APL")
 fitFcn.Draw("same")
-
-canvas.cd(1)
-fitFcn.Draw("same")
-canvas.Update()
-
-#gRV.ComputeRange(xmin,ymin,xmax,ymax)
-#xmin=
-#h=TH2F("h",gIV.GetTitle(),10,1,gIV.GetXaxis().GetXmax(),10,0,ymin*10);
-#gStyle.SetOptStat(0)
-#h.Draw()
-#gIV.Draw("PL")
+c_IV.Update()
 
 
-
-
-
+# print results
 print "=== Quench Resistance Analysis ==="
-QR=fitFcn.GetParameter(0)
-printf("Estimated total quence resistance: %6.0f\n",QR)
-printf("Estimated quence resistance / SPAD: %6.2e\n",QR*nSPADs)
+printf("Current supply series resistance: %4.0f Ohms\n",rSeries*1000)
+printf("Device resistance: %5.0f Ohms\n",QR)
+printf("Average quence resistance / SPAD: %6.2e Ohms\n",QR*nSPADs)
 print "===================="
 
-canvas2 = TCanvas("cIV","I-V",800,800)
-gIV.Draw("APL")
-canvas2.Update()
 
 
 
-#os.system('sleep 2')
 if not args.auto:
     print 'Hit return to exit'
     sys.stdout.flush() 
     raw_input('')
 
 
-
-#png=args.f[0].replace(".csv",".png")
-
-#canvas.Print(png)
 
 
 
