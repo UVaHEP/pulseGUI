@@ -194,7 +194,7 @@ if doLightAnalysis:
 print "===================="
 
 # diagnostic for Gain=1 estimate
-#ana.gDeltaI.Draw("ALP")
+#ana.gDeltaI.Draw("AP")
 #canvas.Update()
 
 

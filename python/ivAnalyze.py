@@ -39,7 +39,7 @@ class ivAnalyze():
         self.gRatio=None     # light to dark ratio
         self.gGain=None      # gain vs V estimate
         self.VMIN=10         # default minimum voltage to read
-        self.G1FITFRAC=0.6   # fit range for current at G=1 as fraction of vPeak 
+        self.G1FITFRAC=0.4   # fit range for current at G=1 as fraction of vPeak 
     def __init__(self,fnIV=None,fnLIV=None):
         self.Reset()
         self.fnIV=fnIV    # dark I-V data
@@ -76,7 +76,8 @@ class ivAnalyze():
         print "Also analyzing illuminated I-V curve"
         readVIfile(self.fnLIV,self.LV,self.LI,self.VMIN)
 
-        if not len(self.LI)==len(self.I):
+        npoints=len(self.LI)
+        if not npoints==len(self.I):
             print "Dark/light files of different length:",len(self.LI),len(self.I)
             sys.exit(1)
 
@@ -85,9 +86,9 @@ class ivAnalyze():
         print "Seeking current at VPeak*0.3:",self.vPeak*0.3
         vdeltaI=array("f")
         deltaI=array("f")
-        for i in range(len(self.V)):
+        for i in range(npoints):
             r=self.LI[i]/self.I[i]
-            print i,self.V[i],r,self.LI[i],self.I[i]
+            #print i,self.V[i],r,self.LI[i],self.I[i]
             if (r) > self.ratioMax[1]:
                 self.ratioMax = [self.V[i], r]
             self.rLD.append(r)
@@ -100,14 +101,21 @@ class ivAnalyze():
                 dV=abs(self.V[i]-self.vPeak*0.3)
                 iMid=self.I[i]    # current at vPeak*0.3
 
-        self.gRatio = TGraph(len(self.V), self.V, self.rLD)
-        #self.gDeltaI= TGraphErrors(len(vdeltaI), vdeltaI, deltaI, deltaIerr)
+        self.gRatio = TGraph(npoints, self.V, self.rLD)
+        # Smooth the graph of light-dark current before fitting
         self.gDeltaI= TGraph(len(vdeltaI), vdeltaI, deltaI)
         gs = TGraphSmooth("normal")
-        grout = gs.SmoothSuper(self.gDeltaI,"",0)
-        self.gDeltaI = TGraph(grout)
+        gsmooth = gs.SmoothSuper(self.gDeltaI,"",0)
+        gDeltaIerr=TGraphErrors(npoints)
+        x=Double(); y=Double()
+        for i in range(len(vdeltaI)):
+            gsmooth.GetPoint(i,x,y)
+            gDeltaIerr.SetPoint(i,x,y)
+            gDeltaIerr.SetPointError(i,0,2e-10) # estimate 200pA measurement errors
+        self.gDeltaI = TGraph(gsmooth)
+        self.gDeltaI = TGraphErrors(gDeltaIerr)
         # estimate additional current for gain=1
-        g1fit=TF1("G1fit","[0]*(1+exp((TMath::Abs(x)-[1])/[2]))",self.vPeak*0.6,self.VMIN)
+        g1fit=TF1("G1fit","[0]*(1+exp((TMath::Abs(x)-[1])/[2]))",self.vPeak*self.G1FITFRAC,self.VMIN)
         g1fit.SetParameters(self.I[0],abs(self.vPeak/2),abs(self.vPeak/5)) # guesstimate params
         self.gDeltaI.Fit(g1fit,"R")
         IatGain1=g1fit.GetParameter(0)
