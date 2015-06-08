@@ -15,6 +15,7 @@ import argparse
 
 from ROOT import Double, gStyle, kRed, kBlue, kGreen, kTeal
 from ROOT import TString, TCanvas, TGraph, TLine, TF1, TH2F, TPaveText, TSpectrum
+from ROOT import TGraphErrors, TGraphSmooth
 from ivtools import *
 
 
@@ -32,11 +33,13 @@ class ivAnalyze():
         self.ratioMax=[0,0]  # location of peak light/dark ratio 
         self.vPeak=0
         self.vKnee=0
-        self.gIV=None
-        self.gDV=None
-        self.gRatio=None
-        self.gGain=None
-        self.VMIN=10
+        self.gIV=None        # I vs V graph
+        self.gDV=None        # dLogIdV graph
+        self.gDeltaI=None    # light - dark current vs V
+        self.gRatio=None     # light to dark ratio
+        self.gGain=None      # gain vs V estimate
+        self.VMIN=10         # default minimum voltage to read
+        self.G1FITFRAC=0.6   # fit range for current at G=1 as fraction of vPeak 
     def __init__(self,fnIV=None,fnLIV=None):
         self.Reset()
         self.fnIV=fnIV    # dark I-V data
@@ -47,7 +50,8 @@ class ivAnalyze():
         self.fnIV=fnIV  
         self.fnLIV=fnLIV
         self.doLightAnalysis= not (fnLIV is None)
-        
+    def SetVmin(self, vmin):
+        self.VMIN=vmin
     def Analyze(self, dorebin=False):
         # read dark I-V data and estimate Vbr
         readVIfile(self.fnIV,self.V,self.I,self.VMIN)
@@ -79,19 +83,37 @@ class ivAnalyze():
         dV=999
         iMid=0
         print "Seeking current at VPeak*0.3:",self.vPeak*0.3
+        vdeltaI=array("f")
+        deltaI=array("f")
         for i in range(len(self.V)):
             r=self.LI[i]/self.I[i]
+            print i,self.V[i],r,self.LI[i],self.I[i]
             if (r) > self.ratioMax[1]:
                 self.ratioMax = [self.V[i], r]
             self.rLD.append(r)
-            #print self.V[i],self.LI[i]-self.I[i]
+                
+            if abs(self.V[i])<abs(self.vPeak)*self.G1FITFRAC:
+                vdeltaI.append(self.V[i])
+                deltaI.append(self.LI[i]-self.I[i])
+                
             if abs(self.V[i]-self.vPeak*0.3) < dV:
                 dV=abs(self.V[i]-self.vPeak*0.3)
-                iMid=self.I[i]
-                #print self.V[i],self.I[i]
+                iMid=self.I[i]    # current at vPeak*0.3
+
         self.gRatio = TGraph(len(self.V), self.V, self.rLD)
+        #self.gDeltaI= TGraphErrors(len(vdeltaI), vdeltaI, deltaI, deltaIerr)
+        self.gDeltaI= TGraph(len(vdeltaI), vdeltaI, deltaI)
+        gs = TGraphSmooth("normal")
+        grout = gs.SmoothSuper(self.gDeltaI,"",0)
+        self.gDeltaI = TGraph(grout)
+        # estimate additional current for gain=1
+        g1fit=TF1("G1fit","[0]*(1+exp((TMath::Abs(x)-[1])/[2]))",self.vPeak*0.6,self.VMIN)
+        g1fit.SetParameters(self.I[0],abs(self.vPeak/2),abs(self.vPeak/5)) # guesstimate params
+        self.gDeltaI.Fit(g1fit,"R")
+        IatGain1=g1fit.GetParameter(0)
         # gain analysis
         # (I_light-I_dark) / (I_light-I_dark)@Vbr/2 [iMid]
         for i in range(len(self.V)):
-            self.G.append( (self.LI[i]-self.I[i])/iMid )
+            #self.G.append( (self.LI[i]-self.I[i])/iMid )
+            self.G.append( (self.LI[i]-self.I[i])/IatGain1 )
         self.gGain=TGraph(len(self.V), self.V, self.G)

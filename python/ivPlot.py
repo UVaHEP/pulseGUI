@@ -8,7 +8,7 @@
 ### Consider the ratio generator in a prototype stage, i.e. no/little error checking
 
 import sys, os, commands, re
-import getopt, string
+import getopt, string, math
 from array import array
 import optparse
 from ivAnalyze import ivAnalyze
@@ -40,7 +40,7 @@ class Thermistor():
 # main
 #######################
 
-# TO DO: conver to argparse.ArgumentParser
+# TO DO: convert to argparse.ArgumentParser
 parser = optparse.OptionParser() 
 parser.add_option('-o', '--output', dest='outfn', default=None)
 parser.add_option('-p', '--png', dest='png', action="store_true")
@@ -69,6 +69,7 @@ doLightAnalysis = not (lfn is None)
 
 if doLightAnalysis: ana=ivAnalyze(dfn,lfn)
 else: ana=ivAnalyze(dfn)
+ana.SetVmin(VMIN)
 
 vPeak,vKnee,ratioMax=ana.Analyze()
 
@@ -172,7 +173,7 @@ if doLightAnalysis:
     canvas.Update()
     if options.gPoint:
         gPoint=options.gPoint
-        gPoint=float(gPoint) # voltage to calculate gain
+        gPoint=math.copysign(float(gPoint),vPeak) # voltage to calculate gain, w/ correct sign convention
         gPointGain=gGain.Eval(gPoint)
     plot,axis=scaleToPad(gGain)
     plot.Draw("L")
@@ -189,10 +190,13 @@ printf("Knee dLogI/DV: %4.2f\n",vKnee)
 if doLightAnalysis:
     printf("Peak light/dark: %4.2f\n",ratioMax[0])
     if options.gPoint:
-        gPoint=options.gPoint
-        gPoint=float(gPoint) # voltage to calculate gain
         printf("Gain at %4.1f V: %6.0f\n",gPoint,gPointGain)
 print "===================="
+
+# diagnostic for Gain=1 estimate
+#ana.gDeltaI.Draw("ALP")
+#canvas.Update()
+
 
 #os.system('sleep 2')
 if not options.batch:
