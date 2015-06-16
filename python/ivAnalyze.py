@@ -15,31 +15,37 @@ import argparse
 
 from ROOT import Double, gStyle, kRed, kBlue, kGreen, kTeal
 from ROOT import TString, TCanvas, TGraph, TLine, TF1, TH2F, TPaveText, TSpectrum
-from ROOT import TGraphErrors, TGraphSmooth
+from ROOT import TGraphErrors
 from ivtools import *
-
 
 
 class ivAnalyze():
     def Reset(self):
-        self.V=array("f")    # I-V
-        self.I=array("f")    #   for dark
-        self.Vbar=array("f")     # V for 1/dV plots
+        # dark data
+        self.V=array("f")     # Voltage points array, dark measurement
+        self.Id=array("f")    # Dark Current
+        # light data
+        self.LV=array("f")    # Voltage points array, light measurement
+        self.Itot=array("f")   # for light
+
+        self.Vbar=array("f")  # V for 1/dV plots
         self.dLogIdV=array("f")   
-        self.LV=array("f")   # I-V
-        self.LI=array("f")   #   for light
-        self.G=array("f")    # gain
-        self.rLD=array("f")  # light to dark current ratio
-        self.ratioMax=[0,0]  # location of peak light/dark ratio 
+
+        self.ratioMax=[0,0]    # location of peak light/dark ratio 
         self.vPeak=0
         self.vKnee=0
-        self.gIV=None        # I vs V graph
-        self.gDV=None        # dLogIdV graph
-        self.gDeltaI=None    # light - dark current vs V
-        self.gRatio=None     # light to dark ratio
-        self.gGain=None      # gain vs V estimate
-        self.VMIN=10         # default minimum voltage to read
-        self.G1FITFRAC=0.4   # fit range for current at G=1 as fraction of vPeak 
+        # graphs
+        self.gIdV=None         # I_dark vs V graph
+        self.gItotV=None       # I_light vs V graph
+        self.gIpV=None         # I_light-dark vs V graph
+        self.gdLnIddV=None     # dark dLnIdV graph
+        self.gdVdLnId=None     # inverse, [dLnIdV]^-1 graph
+        self.gIpV=None         # light - dark current vs V
+        self.gRatio=None       # light to dark ratio
+        self.gGain=None        # gain vs V 
+        # parameters
+        self.VMIN=10           # default minimum voltage to read
+        self.G1FITFRAC=0.5     # fit range for currents at G~1 as fraction of vPeak 
     def __init__(self,fnIV=None,fnLIV=None):
         self.Reset()
         self.fnIV=fnIV    # dark I-V data
@@ -52,20 +58,22 @@ class ivAnalyze():
         self.doLightAnalysis= not (fnLIV is None)
     def SetVmin(self, vmin):
         self.VMIN=vmin
+
+    # read dark I-V data and estimate Vbr
     def Analyze(self, dorebin=False):
-        # read dark I-V data and estimate Vbr
-        readVIfile(self.fnIV,self.V,self.I,self.VMIN)
-        calc_dLogIdV(self.V,self.I,self.dLogIdV,self.Vbar)
-        self.vPeak=getMaxXY(self.Vbar,self.dLogIdV)[0]  # estimate of Vbr from peak
+        readVIfile(self.fnIV,self.V,self.Id,self.VMIN)
+        self.gIdV=TGraph(len(self.V), self.V, self.Id)
+        self.gIdV.SetTitle("I-V Curve;Volts;Current [Amps]")
+        self.gdLnIddV=calc_dLogIdV(self.V,self.Id)
+        self.gdVdLnId=InvertGraph(self.gdLnIddV)
+        self.vPeak=maxXY(self.gdLnIddV)[0]
         if self.doLightAnalysis: self.AnalyzeLight()
-        self.gIV=TGraph(len(self.V), self.V, self.I)
-        self.gDV=TGraph(len(self.Vbar), self.Vbar, self.dLogIdV)
         fitFcn=TF1("fitFcn","[0]+exp(-[1]*(x-[2]))",-80,80)
         fitFcn.SetParameters(0.05,5,self.vPeak) # guess at starting params
         if self.vPeak<0:
-            self.gDV.Fit(fitFcn,"","",self.vPeak,self.vPeak+5)
+            self.gdLnIddV.Fit(fitFcn,"","",self.vPeak,self.vPeak+5)
         else:
-            self.gDV.Fit(fitFcn,"","",self.vPeak-5,self.vPeak)
+            self.gdLnIddV.Fit(fitFcn,"","",self.vPeak-5,self.vPeak)
         self.vKnee=fitFcn.GetParameter(2)
         return self.vPeak,self.vKnee,self.ratioMax
 
@@ -74,54 +82,74 @@ class ivAnalyze():
         #Nota bene! I'm not doing any error checking with this, so if you have files with 
         #different voltage ranges or data points this won't work! 
         print "Also analyzing illuminated I-V curve"
-        readVIfile(self.fnLIV,self.LV,self.LI,self.VMIN)
+        readVIfile(self.fnLIV,self.LV,self.Itot,self.VMIN)
+        self.gItotV=TGraph(len(self.LV), self.LV, self.Itot)
+        self.gItotV.SetTitle("I-V Curve (light);Volts;Current [Amps]")
+        self.gItotV.SetName("LIV")
 
-        npoints=len(self.LI)
-        if not npoints==len(self.I):
-            print "Dark/light files of different length:",len(self.LI),len(self.I)
+        # to do: calc [dlogItot/dV]-1, use to estimate Vbr
+        
+        npoints=len(self.Itot)
+        if not npoints==len(self.Id):
+            print "Dark/light files of different length:",len(self.Itot),len(self.Id)
             sys.exit(1)
 
-        dV=999
-        iMid=0
-        print "Seeking current at VPeak*0.3:",self.vPeak*0.3
+        # ratio of light to dark IV curves
+        self.gRatio = RatioGraph(self.gItotV,self.gIdV)
+        self.ratioMax=maxXY(self.gRatio)
+            
+        # make graph of Ip = light-dark currents
+        # use restricted range around Gain=1 (low voltage) region
         vdeltaI=array("f")
         deltaI=array("f")
         for i in range(npoints):
-            r=self.LI[i]/self.I[i]
-            #print i,self.V[i],r,self.LI[i],self.I[i]
-            if (r) > self.ratioMax[1]:
-                self.ratioMax = [self.V[i], r]
-            self.rLD.append(r)
-                
             if abs(self.V[i])<abs(self.vPeak)*self.G1FITFRAC:
                 vdeltaI.append(self.V[i])
-                deltaI.append(self.LI[i]-self.I[i])
+                deltaI.append(self.Itot[i]-self.Id[i])
+        self.gIpV= TGraph(len(vdeltaI), vdeltaI, deltaI)
                 
-            if abs(self.V[i]-self.vPeak*0.3) < dV:
-                dV=abs(self.V[i]-self.vPeak*0.3)
-                iMid=self.I[i]    # current at vPeak*0.3
-
-        self.gRatio = TGraph(npoints, self.V, self.rLD)
+        # Extrapolate the Ip=Itot-Id curve to 0V to estimate the signal at Gain=1
         # Smooth the graph of light-dark current before fitting
-        self.gDeltaI= TGraph(len(vdeltaI), vdeltaI, deltaI)
-        gs = TGraphSmooth("normal")
-        gsmooth = gs.SmoothSuper(self.gDeltaI,"",0)
-        gDeltaIerr=TGraphErrors(npoints)
+        gsmooth = SmoothGraph(self.gIpV)
+        gDeltaIerr=TGraphErrors(npoints) # assign some errors for stable fit
         x=Double(); y=Double()
+        gsmooth.GetPoint(len(vdeltaI)-1,x,y) # To do: better to see minimum y!
+        y0=float(y)
+        wgt0=y/20 # minimum weight for fit values
         for i in range(len(vdeltaI)):
             gsmooth.GetPoint(i,x,y)
             gDeltaIerr.SetPoint(i,x,y)
-            gDeltaIerr.SetPointError(i,0,2e-10) # estimate 200pA measurement errors
-        self.gDeltaI = TGraph(gsmooth)
-        self.gDeltaI = TGraphErrors(gDeltaIerr)
+            gDeltaIerr.SetPointError(i,0,wgt0*y/y0) 
+        self.gIpV = TGraph(gsmooth)
+        self.gIpV = TGraphErrors(gDeltaIerr)
+        self.gIpV.SetTitle("Ilight-Idark Smoothed")
         # estimate additional current for gain=1
-        g1fit=TF1("G1fit","[0]*(1+exp((TMath::Abs(x)-[1])/[2]))",self.vPeak*self.G1FITFRAC,self.VMIN)
-        g1fit.SetParameters(self.I[0],abs(self.vPeak/2),abs(self.vPeak/5)) # guesstimate params
-        self.gDeltaI.Fit(g1fit,"R")
-        IatGain1=g1fit.GetParameter(0)
-        # gain analysis
-        # (I_light-I_dark) / (I_light-I_dark)@Vbr/2 [iMid]
-        for i in range(len(self.V)):
-            #self.G.append( (self.LI[i]-self.I[i])/iMid )
-            self.G.append( (self.LI[i]-self.I[i])/IatGain1 )
-        self.gGain=TGraph(len(self.V), self.V, self.G)
+        # use vertex form of parabola, set to constanst for |x|<vertex
+        # abs(x)<abs(h)?k:a*(x-h)**2+k
+        print "Fitting for Ip at G=1: abs(x)<abs(h)?k:a*(x-h)**2+k"
+        g1fit=TF1("G1fit","abs(x)<abs([0])?[1]:[2]*(x-[0])*(x-[0])+[1]",
+                  self.vPeak*self.G1FITFRAC,self.VMIN)
+        g1fit.SetParNames("h","k","a")
+        g1fit.SetParameters(self.V[0]*2,self.Id[0],self.Id[0]) # guesstimate params
+        self.gIpV.Fit(g1fit,"R")
+        IatGain1=g1fit.GetParameter(1) # current Ip at unity gain
+        # gain calculation
+        self.gGain=TGraph(npoints)
+        for i in range(npoints):
+            g=(self.Itot[i]-self.Id[i])/IatGain1
+            self.gGain.SetPoint(i,self.V[i],g)
+        # testing...
+        # fit for gain from Vpeak_ratio to ~ Vpeak_gain,
+        # extrapolate to G=1 to estimate Vbr
+        #gxmax,gymax=maxXY(self.gGain)
+        #print gxmax,gymax,self.ratioMax[0],self.gGain.Eval(self.ratioMax[0])
+        #print "******",gxmax*0.96,self.ratioMax[0]*0.95
+        #g0fit=TF1("G0fit","pol1",gxmax*0.95,self.ratioMax[0])
+        #self.gGain.Fit("G0fit","R")
+        #p0=g0fit.GetParameter(0)
+        #p1=g0fit.GetParameter(1)
+        #g0fit=TF1("G1fit","abs(x)<abs([0])?[1]:[2]*(x-[0])*(x-[0])+[1]",
+        #          gxmax*0.9,self.ratioMax[0])
+        #g0fit.SetParameters(self.ratioMax[0],1,??)
+        #self.gGain.Fit("G0fit","R")
+        #self.gGain.Print()

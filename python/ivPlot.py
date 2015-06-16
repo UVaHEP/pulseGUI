@@ -78,11 +78,11 @@ vPeak,vKnee,ratioMax=ana.Analyze()
 
 gStyle.SetOptStat(0)
 # graphs
-gIV=ana.gIV
+gIV=ana.gIdV
 gIV.SetName("IV")
 gIV.SetLineWidth(2)
 
-gDV = ana.gDV
+gDV = ana.gdLnIddV
 gDV.SetName("dLogI/dV")
 gDV.SetLineWidth(2)
 
@@ -106,7 +106,6 @@ IMIN=1e-9
 canvas.cd(1).SetLogy()
 xmin=Double(); xmax=Double(); ymin=Double(); ymax=Double()
 gIV.ComputeRange(xmin,ymin,xmax,ymax)
-gIV.SetTitle("I-V Curve;Volts;Current [Amps]");
 gIV.SetMinimum(IMIN)
 hIV=TH2F("hIV","I-V Curve;Volts;Current [Amps]",10,xmin,xmax,10,ymin,ymax*1.1)
 hIV.GetYaxis().SetTitleOffset(1.4)
@@ -119,9 +118,7 @@ b=TLine(vKnee,IMIN,vKnee,IMIN*2)
 b.SetLineColor(kBlue)
 b.Draw()
 if doLightAnalysis:
-    gLIV=TGraph(len(ana.V), ana.LV, ana.LI)
-    gLIV.SetTitle("I-V Curve (light);Volts;Current [Amps]");
-    gLIV.SetName("LIV")
+    gLIV=ana.gItotV
     gLIV.SetLineWidth(2)
     gLIV.SetLineColor(kGreen)
     gLIV.Draw("L")
@@ -193,9 +190,10 @@ if doLightAnalysis:
         printf("Gain at %4.1f V: %6.0f\n",gPoint,gPointGain)
 print "===================="
 
-# diagnostic for Gain=1 estimate
-#ana.gDeltaI.Draw("AP")
-#canvas.Update()
+# diagnostic tests
+#ana.gIpV.Draw("AP*X")
+#ana.gdVdLnId.Draw("AP*L")
+canvas.Update()
 
 
 #os.system('sleep 2')

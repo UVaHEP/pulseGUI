@@ -1,56 +1,51 @@
 import numpy, os, re, sys
 from array import array
-from ROOT import TGraph
+from ROOT import TGraph, TGraphSmooth, Double
 
 ########################
-def printf(format, *args):
 # C-like printf
+def printf(format, *args):
 ########################
     sys.stdout.write(format % args)
 
-########################
-def calcDelta(x,xbar,dx):
-# calculate bin centers and width for derivative calculations
-########################
-    for i in range(len(x)-1):
-        xbar.append((x[i]+x[i+1])/2)
-        dx.append(x[i+1]-x[i])
-
 
 ########################
-def calc_dVdI(V,I,dIdV,Vbar):
-# simple derivative calculation dI/dV
+# return x,y for maximum of TGraph
 ########################
-    assert len(I)==len(V), "calc_dIdV: array sizes not equal"
-    dV=array("f")
-    dI=array("f")
-    Ibar=array("f")
-    calcDelta(I,Ibar,dI)
-    calcDelta(V,Vbar,dV)
-    for i in range(len(Ibar)):
-        if abs(Vbar[i])<0.1: continue
-        print Vbar[i],dV[i],dI[i]
-        R=abs(dV[i]/dI[i])
-        dIdV.append(R)
+def maxXY(tg):
+    xmax=0
+    ymax=-1e50
+    npoints=tg.GetN()
+    x=Double(); y=Double()
+    for i in range(npoints):
+        tg.GetPoint(i,x,y)
+        if y>ymax:
+            ymax=float(y)
+            xmax=float(x)
+    return xmax,ymax
+        
 
+        
 ########################
-def calc_dLogIdV(V,I,dLogIdV,Vbar):
 # simple derivative calculation for peak Vbr estimation
+def calc_dLogIdV(V,I):
 ########################
-    dV=array("f")
-    dI=array("f")
-    Ibar=array("f")
-    calcDelta(I,Ibar,dI)
-    calcDelta(V,Vbar,dV)
-    for i in range(len(Ibar)):
-        dLogIdV.append(1/Ibar[i]*dI[i]/abs(dV[i]))
+    npoints=len(V)-1
+    tg=TGraph(npoints)
+    for i in range(npoints):
+        dI=I[i+1]-I[i]
+        Ibar=(I[i+1]+I[i])/2
+        dV=V[i+1]-V[i]
+        Vbar=(V[i+1]+V[i])/2
+        dLogIdV=1/Ibar*dI/abs(dV)
+        tg.SetPoint(i,Vbar,dLogIdV)
+    return TGraph(tg)
 
 
 ########################
-def readVIfile(file, V, I, Vmin=0):
 # read CSV file and return V,I data in given arrays 
+def readVIfile(file, V, I, Vmin=0):
 ########################
-
     f = open(file, 'r')
     # identify file type from header
     isAgilent = "Repeat,VAR2" in f.readline()
@@ -66,30 +61,9 @@ def readVIfile(file, V, I, Vmin=0):
         if abs(v)<Vmin or i==0: continue
         if len(V)>0 and v==V[len(V)-1] :
             I[len(V)-1]=i # if doing multiple readings, take the last one
-            continue
+            continue      # TO DO: add averaging option
         V.append(v)
         I.append(i)
-
-
-#######################
-# find idx for maximum entry in array
-def getMaxIdx(a):
-#######################
-    amax=-1e20
-    idx=-1
-    for j in range(len(a)):
-        if a[j]>amax:
-            amax=a[j]
-            idx=j
-        if amax>1 and a[j]<0.5*amax: break  # take first peak in case of doubles
-    return idx
-
-#######################
-def getMaxXY(x,y):
-# return (x,y) for y_max
-#######################
-    idx=getMaxIdx(y)
-    return x[idx],y[idx]
 
 
 #######################
@@ -112,5 +86,49 @@ def CalcCelcius(resistance):
     T,R=numpy.genfromtxt(os.getenv("PULSGUIDIR")+"/dat/KT103J2.dat.bz2",unpack=True)
     return numpy.interp(resistance,R,T)
 
+
+#######################
+def SmoothGraph(graphin,type="super",strength=0):
+# return a smoothed version of input TGraph
+# strength parameter depends on smoother choosen
+# SmoothSuper: strength=bass
+# SmoothKernel: strength=bandwidth
+#######################
+    type=type.lower()
+    gs = TGraphSmooth("normal")
+    if type=="super":
+        graphSm=gs.SmoothSuper(graphin,"",strength,0)
+    elif type=="kernel":
+        graphSm=gs.SmoothKernel(graphin,"",strength)
+    else:
+        print "[SmoothGraph] Smoother",type,"not recognized, returning None"
+        return None
+    return TGraph(graphSm)
+
+#######################
+def InvertGraph(graphin):
+# return a inverted version of input TGraph
+#######################
+    ginv=TGraph(graphin.GetN())
+    x=Double(); y=Double()
+    for i in range(graphin.GetN()):
+        graphin.GetPoint(i, x, y)
+        if y==0:
+            print "[InvertGraph] Cannot invert graph with 0 value, returning None"
+            return None
+        ginv.SetPoint(i, x, 1/y)
+    return TGraph(ginv)
+
     
-    
+#######################
+def RatioGraph(graph1,graph2):
+# return ratio of two TGraphs = graph1/graph2
+#######################
+    gr=TGraph(graph1)
+    x=Double(); y1=Double(); y2=Double()
+    for i in range(graph1.GetN()):
+        graph1.GetPoint(i, x, y1)
+        graph2.GetPoint(i, x, y2)
+        gr.SetPoint(i, x, y1/y2)
+    return TGraph(gr)
+
