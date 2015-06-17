@@ -153,8 +153,9 @@ labVbr.AddText(msg)
 if doLightAnalysis:
     msg="VpIp="+("%5.2f" % ana.vPeakIp)
     labVbr.AddText(msg)
+    ana.gdLnIpdV.Draw("same")
 labVbr.Draw()
-ana.gdLnIpdV.Draw("same")
+
 
 if doLightAnalysis:
     #Draw the Ratio of Light to Dark Curves on canvas 3 
