@@ -33,8 +33,8 @@ class Thermistor():
     def Temperature(self,R):
         return self.graph.Eval(R)
 
-
-
+    
+    
 
 #######################
 # main
@@ -71,8 +71,8 @@ if doLightAnalysis: ana=ivAnalyze(dfn,lfn)
 else: ana=ivAnalyze(dfn)
 ana.SetVmin(VMIN)
 
-vPeak,vKnee,ratioMax=ana.Analyze()
 
+ana.Analyze()
 
 # analysis done, get with the plots
 
@@ -111,10 +111,10 @@ hIV=TH2F("hIV","I-V Curve;Volts;Current [Amps]",10,xmin,xmax,10,ymin,ymax*1.1)
 hIV.GetYaxis().SetTitleOffset(1.4)
 hIV.Draw()
 gIV.Draw("L")
-a=TLine(vPeak,IMIN,vPeak,IMIN*2)
+a=TLine(ana.vPeak,IMIN,ana.vPeak,IMIN*2)
 a.SetLineColor(kRed)
 a.Draw()
-b=TLine(vKnee,IMIN,vKnee,IMIN*2)
+b=TLine(ana.vKnee,IMIN,ana.vKnee,IMIN*2)
 b.SetLineColor(kBlue)
 b.Draw()
 if doLightAnalysis:
@@ -122,55 +122,62 @@ if doLightAnalysis:
     gLIV.SetLineWidth(2)
     gLIV.SetLineColor(kGreen)
     gLIV.Draw("L")
-
-
+    
 canvas.cd(2)
-gDV.ComputeRange(xmin,ymin,xmax,ymax)
+if doLightAnalysis:
+    ana.gdLnIpdV.ComputeRange(xmin,ymin,xmax,ymax)
+else:
+    gDV.ComputeRange(xmin,ymin,xmax,ymax)
 gDV.SetTitle("Breakdown analysis;Volts;dlog(I)/dV");
-if vPeak<0: 
-    gDVframe=TH2F("dvFrame",gDV.GetTitle(),5,xmin,vPeak/2,5,0,ymax*1.1)
+if ana.vPeak<0: 
+    gDVframe=TH2F("dvFrame",gDV.GetTitle(),5,xmin,ana.vPeak/2,5,0,ymax*1.1)
 else:
     gDVframe=TH2F("dvFrame",gDV.GetTitle(),5,xmin/2,xmax,5,0,ymax*1.1)
 gDVframe.Draw()
 gDV.Draw("L")
-tlVpeak=TLine(vPeak,ymin+(ymax-ymin)/2,vPeak,ymax*1.08)
+ana.gd2LnIddV2.Draw("L")
+tlVpeak=TLine(ana.vPeak,ymin+(ymax-ymin)/2,ana.vPeak,ymax*1.08)
 tlVpeak.SetLineColor(kRed)
 tlVpeak.Draw("same")
 fitFcn=gDV.GetFunction("fitFcn")
 fitFcn.SetLineColor(kTeal)
-tlVknee=TLine(vKnee, gDV.GetYaxis().GetXmin(),vKnee,fitFcn.GetParameter(0))
+tlVknee=TLine(ana.vKnee, gDV.GetYaxis().GetXmin(),ana.vKnee,fitFcn.GetParameter(0))
 tlVknee.SetLineColor(kBlue)
 tlVknee.SetLineWidth(2)
 tlVknee.Draw("same")
 labVbr=TPaveText(0.50,0.76,0.89,0.90,"NDC")
-msg="Vpeak="+("%5.2f" % vPeak)
+msg="Vpeak="+("%5.2f" % ana.vPeak)
 labVbr.AddText(msg)
-msg="Vknee="+("%5.2f" % vKnee)
+msg="Vknee="+("%5.2f" % ana.vKnee)
 labVbr.AddText(msg)
+if doLightAnalysis:
+    msg="VpIp="+("%5.2f" % ana.vPeakIp)
+    labVbr.AddText(msg)
 labVbr.Draw()
+ana.gdLnIpdV.Draw("same")
 
 if doLightAnalysis:
     #Draw the Ratio of Light to Dark Curves on canvas 3 
     canvas.cd(3) #.SetLogy()
     gRatio.ComputeRange(xmin, ymin, xmax, ymax)
     gRatio.SetTitle("Ratio of Light to Dark;Volts;Current Ratio [A]")
-    if vPeak<0: 
-        gRframe=TH2F("grFrame",gRatio.GetTitle(),10,xmin,vPeak/2,10,0,ymax*1.1)
+    if ana.vPeak<0: 
+        gRframe=TH2F("grFrame",gRatio.GetTitle(),10,xmin,ana.vPeak/2,10,0,ymax*1.1)
     else:
-        gRframe=TH2F("grFrame",gRatio.GetTitle(),10,VPeak/2,xmax,10,0,ymax*1.1)
+        gRframe=TH2F("grFrame",gRatio.GetTitle(),10,ana.vPeak/2,xmax,10,0,ymax*1.1)
     gRframe.Draw()
     gRatio.Draw("L")
-    RatioMax = TLine(ratioMax[0], ymin+(ymax-ymin)/2, ratioMax[0], ymax*1.08)
+    RatioMax = TLine(ana.ratioMax[0], ymin+(ymax-ymin)/2, ana.ratioMax[0], ymax*1.08)
     RatioMax.SetLineColor(kRed)
     RatioMax.Draw("same")
     labRat=TPaveText(0.50,0.83,0.89,0.90,"NDC")
-    msg="Vmax(L/D)="+("%5.2f" % ratioMax[0])
+    msg="Vmax(L/D)="+("%5.2f" % ana.ratioMax[0])
     labRat.AddText(msg)
     labRat.Draw()
     canvas.Update()
     if options.gPoint:
         gPoint=options.gPoint
-        gPoint=math.copysign(float(gPoint),vPeak) # voltage to calculate gain, w/ correct sign convention
+        gPoint=math.copysign(float(gPoint),ana.vPeak) # voltage to calculate gain, w/ correct sign convention
         gPointGain=gGain.Eval(gPoint)
     plot,axis=scaleToPad(gGain)
     plot.Draw("L")
@@ -182,10 +189,11 @@ if doLightAnalysis:
 canvas.Update()
 
 print "=== I-V Analysis ==="
-printf("Peak dLogI/DV: %4.2f\n",vPeak)
-printf("Knee dLogI/DV: %4.2f\n",vKnee)
+printf("Peak dLogI/DV: %4.2f\n",ana.vPeak)
+printf("Knee dLogI/DV: %4.2f\n",ana.vKnee)
 if doLightAnalysis:
-    printf("Peak light/dark: %4.2f\n",ratioMax[0])
+    printf("Peak light/dark: %4.2f\n",ana.ratioMax[0])
+    printf("Vpeak dLogIp/DV: %4.2f\n",ana.vPeakIp)
     if options.gPoint:
         printf("Gain at %4.1f V: %6.0f\n",gPoint,gPointGain)
 print "===================="
