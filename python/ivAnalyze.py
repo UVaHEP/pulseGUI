@@ -41,7 +41,7 @@ class ivAnalyze():
         self.gdLnIddV=None     # dark current dLnIdV graph
         self.gd2LnIddV2=None   # dark current d^2logI/dV^2
         self.doubleD=None
-        self.gdLnIpdV=None     # dLnIpdV graph
+        self.gdLnIpdV=None     # dLogI/dV for photo current
         self.gdVdLnId=None     # inverse, [dLnIdV]^-1 graph
         self.gRatio=None       # light to dark ratio
         self.gGain=None        # gain vs V 
@@ -155,7 +155,13 @@ class ivAnalyze():
         # make graph of Ip = light+leakage-dark currents
         self.gIpV=TGraphDiff(self.gItotV,self.gIdV)
         self.gdLnIpdV=IV2dLogIdV(self.gIpV)
+        self.gdLnIpdV.SetLineColor(kBlue)
         self.vPeakIp=GraphMax(self.gdLnIpdV)[0]
+        # fit the peak
+        #fitfcn=TF1("fitfcn","[0]/TMath::Abs(x-[1])",self.vPeakIp-1,self.vPeakIp+1)
+        #fitfcn.SetParameters(1,self.vPeakIp)
+        #fitfcn.FixParameter(1,self.vPeakIp)
+        #self.gdLnIpdV.Fit(fitfcn,"R")
         
         # make restricted range version around Gain=1 (low voltage) region
         # To do, drop this and replace w/ fit range above, as in exmaple....

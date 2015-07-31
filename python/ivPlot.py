@@ -17,7 +17,7 @@ from ivAnalyze import ivAnalyze
 rootlibs=commands.getoutput("root-config --libdir")
 sys.path.append(rootlibs)
 
-from ROOT import Double, gStyle, kGreen, kRed, kTeal, kBlue, TGraphSmooth
+from ROOT import Double, gStyle, kGreen, kRed, kTeal, kBlue, kGray, TGraphSmooth
 from ROOT import TString, TCanvas, TGraph, TLine, TF1, TH2F, TPaveText
 from ivtools import *
 from rootTools import *
@@ -48,6 +48,7 @@ parser.add_option('-b', '--batch', dest='batch', action="store_true")
 parser.add_option('-f', '--darkfn', dest='dfn', default=None)
 parser.add_option('-l', '--lightfn', dest='lfn', default=None)
 parser.add_option('-g', '--gainPoint', dest='gPoint', default=None)
+parser.add_option('-x', '--debug', dest='doDebug', default=None)
 
 
 (options, args) = parser.parse_args()
@@ -66,6 +67,7 @@ if dfn is None:
 
 
 doLightAnalysis = not (lfn is None)
+doDebug=not (options.doDebug is None)
 
 if doLightAnalysis: ana=ivAnalyze(dfn,lfn)
 else: ana=ivAnalyze(dfn)
@@ -77,17 +79,18 @@ ana.Analyze()
 # analysis done, get with the plots
 
 gStyle.SetOptStat(0)
-# graphs
-gIV=ana.gIdV
+#### graphs
+gIV=ana.gIdV         # dark I-V graph
 gIV.SetName("IV")
 gIV.SetLineWidth(2)
 
-gDV = ana.gdLnIddV
+gDV = ana.gdLnIddV   # dark dLogI/dV
 gDV.SetName("dLogI/dV")
 gDV.SetLineWidth(2)
 
 if doLightAnalysis:
-    gRatio = ana.gRatio
+    gdLnIpdV=ana.gdLnIpdV        # dLogIp/dV for photo current
+    gRatio = ana.gRatio          # light to dark current ratio
     gRatio.SetName("LD_ratio")
     gRatio.SetLineWidth(2)
     gGain=ana.gGain
@@ -102,6 +105,8 @@ if doLightAnalysis:
 else:
     canvas.Divide(2,1)
 
+#### Canvas 1:  Dark and light I-V curves
+    
 IMIN=1e-9
 canvas.cd(1).SetLogy()
 xmin=Double(); xmax=Double(); ymin=Double(); ymax=Double()
@@ -111,54 +116,53 @@ hIV=TH2F("hIV","I-V Curve;Volts;Current [Amps]",10,xmin,xmax,10,ymin,ymax*1.1)
 hIV.GetYaxis().SetTitleOffset(1.4)
 hIV.Draw()
 gIV.Draw("L")
-a=TLine(ana.vPeak,IMIN,ana.vPeak,IMIN*2)
-a.SetLineColor(kRed)
-a.Draw()
-b=TLine(ana.vKnee,IMIN,ana.vKnee,IMIN*2)
-b.SetLineColor(kBlue)
-b.Draw()
+
 if doLightAnalysis:
     gLIV=ana.gItotV
     gLIV.SetLineWidth(2)
     gLIV.SetLineColor(kGreen)
     gLIV.Draw("L")
-    
+
+#### Canvas 2: V_breakdown analysis
+# To do: think about possibility of some
+#         dark count analysis using dLnI/dV vs dLnIp/dV
+
 canvas.cd(2)
+title2=TString()
 if doLightAnalysis:
-    ana.gdLnIpdV.ComputeRange(xmin,ymin,xmax,ymax)
+    gdLnIpdV.ComputeRange(xmin,ymin,xmax,ymax) # dLogI/dV for photo current
+    gdLnIpdV.SetTitle("Breakdown analysis;Volts;dlog(I_{p})/dV")
+    title2=gdLnIpdV.GetTitle()
 else:
-    gDV.ComputeRange(xmin,ymin,xmax,ymax)
-gDV.SetTitle("Breakdown analysis;Volts;dlog(I)/dV");
+    gDV.ComputeRange(xmin,ymin,xmax,ymax)          # dark dLogI/dV
+    gDV.SetTitle("Breakdown analysis;Volts;dlog(I)/dV")
+    title2=gDV.GetTitle()
+    
 if ana.vPeak<0: 
-    gDVframe=TH2F("dvFrame",gDV.GetTitle(),5,xmin,ana.vPeak/2,5,0,ymax*1.1)
+    gDVframe=TH2F("dvFrame",title2,5,xmin,ana.vPeak/2,5,0,ymax*1.1)
 else:
-    gDVframe=TH2F("dvFrame",gDV.GetTitle(),5,xmin/2,xmax,5,0,ymax*1.1)
+    gDVframe=TH2F("dvFrame",title2,5,xmin/2,xmax,5,0,ymax*1.1)
+
+
 gDVframe.Draw()
-gDV.Draw("L")
-ana.gd2LnIddV2.Draw("L")
-tlVpeak=TLine(ana.vPeak,ymin+(ymax-ymin)/2,ana.vPeak,ymax*1.08)
-tlVpeak.SetLineColor(kRed)
-tlVpeak.Draw("same")
-fitFcn=gDV.GetFunction("fitFcn")
-fitFcn.SetLineColor(kTeal)
-tlVknee=TLine(ana.vKnee, gDV.GetYaxis().GetXmin(),ana.vKnee,fitFcn.GetParameter(0))
-tlVknee.SetLineColor(kBlue)
-tlVknee.SetLineWidth(2)
-tlVknee.Draw("same")
+
 labVbr=TPaveText(0.50,0.76,0.89,0.90,"NDC")
-msg="Vpeak="+("%5.2f" % ana.vPeak)
-labVbr.AddText(msg)
-msg="Vknee="+("%5.2f" % ana.vKnee)
-labVbr.AddText(msg)
 if doLightAnalysis:
+    gDV.SetLineColor(kGray)
+    gDV.Draw("L")
     msg="VpIp="+("%5.2f" % ana.vPeakIp)
     labVbr.AddText(msg)
-    ana.gdLnIpdV.Draw("same")
+    gdLnIpdV.Draw("same")
+else:
+    gDV.Draw("L")
+
+
 labVbr.Draw()
 
+##### Canvas 3: Gain
 
 if doLightAnalysis:
-    #Draw the Ratio of Light to Dark Curves on canvas 3 
+    # Draw the Ratio of Light to Dark Curves
     canvas.cd(3) #.SetLogy()
     gRatio.ComputeRange(xmin, ymin, xmax, ymax)
     gRatio.SetTitle("Ratio of Light to Dark;Volts;Current Ratio [A]")
@@ -200,9 +204,10 @@ if doLightAnalysis:
 print "===================="
 
 # diagnostic tests
-#ana.gIpV.Draw("AP*X")
+#c2=TCanvas()
+#ana.gIpLowV.Draw("AP*X")
 #ana.gdVdLnId.Draw("AP*L")
-canvas.Update()
+#canvas.Update()
 
 
 #os.system('sleep 2')
