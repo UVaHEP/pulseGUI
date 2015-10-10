@@ -68,9 +68,9 @@ class ivAnalyze():
         # quick and dirty, return i(light)-i(dark) @ 30V
         ip30=0
         for i in range(len(self.V)):
-            print self.V[i]
             if self.V[i]<-30: break
             ip30=self.Itot[i]-self.Id[i]
+            #print i, self.V[i],self.Itot[i]-self.Id[i]
         return ip30
         # Smooth the graph of light-dark current before fitting
         gsmooth = TGraphSmoother(self.gIpLowV)
@@ -154,7 +154,6 @@ class ivAnalyze():
                 print "Padding light data to match dark measurements, beware..."
                 npoints=len(self.Id)
                 for i in range(len(self.Itot),len(self.Id)):
-                    print "setting",i
                     self.LV.append(self.V[i])
                     self.Itot.append(1e-2)  # ~current limit
             else: sys.exit(1)
@@ -170,6 +169,7 @@ class ivAnalyze():
             
         # make graph of Ip = light+leakage-dark currents
         self.gIpV=TGraphDiff(self.gItotV,self.gIdV)
+        self.gIpV.SetLineColor(kBlue)
         self.gdLnIpdV=IV2dLogIdV(self.gIpV)
         self.gdLnIpdV.SetLineColor(kBlue)
         self.vPeakIp=GraphMax(self.gdLnIpdV)[0]

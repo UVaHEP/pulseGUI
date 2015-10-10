@@ -122,7 +122,8 @@ if doLightAnalysis:
     gLIV.SetLineWidth(2)
     gLIV.SetLineColor(kGreen)
     gLIV.Draw("L")
-
+    ana.gIpV.Draw("L")
+    
 #### Canvas 2: V_breakdown analysis
 # To do: think about possibility of some
 #         dark count analysis using dLnI/dV vs dLnIp/dV
@@ -139,14 +140,14 @@ else:
     title2=gDV.GetTitle()
     
 if ana.vPeak<0: 
-    gDVframe=TH2F("dvFrame",title2,5,xmin,ana.vPeak/2,5,0,ymax*1.1)
+    gDVframe=TH2F("dvFrame",title2,5,xmin,xmin/2,5,0,ymax*1.1)
 else:
     gDVframe=TH2F("dvFrame",title2,5,xmin/2,xmax,5,0,ymax*1.1)
 
 
 gDVframe.Draw()
 
-labVbr=TPaveText(0.50,0.76,0.89,0.90,"NDC")
+labVbr=TPaveText(0.50,0.83,0.89,0.90,"NDC")
 if doLightAnalysis:
     gDV.SetLineColor(kGray)
     gDV.Draw("L")
@@ -167,9 +168,9 @@ if doLightAnalysis:
     gRatio.ComputeRange(xmin, ymin, xmax, ymax)
     gRatio.SetTitle("Ratio of Light to Dark;Volts;Current Ratio [A]")
     if ana.vPeak<0: 
-        gRframe=TH2F("grFrame",gRatio.GetTitle(),10,xmin,ana.vPeak/2,10,0,ymax*1.1)
+        gRframe=TH2F("grFrame",gRatio.GetTitle(),10,xmin,ana.ratioMax[0]/1.2,10,0.1,ymax*1.1)
     else:
-        gRframe=TH2F("grFrame",gRatio.GetTitle(),10,ana.vPeak/2,xmax,10,0,ymax*1.1)
+        gRframe=TH2F("grFrame",gRatio.GetTitle(),10,ana.vPeak/2,xmax,10,0.1,ymax*1.1)
     gRframe.Draw()
     gRatio.Draw("L")
     RatioMax = TLine(ana.ratioMax[0], ymin+(ymax-ymin)/2, ana.ratioMax[0], ymax*1.08)
@@ -204,10 +205,10 @@ if doLightAnalysis:
 print "===================="
 
 # diagnostic tests
-c2=TCanvas()
-ana.gIpLowV.Draw("AP*X")
+#c2=TCanvas()
+#ana.gIpLowV.Draw("AP*X")
 #ana.gdVdLnId.Draw("AP*L")
-canvas.Update()
+#canvas.Update()
 
 
 #os.system('sleep 2')

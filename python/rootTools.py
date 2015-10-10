@@ -19,7 +19,7 @@ def scaleToPad(obj2):
         obj2.ComputeRange(xmin, ymin, xmax, ymax)
         rightmax=ymax*1.1  # right axis
         scale = gPad.GetUymax()/rightmax;
-#        if logy: scale=TMath.Power(10,scale)
+        if logy: scale=TMath.Power(10,scale)
         for i in range(obj2.GetN()):
             obj2.GetY()[i] = obj2.GetY()[i]*scale
     elif isTH1:
@@ -28,7 +28,7 @@ def scaleToPad(obj2):
         if logy: scale=TMath.Power(10,scale)
         obj2.Scale(scale)
     axisYmax=gPad.GetUymax()
-    if gPad.GetLogy()==1: axisYmax=TMath.Power(10,axisYmax)
+    if logy: axisYmax=TMath.Power(10,axisYmax)
     axis = TGaxis(gPad.GetUxmax(),gPad.GetUymin(),
                       gPad.GetUxmax(),axisYmax,0,rightmax,510,"+L")
     color=obj2.GetLineColor()
