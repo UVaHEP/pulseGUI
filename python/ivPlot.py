@@ -204,10 +204,10 @@ if doLightAnalysis:
 print "===================="
 
 # diagnostic tests
-#c2=TCanvas()
-#ana.gIpLowV.Draw("AP*X")
+c2=TCanvas()
+ana.gIpLowV.Draw("AP*X")
 #ana.gdVdLnId.Draw("AP*L")
-#canvas.Update()
+canvas.Update()
 
 
 #os.system('sleep 2')

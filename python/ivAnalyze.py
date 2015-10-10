@@ -65,6 +65,13 @@ class ivAnalyze():
     # I_light-dark vs V graph at low voltage and extrapolting to V=0
     # return I_p(G=1)
     def CalcIatGain1(self):
+        # quick and dirty, return i(light)-i(dark) @ 30V
+        ip30=0
+        for i in range(len(self.V)):
+            print self.V[i]
+            if self.V[i]<-30: break
+            ip30=self.Itot[i]-self.Id[i]
+        return ip30
         # Smooth the graph of light-dark current before fitting
         gsmooth = TGraphSmoother(self.gIpLowV)
         gDeltaIerr=TGraphErrors(self.gIpLowV.GetN()) # assign some *incorrect* errors for stable fit
@@ -137,17 +144,26 @@ class ivAnalyze():
         #different voltage ranges or data points this won't work! 
         print "Also analyzing illuminated I-V curve"
         readVIfile(self.fnLIV,self.LV,self.Itot,self.VMIN)
-        self.gItotV=TGraph(len(self.LV), self.LV, self.Itot)
-        self.gItotV.SetTitle("I-V Curve (light);Volts;Current [Amps]")
-        self.gItotV.SetName("LIV")
 
         # to do: calc [dlogItot/dV]-1, use to estimate Vbr
         
         npoints=len(self.Itot)
         if not npoints==len(self.Id):
             print "Dark/light files of different length:",len(self.Itot),len(self.Id)
-            sys.exit(1)
+            if len(self.Itot)<len(self.Id):
+                print "Padding light data to match dark measurements, beware..."
+                npoints=len(self.Id)
+                for i in range(len(self.Itot),len(self.Id)):
+                    print "setting",i
+                    self.LV.append(self.V[i])
+                    self.Itot.append(1e-2)  # ~current limit
+            else: sys.exit(1)
 
+        # define graphs
+        self.gItotV=TGraph(len(self.LV), self.LV, self.Itot)
+        self.gItotV.SetTitle("I-V Curve (light);Volts;Current [Amps]")
+        self.gItotV.SetName("LIV")
+            
         # ratio of light to dark IV curves
         self.gRatio = TGraphDivide(self.gItotV,self.gIdV)
         self.ratioMax=GraphMax(self.gRatio)
@@ -173,17 +189,14 @@ class ivAnalyze():
             if abs(Vi)>abs(self.vPeak)*self.G1FITFRAC:
                 self.gIpLowV.RemovePoint(i)
                 
-        # estimate tle light current Ip at Gain~1
+        # estimate the light current Ip at Gain~1
         IatGain1=self.CalcIatGain1()
         # gain calculation
         self.gGain=TGraph(npoints)
         for i in range(npoints):
             g=(self.Itot[i]-self.Id[i])/IatGain1
             self.gGain.SetPoint(i,self.V[i],g)
-
-            
-            
-            
+                        
         # testing...
         # fit for gain from Vpeak_ratio to ~ Vpeak_gain,
         # extrapolate to G=1 to estimate Vbr
