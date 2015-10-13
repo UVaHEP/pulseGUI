@@ -116,9 +116,9 @@ class ivAnalyze():
             
         fitFcn.SetParameters(0.05,5,self.vPeak) # guess at starting params
         if self.vPeak<0:
-            self.gdLnIddV.Fit(fitFcn,"","",self.vPeak,self.vPeak+5)
+            self.gdLnIddV.Fit(fitFcn,"0","",self.vPeak,self.vPeak+5)
         else:
-            self.gdLnIddV.Fit(fitFcn,"","",self.vPeak-5,self.vPeak)
+            self.gdLnIddV.Fit(fitFcn,"0","",self.vPeak-5,self.vPeak)
         self.vKnee=fitFcn.GetParameter(2)
 
         
@@ -140,8 +140,8 @@ class ivAnalyze():
 
     def AnalyzeLight(self):
         #generate Light/Dark Ratio
-        #Nota bene! I'm not doing any error checking here, so if you have files with 
-        #different voltage ranges or data points this won't work! 
+        #Nota bene! I'm doing minimal error checking here, so if you have files with 
+        #different voltage ranges or data points this might not work! 
         print "Also analyzing illuminated I-V curve"
         readVIfile(self.fnLIV,self.LV,self.Itot,self.VMIN)
 
@@ -165,14 +165,15 @@ class ivAnalyze():
             
         # ratio of light to dark IV curves
         self.gRatio = TGraphDivide(self.gItotV,self.gIdV)
-        self.ratioMax=GraphMax(self.gRatio)
+        self.ratioMax=GraphMax(self.gRatio,self.vPeak-abs(self.vPeak/4),self.vPeak+abs(self.vPeak/4),)
             
         # make graph of Ip = light+leakage-dark currents
         self.gIpV=TGraphDiff(self.gItotV,self.gIdV)
         self.gIpV.SetLineColor(kBlue)
         self.gdLnIpdV=IV2dLogIdV(self.gIpV)
         self.gdLnIpdV.SetLineColor(kBlue)
-        self.vPeakIp=GraphMax(self.gdLnIpdV)[0]
+        #self.vPeakIp=GraphMax(self.gdLnIpdV)[0]
+        self.vPeakIp=GraphMaxRight(self.gdLnIpdV,-999,-54)[0]  # only valid for -Vbias, ugly filthy hack !!!
         # fit the peak
         #fitfcn=TF1("fitfcn","[0]/TMath::Abs(x-[1])",self.vPeakIp-1,self.vPeakIp+1)
         #fitfcn.SetParameters(1,self.vPeakIp)

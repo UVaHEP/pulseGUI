@@ -17,13 +17,11 @@ from ivAnalyze import ivAnalyze
 rootlibs=commands.getoutput("root-config --libdir")
 sys.path.append(rootlibs)
 
-from ROOT import Double, gStyle, kGreen, kRed, kTeal, kBlue, kGray, TGraphSmooth
-from ROOT import TString, TCanvas, TGraph, TLine, TF1, TH2F, TPaveText
+from ROOT import *
 from ivtools import *
 from rootTools import *
 
 VMIN=10  # minimum voltage to read
-
 
 
 class Thermistor():
@@ -94,9 +92,10 @@ if doLightAnalysis:
     gRatio.SetName("LD_ratio")
     gRatio.SetLineWidth(2)
     gGain=ana.gGain
-    gGain.SetName("Gain")
-    gGain.SetLineWidth(1)
-    gGain.SetLineColor(kGreen+3)
+    gGain.SetName("gGain")
+    gGain.SetLineWidth(2)
+    gGain.SetLineColor(kGreen+1)
+    
 
 #canvas = TCanvas("ivdata","I-V Data",800,400)
 canvas = TCanvas("ivdata",os.path.basename(dfn),800,400)
@@ -116,6 +115,8 @@ hIV=TH2F("hIV","I-V Curve;Volts;Current [Amps]",10,xmin,xmax,10,ymin,ymax*1.1)
 hIV.GetYaxis().SetTitleOffset(1.4)
 hIV.Draw()
 gIV.Draw("L")
+leg1=TLegend(0.5,0.75,0.9,0.9)
+leg1.AddEntry(gIV,"I-V Dark","l")
 
 if doLightAnalysis:
     gLIV=ana.gItotV
@@ -123,7 +124,10 @@ if doLightAnalysis:
     gLIV.SetLineColor(kGreen)
     gLIV.Draw("L")
     ana.gIpV.Draw("L")
+    leg1.AddEntry(gLIV,"I-V Light","l")
+    leg1.AddEntry(ana.gIpV,"Light-Dark","l")
     
+leg1.Draw()
 #### Canvas 2: V_breakdown analysis
 # To do: think about possibility of some
 #         dark count analysis using dLnI/dV vs dLnIp/dV
@@ -140,46 +144,47 @@ else:
     title2=gDV.GetTitle()
     
 if ana.vPeak<0: 
-    gDVframe=TH2F("dvFrame",title2,5,xmin,xmin/2,5,0,ymax*1.1)
+    gDVframe=TH2F("dvFrame",title2,5,xmin,min(ana.vPeak*0.75,xmin/2),5,0,ymax*1.1)
 else:
-    gDVframe=TH2F("dvFrame",title2,5,xmin/2,xmax,5,0,ymax*1.1)
+    gDVframe=TH2F("dvFrame",title2,5,max(ana.vPeak*0.75,xmax/2),xmax,5,0,ymax*1.1)
 
 
 gDVframe.Draw()
 
-labVbr=TPaveText(0.50,0.83,0.89,0.90,"NDC")
+leg2=TLegend(0.5,0.75,0.9,0.9)
 if doLightAnalysis:
-    gDV.SetLineColor(kGray)
+    gDV.SetLineColor(kGray+2)
     gDV.Draw("L")
-    msg="VpIp="+("%5.2f" % ana.vPeakIp)
-    labVbr.AddText(msg)
+    msg="VpI_p="+("%5.2f" % ana.vPeakIp)
     gdLnIpdV.Draw("same")
+    leg2.AddEntry(gdLnIpdV,"dlogI_p/dV","l")
+    leg2.AddEntry(0,msg,"")
 else:
+    msg="VpId="+("%5.2f" % ana.vPeak)
+    leg2.AddEntry(0,msg,"")
     gDV.Draw("L")
 
+leg2.AddEntry(gDV,"dlogI_d/dV","l")
 
-labVbr.Draw()
+leg2.Draw()
 
 ##### Canvas 3: Gain
 
 if doLightAnalysis:
+    leg3=TLegend(0.5,0.75,0.9,0.9)
     # Draw the Ratio of Light to Dark Curves
     canvas.cd(3) #.SetLogy()
     gRatio.ComputeRange(xmin, ymin, xmax, ymax)
     gRatio.SetTitle("Ratio of Light to Dark;Volts;Current Ratio [A]")
     if ana.vPeak<0: 
-        gRframe=TH2F("grFrame",gRatio.GetTitle(),10,xmin,ana.ratioMax[0]/1.2,10,0.1,ymax*1.1)
+        gRframe=TH2F("grFrame",gRatio.GetTitle(),10,xmin,xmin*0.75,10,0.1,ymax*1.1)
     else:
-        gRframe=TH2F("grFrame",gRatio.GetTitle(),10,ana.vPeak/2,xmax,10,0.1,ymax*1.1)
+        gRframe=TH2F("grFrame",gRatio.GetTitle(),10,xmax*0,75,xmax,10,0.1,ymax*1.1)
     gRframe.Draw()
     gRatio.Draw("L")
-    RatioMax = TLine(ana.ratioMax[0], ymin+(ymax-ymin)/2, ana.ratioMax[0], ymax*1.08)
+    RatioMax = TLine(ana.ratioMax[0], ymin, ana.ratioMax[0], ymax/2)
     RatioMax.SetLineColor(kRed)
     RatioMax.Draw("same")
-    labRat=TPaveText(0.50,0.83,0.89,0.90,"NDC")
-    msg="Vmax(L/D)="+("%5.2f" % ana.ratioMax[0])
-    labRat.AddText(msg)
-    labRat.Draw()
     canvas.Update()
     if options.gPoint:
         gPoint=options.gPoint
@@ -191,12 +196,18 @@ if doLightAnalysis:
     #axis.SetNoExponent(True)
     axis.SetMaxDigits(3)
     axis.Draw()
+    leg3.AddEntry("gRatio","L/D ratio","l")
+    leg3.AddEntry("gGain","Gain [I_p/I_p(@30)]","l")
+    msg="Vmax(L/D)="+("%5.2f" % ana.ratioMax[0])
+    leg3.AddEntry(0,msg,"")
+    leg3.Draw()
 
-canvas.Update()
+    canvas.Update()
 
 print "=== I-V Analysis ==="
 printf("Peak dLogI/DV: %4.2f\n",ana.vPeak)
 printf("Knee dLogI/DV: %4.2f\n",ana.vKnee)
+printf("Dark Current @ 30 40 50V: %6.2e %6.2e %6.2e\n",gIV.Eval(-30),gIV.Eval(-40),gIV.Eval(-50))
 if doLightAnalysis:
     printf("Peak light/dark: %4.2f\n",ana.ratioMax[0])
     printf("Vpeak dLogIp/DV: %4.2f\n",ana.vPeakIp)

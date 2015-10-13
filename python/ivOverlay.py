@@ -10,7 +10,7 @@ import argparse
 rootlibs=commands.getoutput("root-config --libdir")
 sys.path.append(rootlibs)
     
-VMIN=10  # minimum voltage to read
+VMIN=0  # minimum voltage to read
 
 #######################
 # main

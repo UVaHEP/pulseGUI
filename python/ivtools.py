@@ -11,19 +11,42 @@ def printf(format, *args):
 
 ########################
 # return x,y for maximum of TGraph
+# optionally search within range
 ########################
-def GraphMax(tg):
-    xmax=0
-    ymax=-1e50
+def GraphMax(tg,xmin=-1e20,xmax=1e20):
+    xMax=0
+    yMax=-1e50
     npoints=tg.GetN()
     x=Double(); y=Double()
     for i in range(npoints):
         tg.GetPoint(i,x,y)
-        if y>ymax:
-            ymax=float(y)
-            xmax=float(x)
-    return xmax,ymax
-        
+        if x<xmin: continue
+        if x>xmax: continue
+        if y>yMax:
+            yMax=float(y)
+            xMax=float(x)
+    return xMax,yMax
+
+########################
+# hack to find right most peak >=20% of highest peak
+########################
+def GraphMaxRight(tg,xmin=-1e20,xmax=1e20):
+    xMax,yMax=GraphMax(tg,xmin,xmax)
+    #print "**********",xMax,yMax
+    x2=xMax; y2=yMax
+    x=Double(); y=Double()
+    npoints=tg.GetN()
+    for i in range(npoints):
+        tg.GetPoint(i,x,y)
+        if float(x)>xmax: continue
+        if float(x)<xMax: continue
+        #print x,y
+        if float(x)>x2 and float(x)>xMax and float(y)>=yMax*0.2:
+            x2=float(x)
+            y2=float(y)
+    return x2,y2
+    
+
 
 
 ########################
@@ -159,8 +182,13 @@ def IV2dLogIdV(tg):
         Ibar=(i2+i1)/2
         dV=v2-v1
         Vbar=(v2+v1)/2
-        dLogIdV=1/Ibar*dI/abs(dV)
-        tgnew.SetPoint(i,Vbar,dLogIdV)
+        if dV==0: # voltage is repeated, use last value for derivative
+            v=Double(); deriv=Double()
+            tgnew.GetPoint(i-1,v,deriv)
+            tgnew.SetPoint(i,v,deriv)
+        else:
+            dLogIdV=1/Ibar*dI/abs(dV)
+            tgnew.SetPoint(i,Vbar,dLogIdV)
     return TGraph(tgnew)
 
 #######################
@@ -177,7 +205,12 @@ def TGraphDerivative(tg):
         Xbar=(x2+x1)/2
         dY=y2-y1
         Ybar=(y2+y1)/2
-        tgnew.SetPoint(i,Xbar,dY/dX)
+        if dX==0: # X value is repeated, use last value for derivative
+            x=Double(); deriv=Double()
+            tgnew.GetPoint(i-1,x,deriv)
+            tgnew.SetPoint(i,x,deriv)
+        else:
+            tgnew.SetPoint(i,Xbar,dY/dX)
     return TGraph(tgnew)
     
 #######################
