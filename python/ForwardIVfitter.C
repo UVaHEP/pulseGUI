@@ -37,7 +37,6 @@ public:
 
   MyFCN(TGraph *grin=0, int n=1, double r=0) : tg(grin), nc(n),
 					       rs(r), xmin(-1e6),xmax(1e6) {}
-
   // objective fcn
   // model: I = Is(exp(B(V-IR))-1)~I = Is exp(B(V-IR))
   //        invert to fit V(I)
@@ -115,8 +114,8 @@ void ForwardIVfitter::Fit(Double_t *par){
 
   minuit->CreateMinimizer();
   minuit->FixParameter(2);
-  fcn.SetXmin(0.9*xmax);
-  //fcn.SetXmax(4);
+  fcn.SetXmin(4);
+  fcn.SetXmax(5);
   int iret = minuit->Minimize();
   minuit->ReleaseParameter(2);
   iret = minuit->Minimize();

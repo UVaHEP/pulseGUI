@@ -55,14 +55,18 @@ def readVIfile(file, V, I, Vmin=0):
 ########################
     f = open(file, 'r')
     # identify file type from header
-    isAgilent = "Repeat,VAR2" in f.readline()
+    line=f.readline()
+    isAgilent = "Repeat,VAR2" in line
+    isFromEric="Voltage_1" in line
     if isAgilent: print "Reading I-V curve from Agilent sourcemeter"
+    elif isFromEric: print "Reading from Eric's data"
     else: print "Reading I-V curve from Keithley sourcemeter"
 
     for line in f.readlines():
         line=line.strip().split(',')
         if isAgilent: v,i=line[3:5]
-        else: v,i=line[0,2]           # Keithley data format
+        elif isFromEric: v,i=line[0:2]
+        else: v,i=line[0:2]           # Keithley data format
         v=float(v)
         i=abs(float(i))
         if abs(v)<Vmin or i==0: continue

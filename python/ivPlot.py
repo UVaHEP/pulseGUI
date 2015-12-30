@@ -98,7 +98,7 @@ if doLightAnalysis:
     
 
 #canvas = TCanvas("ivdata","I-V Data",800,400)
-canvas = TCanvas("ivdata",os.path.basename(dfn),800,400)
+canvas = TCanvas("ivdata",os.path.basename(dfn),1200,600)
 if doLightAnalysis:
     canvas.Divide(3,1)
 else:
@@ -182,15 +182,20 @@ if doLightAnalysis:
         gRframe=TH2F("grFrame",gRatio.GetTitle(),10,xmax*0,75,xmax,10,0.1,ymax*1.1)
     gRframe.Draw()
     gRatio.Draw("L")
-    RatioMax = TLine(ana.ratioMax[0], ymin, ana.ratioMax[0], ymax/2)
+    #RatioMax = TLine(ana.ratioMax[0], ymin, ana.ratioMax[0], ymax/2)
+    RatioMax = TLine(ana.ratioMax[0], gRframe.GetYaxis().GetXmin(), ana.ratioMax[0], ymax)
     RatioMax.SetLineColor(kRed)
     RatioMax.Draw("same")
     canvas.Update()
     if options.gPoint:
         gPoint=options.gPoint
-        gPoint=math.copysign(float(gPoint),ana.vPeak) # voltage to calculate gain, w/ correct sign convention
+        if gPoint=="Rmax": gPoint=ana.ratioMax[0]
+        elif gPoint=="+2": gPoint=ana.vPeakIp-2
+        else: gPoint=math.copysign(float(gPoint),ana.vPeak) # voltage to calculate gain, w/ correct sign convention
         gPointGain=gGain.Eval(gPoint)
-    plot,axis=scaleToPad(gGain)
+    ylimit=None
+    if options.gPoint: ylimit=gPointGain
+    plot,axis=scaleToPad(gGain,ylimit)
     plot.Draw("L")
     axis.SetTitleOffset(1.3)
     #axis.SetNoExponent(True)

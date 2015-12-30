@@ -1,5 +1,7 @@
 #!/usr/bin/env python
 
+# batch process iv data files in given directory
+
 import getopt,commands,sys,glob,os
 from ivAnalyze import ivAnalyze
 
@@ -17,13 +19,9 @@ results={}
 def ProcessDir(dir):
     print "Processing data in:",dir
     darkFiles=[]
-    darkFiles.extend( glob.glob(dir+'/*Dark*csv') )
-    darkFiles.extend( glob.glob(dir+'/*-D-*csv') )
+    darkFiles.extend( glob.glob(dir+'/*iLED0-*csv') )
     lightFiles=[]
-    lightFiles.extend( glob.glob(dir+'/*-L-*csv') )
-    lightFiles.extend( glob.glob(dir+'/*Light*csv') )
-    lightFiles.extend( glob.glob(dir+'/*urple*csv') )
-    lightFiles.extend( glob.glob(dir+'/*reen*csv') )
+    lightFiles.extend( glob.glob(dir+'/*iLED[1-9]*csv') )
 
     ana=ivAnalyze()
 
@@ -32,13 +30,15 @@ def ProcessDir(dir):
         for f in lightFiles:
             ln=os.path.basename(f)
             dn=os.path.basename(df)
-            if ln[0:2]==dn[0:2]: # not the smartest file matcher, be careful w/ file names!
+            matchto=dn.find("_iLED")
+            if ln[0:matchto]==dn[0:matchto]:
                 lf=f
                 break
         print df,lf
         ana.SetData(df,lf)
-        results[df]=[lf,ana.Analyze()]
-#        print ana.Analyze()
+        ana.Analyze()
+        results[df]=[lf,ana.vPeakIp]
+
     return
 
 if __name__ == '__main__': 
@@ -68,18 +68,16 @@ if __name__ == '__main__':
         ProcessDir(d)
 
     # ouch!
-    
-    for k in results:
-        df=k
-        lf=results[k][0]
-        vPeak=results[k][1][0]
-        vKnee=results[k][1][1]
-        vRmax=results[k][1][2][0]
-        rMax=results[k][1][2][1]
-        print k,lf
-        df=os.path.basename(k)
-        if lf==None: 
-            lf="None"
-        else:
-            lf=os.path.basename(lf)
-        print (":: %25s %25s %4.2f %4.2f (%4.2f) %4.2f %5.2f" % (df, lf, vPeak, vKnee, abs(vPeak-vKnee), vRmax, rMax) )
+
+    for df in sorted(results.iterkeys()):
+        matchto=os.path.basename(df).find("_iLED")
+        dev=os.path.basename(df)[0:matchto]
+        lf=results[df][0]
+        vPeak=results[df][1]
+        print ("%s %4.2f") % (dev,vPeak)
+
+        #if lf==None: 
+        #    lf="None"
+        #else:
+        #    lf=os.path.basename(lf)
+        #print (":: %25s %25s %4.2f %4.2f (%4.2f) %4.2f %5.2f" % (df, lf, vPeak, vKnee, abs(vPeak-vKnee), vRmax, rMax) )

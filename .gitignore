@@ -4,6 +4,7 @@ bin
 *.csv
 *~
 *.o
+*.so
 *.d
 *.gch
 *.mat

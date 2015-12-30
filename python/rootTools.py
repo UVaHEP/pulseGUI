@@ -1,9 +1,9 @@
 import os
 from ROOT import Double, gPad, TGaxis, TMath
 
-# scale graphis object for plotting on gPad
+# scale graphic object for plotting on gPad
 # assuming same x-axis for now, and no scaling for ymin
-def scaleToPad(obj2):
+def scaleToPad(obj2,ylimit=None) :
     if gPad==0:
         print "plotOver: No current TPad. Skip drawing."
         return
@@ -17,6 +17,7 @@ def scaleToPad(obj2):
     if isGraph:
         xmin=Double(); xmax=Double(); ymin=Double(); ymax=Double()
         obj2.ComputeRange(xmin, ymin, xmax, ymax)
+        if not ylimit==None: ymax=ylimit
         rightmax=ymax*1.1  # right axis
         scale = gPad.GetUymax()/rightmax;
         if logy: scale=TMath.Power(10,scale)

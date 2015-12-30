@@ -172,8 +172,8 @@ class ivAnalyze():
         self.gIpV.SetLineColor(kBlue)
         self.gdLnIpdV=IV2dLogIdV(self.gIpV)
         self.gdLnIpdV.SetLineColor(kBlue)
-        #self.vPeakIp=GraphMax(self.gdLnIpdV)[0]
-        self.vPeakIp=GraphMaxRight(self.gdLnIpdV,-999,-54)[0]  # only valid for -Vbias, ugly filthy hack !!!
+        self.vPeakIp=GraphMax(self.gdLnIpdV,-999,-54)[0] # HACK to get around noisy data at low voltages
+        #self.vPeakIp=GraphMaxRight(self.gdLnIpdV,-999,-54)[0]  # only valid for -Vbias, ugly filthy hack !!!
         # fit the peak
         #fitfcn=TF1("fitfcn","[0]/TMath::Abs(x-[1])",self.vPeakIp-1,self.vPeakIp+1)
         #fitfcn.SetParameters(1,self.vPeakIp)
