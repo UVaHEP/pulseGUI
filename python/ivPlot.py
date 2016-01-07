@@ -45,7 +45,7 @@ parser.add_option('-p', '--png', dest='png', action="store_true")
 parser.add_option('-b', '--batch', dest='batch', action="store_true")
 parser.add_option('-f', '--darkfn', dest='dfn', default=None)
 parser.add_option('-l', '--lightfn', dest='lfn', default=None)
-parser.add_option('-g', '--gainPoint', dest='gPoint', default=None)
+#parser.add_option('-g', '--gainPoint', dest='gPoint', default=None)
 parser.add_option('-x', '--debug', dest='doDebug', default=None)
 
 
@@ -70,9 +70,7 @@ doDebug=not (options.doDebug is None)
 if doLightAnalysis: ana=ivAnalyze(dfn,lfn)
 else: ana=ivAnalyze(dfn)
 ana.SetVmin(VMIN)
-
-
-ana.Analyze()
+results=ana.Analyze()
 
 # analysis done, get with the plots
 
@@ -88,9 +86,9 @@ gDV.SetLineWidth(2)
 
 if doLightAnalysis:
     gdLnIpdV=ana.gdLnIpdV        # dLogIp/dV for photo current
-    gRatio = ana.gRatio          # light to dark current ratio
-    gRatio.SetName("LD_ratio")
-    gRatio.SetLineWidth(2)
+    gLDRatio = ana.gLDRatio          # light to dark current ratio
+    gLDRatio.SetName("LD_ratio")
+    gLDRatio.SetLineWidth(2)
     gGain=ana.gGain
     gGain.SetName("gGain")
     gGain.SetLineWidth(2)
@@ -128,6 +126,7 @@ if doLightAnalysis:
     leg1.AddEntry(ana.gIpV,"Light-Dark","l")
     
 leg1.Draw()
+#gIV.Fit("expo","0","",-50,-10)
 #### Canvas 2: V_breakdown analysis
 # To do: think about possibility of some
 #         dark count analysis using dLnI/dV vs dLnIp/dV
@@ -152,10 +151,13 @@ else:
 gDVframe.Draw()
 
 leg2=TLegend(0.5,0.75,0.9,0.9)
+leg2.AddEntry(gDV,"dlogI_d/dV","l")
+
 if doLightAnalysis:
     gDV.SetLineColor(kGray+2)
     gDV.Draw("L")
-    msg="VpI_p="+("%5.2f" % ana.vPeakIp)
+    msg="Vbr="+("%5.2f" % ana.vPeakIp)
+    gdLnIpdV.SetLineWidth(2)
     gdLnIpdV.Draw("same")
     leg2.AddEntry(gdLnIpdV,"dlogI_p/dV","l")
     leg2.AddEntry(0,msg,"")
@@ -163,8 +165,6 @@ else:
     msg="VpId="+("%5.2f" % ana.vPeak)
     leg2.AddEntry(0,msg,"")
     gDV.Draw("L")
-
-leg2.AddEntry(gDV,"dlogI_d/dV","l")
 
 leg2.Draw()
 
@@ -174,60 +174,50 @@ if doLightAnalysis:
     leg3=TLegend(0.5,0.75,0.9,0.9)
     # Draw the Ratio of Light to Dark Curves
     canvas.cd(3) #.SetLogy()
-    gRatio.ComputeRange(xmin, ymin, xmax, ymax)
-    gRatio.SetTitle("Ratio of Light to Dark;Volts;Current Ratio [A]")
+    gLDRatio.ComputeRange(xmin, ymin, xmax, ymax)
+    gLDRatio.SetTitle("Ratio of Light to Dark;Volts;Current Ratio [A]")
     if ana.vPeak<0: 
-        gRframe=TH2F("grFrame",gRatio.GetTitle(),10,xmin,xmin*0.75,10,0.1,ymax*1.1)
+        gRframe=TH2F("grFrame",gLDRatio.GetTitle(),10,xmin,xmin*0.75,10,0.1,ymax*1.1)
     else:
-        gRframe=TH2F("grFrame",gRatio.GetTitle(),10,xmax*0,75,xmax,10,0.1,ymax*1.1)
+        gRframe=TH2F("grFrame",gLDRatio.GetTitle(),10,xmax*0,75,xmax,10,0.1,ymax*1.1)
     gRframe.Draw()
-    gRatio.Draw("L")
-    #RatioMax = TLine(ana.ratioMax[0], ymin, ana.ratioMax[0], ymax/2)
-    RatioMax = TLine(ana.ratioMax[0], gRframe.GetYaxis().GetXmin(), ana.ratioMax[0], ymax)
+    gLDRatio.Draw("L")
+    #RatioMax = TLine(ana.LDRmax[0], ymin, ana.LDRmax[0], ymax/2)
+    RatioMax = TLine(ana.LDRmax[0], gRframe.GetYaxis().GetXmin(), ana.LDRmax[0], ymax)
     RatioMax.SetLineColor(kRed)
     RatioMax.Draw("same")
     canvas.Update()
-    if options.gPoint:
-        gPoint=options.gPoint
-        if gPoint=="Rmax": gPoint=ana.ratioMax[0]
-        elif gPoint=="+2": gPoint=ana.vPeakIp-2
-        else: gPoint=math.copysign(float(gPoint),ana.vPeak) # voltage to calculate gain, w/ correct sign convention
-        gPointGain=gGain.Eval(gPoint)
+    #if options.gPoint:
+    #    gPoint=options.gPoint
+    #    if gPoint=="Vop": gPoint=ana.LDRmax[0]
+    #    elif gPoint=="+2": gPoint=ana.vPeakIp-2
+    #    else: gPoint=math.copysign(float(gPoint),ana.vPeak) # ensure correct sign convention
+    #    gPointGain=gGain.Eval(gPoint)
     ylimit=None
-    if options.gPoint: ylimit=gPointGain
     plot,axis=scaleToPad(gGain,ylimit)
     plot.Draw("L")
     axis.SetTitleOffset(1.3)
-    #axis.SetNoExponent(True)
-    axis.SetMaxDigits(3)
+    axis.SetMaxDigits(3) #; axis.SetNoExponent(True)
     axis.Draw()
-    leg3.AddEntry("gRatio","L/D ratio","l")
+    leg3.AddEntry("gLDRatio","L/D ratio","l")
     leg3.AddEntry("gGain","Gain [I_p/I_p(@30)]","l")
-    msg="Vmax(L/D)="+("%5.2f" % ana.ratioMax[0])
+    msg="Vop="+("%5.2f" % ana.LDRmax[0])
     leg3.AddEntry(0,msg,"")
     leg3.Draw()
 
     canvas.Update()
 
 print "=== I-V Analysis ==="
-printf("Peak dLogI/DV: %4.2f\n",ana.vPeak)
-printf("Knee dLogI/DV: %4.2f\n",ana.vKnee)
-printf("Dark Current @ 30 40 50V: %6.2e %6.2e %6.2e\n",gIV.Eval(-30),gIV.Eval(-40),gIV.Eval(-50))
 if doLightAnalysis:
-    printf("Peak light/dark: %4.2f\n",ana.ratioMax[0])
-    printf("Vpeak dLogIp/DV: %4.2f\n",ana.vPeakIp)
-    if options.gPoint:
-        printf("Gain at %4.1f V: %6.0f\n",gPoint,gPointGain)
+    printf("Vpeak dLogIp/DV (Vbr): %4.2f\n",results["vPeakIp"])
+    printf("Peak light/dark (Vop): %4.2f   FWHM: %4.2f\n",results["LDRmax"][0],results["LDRmax"][2])
+    printf("M(Vop): %6.2e at Vex: %6.2f\n",results["M(Vop)"],results["LDRmax"][0]-results["vPeakIp"])
+else:    
+    printf("Peak dLogI/DV: %4.2f\n",results["vPeak"])
+printf("Dark Current @ 30 40 50V: %6.2e %6.2e %6.2e\n",gIV.Eval(-30),gIV.Eval(-40),gIV.Eval(-50))
 print "===================="
 
-# diagnostic tests
-#c2=TCanvas()
-#ana.gIpLowV.Draw("AP*X")
-#ana.gdVdLnId.Draw("AP*L")
-#canvas.Update()
 
-
-#os.system('sleep 2')
 if not options.batch:
     print 'Hit return to exit'
     sys.stdout.flush() 
@@ -238,9 +228,3 @@ if options.png:
     canvas.Print(png)
 elif options.outfn:
     canvas.Print(options.outfn)
-
-# temporary
-#R=float(dfn.split(".c")[0].split("-")[4])*1000
-#therm=Thermistor()
-#print "Temperature:",therm.Temperature(R)
-

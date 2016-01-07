@@ -18,6 +18,9 @@ def GraphMax(tg,xmin=-1e20,xmax=1e20):
     yMax=-1e50
     npoints=tg.GetN()
     x=Double(); y=Double()
+    tg.Sort()
+    #print tg.GetName()
+    imax=0
     for i in range(npoints):
         tg.GetPoint(i,x,y)
         if x<xmin: continue
@@ -25,7 +28,25 @@ def GraphMax(tg,xmin=-1e20,xmax=1e20):
         if y>yMax:
             yMax=float(y)
             xMax=float(x)
-    return xMax,yMax
+            imax=i
+    # find approximate FWHM
+    x1=Double(); y1=Double()
+    x2=Double(); y2=Double()
+    for i in range(imax-1,-1,-1): #Scan left
+        tg.GetPoint(i,x1,y1)
+        tg.GetPoint(i+1,x2,y2)
+        if y1<=yMax/2: break
+    mL=(y2-y1)/(x2-x1)
+    #print x1,y1,x2,y2,yMax/2
+    xL=x1+(yMax/2-y1)/mL
+    for i in range(imax,npoints): #Scan right
+        tg.GetPoint(i,x1,y1)
+        tg.GetPoint(i+1,x2,y2)
+        if y2<=yMax/2: break
+    mH=(y2-y1)/(x2-x1)
+    #print x1,y1,x2,y2,yMax/2
+    xH=x1+(yMax/2-y1)/mH
+    return xMax,yMax,xH-xL
 
 ########################
 # hack to find right most peak >=20% of highest peak

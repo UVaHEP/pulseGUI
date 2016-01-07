@@ -36,9 +36,7 @@ def ProcessDir(dir):
                 break
         print df,lf
         ana.SetData(df,lf)
-        ana.Analyze()
-        results[df]=[lf,ana.vPeakIp]
-
+        results[df]=ana.Analyze()        
     return
 
 if __name__ == '__main__': 
@@ -67,14 +65,18 @@ if __name__ == '__main__':
     for d in dirList: 
         ProcessDir(d)
 
-    # ouch!
-
+    # need to print: Vbr, "Vop", LDR(@Vop), Id(Vbr/10,4,2,1), Delta(Vop,VBr)
+    #                (I_light-I_dark)/I_dark (@Vop), Gain(@Vop)
+    # look at slope of dI/dV vs V, is it ~flat up to Vbr for good devs?
+    print ""
+    print ("%15s %8s %8s %8s %8s %8s %8s") % ("Dev/chan","Vbr","Vop","Vex","LDRmax","FWHM","DC Gain")
     for df in sorted(results.iterkeys()):
         matchto=os.path.basename(df).find("_iLED")
         dev=os.path.basename(df)[0:matchto]
-        lf=results[df][0]
-        vPeak=results[df][1]
-        print ("%s %4.2f") % (dev,vPeak)
+        dat=results[df]
+        print ("%15s %8.2f %8.2f %8.2f %8.2f %8.2f %8.1e") % (dev,dat["vPeakIp"],dat["LDRmax"][0],
+                                                              dat["LDRmax"][0]-dat["vPeakIp"],
+                                                              dat["LDRmax"][1],dat["LDRmax"][2],dat["M(Vop)"])
 
         #if lf==None: 
         #    lf="None"

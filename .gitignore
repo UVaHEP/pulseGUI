@@ -2,6 +2,8 @@ build
 bin
 *.root
 *.csv
+*.log
+*.tar
 *~
 *.o
 *.so
@@ -14,5 +16,6 @@ bin
 *_.cc
 *_.h
 *_
+*_keep*
 *dat
 *.plt
