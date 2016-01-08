@@ -47,6 +47,7 @@ parser.add_option('-f', '--darkfn', dest='dfn', default=None)
 parser.add_option('-l', '--lightfn', dest='lfn', default=None)
 #parser.add_option('-g', '--gainPoint', dest='gPoint', default=None)
 parser.add_option('-x', '--debug', dest='doDebug', default=None)
+parser.add_option('-w', '--write', dest='writeGraphs', action="store_true")
 
 
 (options, args) = parser.parse_args()
@@ -77,11 +78,9 @@ results=ana.Analyze()
 gStyle.SetOptStat(0)
 #### graphs
 gIV=ana.gIdV         # dark I-V graph
-gIV.SetName("IV")
 gIV.SetLineWidth(2)
 
 gDV = ana.gdLnIddV   # dark dLogI/dV
-gDV.SetName("dLogI/dV")
 gDV.SetLineWidth(2)
 
 if doLightAnalysis:
@@ -214,17 +213,22 @@ if doLightAnalysis:
     printf("M(Vop): %6.2e at Vex: %6.2f\n",results["M(Vop)"],results["LDRmax"][0]-results["vPeakIp"])
 else:    
     printf("Peak dLogI/DV: %4.2f\n",results["vPeak"])
-printf("Dark Current @ 30 40 50V: %6.2e %6.2e %6.2e\n",gIV.Eval(-30),gIV.Eval(-40),gIV.Eval(-50))
+printf("Dark Current @ 90%% 60%% 30%% of Vbr: %6.2e %6.2e %6.2e\n",results["I90"],results["I60"],results["I30"])
 print "===================="
 
-
-if not options.batch:
-    print 'Hit return to exit'
-    sys.stdout.flush() 
-    raw_input('')
     
 if options.png:
     png=dfn.replace(".csv",".png")
     canvas.Print(png)
 elif options.outfn:
     canvas.Print(options.outfn)
+
+if options.writeGraphs:
+    tfout=dfn.replace(".csv",".root")
+    ana.Write(tfout)
+    
+
+if not options.batch:
+    print 'Hit return to exit'
+    sys.stdout.flush() 
+    raw_input('')

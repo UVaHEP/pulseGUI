@@ -69,17 +69,15 @@ if __name__ == '__main__':
     #                (I_light-I_dark)/I_dark (@Vop), Gain(@Vop)
     # look at slope of dI/dV vs V, is it ~flat up to Vbr for good devs?
     print ""
-    print ("%15s %8s %8s %8s %8s %8s %8s") % ("Dev/chan","Vbr","Vop","Vex","LDRmax","FWHM","DC Gain")
+    print ("%15s %8s %8s %8s %8s %8s %8s %8s %8s %8s") % ("Dev/chan","Vbr","Vop","Vex","LDRmax","FWHM","DC_Gain",
+                                              "I90%", "I60%", "I30%")
     for df in sorted(results.iterkeys()):
         matchto=os.path.basename(df).find("_iLED")
         dev=os.path.basename(df)[0:matchto]
         dat=results[df]
-        print ("%15s %8.2f %8.2f %8.2f %8.2f %8.2f %8.1e") % (dev,dat["vPeakIp"],dat["LDRmax"][0],
-                                                              dat["LDRmax"][0]-dat["vPeakIp"],
-                                                              dat["LDRmax"][1],dat["LDRmax"][2],dat["M(Vop)"])
+        print ("%15s %8.2f %8.2f %8.2f %8.2f %8.2f %8.1e %8.2e %8.2e %8.2e") %\
+        (dev,dat["vPeakIp"],dat["LDRmax"][0],
+         dat["LDRmax"][0]-dat["vPeakIp"],
+         dat["LDRmax"][1],dat["LDRmax"][2],dat["M(Vop)"],
+         dat["I90"],dat["I60"],dat["I30"])
 
-        #if lf==None: 
-        #    lf="None"
-        #else:
-        #    lf=os.path.basename(lf)
-        #print (":: %25s %25s %4.2f %4.2f (%4.2f) %4.2f %5.2f" % (df, lf, vPeak, vKnee, abs(vPeak-vKnee), vRmax, rMax) )

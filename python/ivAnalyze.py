@@ -13,7 +13,7 @@ from array import array
 from math import copysign
 import argparse 
 
-from ROOT import Double, gStyle, kRed, kBlue, kGreen, kTeal
+from ROOT import Double, gStyle, kRed, kBlue, kGreen, kTeal, TFile
 from ROOT import TString, TCanvas, TGraph, TLine, TF1, TH2F, TPaveText, TSpectrum
 from ROOT import TGraphErrors
 from ivtools import *
@@ -60,6 +60,20 @@ class ivAnalyze():
         self.doLightAnalysis= not (fnLIV is None)
     def SetVmin(self, vmin):
         self.VMIN=vmin
+    def Write(self, filename):
+        tf=TFile(filename,"recreate")
+        self.gIdV.Write()
+        self.gItotV.Write()
+        self.gIpLowV.Write()
+        self.gIpV.Write()
+        self.gdLnIddV.Write()
+        self.gd2LnIddV2.Write()
+        self.gdLnIpdV.Write()
+        self.gdVdLnId.Write()
+        self.gLDRatio.Write()
+        self.gGain.Write()
+        tf.Close()
+        print "Graphs written to:",filename
         
     # calculate the current Ip for at Gain~1 using a fit to
     # I_light-dark vs V graph at low voltage and extrapolting to V=0
@@ -104,10 +118,15 @@ class ivAnalyze():
     def Analyze(self, dorebin=False):
         readVIfile(self.fnIV,self.V,self.Id,self.VMIN)
         self.gIdV=TGraph(len(self.V), self.V, self.Id)
+        self.gIdV.SetName("gIdV")
         self.gIdV.SetTitle("I-V Curve;Volts;Current [Amps]")
         self.gdLnIddV=IV2dLogIdV(self.gIdV)
+        self.gdLnIddV.SetName("gdLnIddV")
+        self.gdLnIddV.SetTitle("dLn(I_{d})/dV;Volts;dLn(I_{d})/dV")
         # take 2nd derivative
         self.gd2LnIddV2=TGraphDerivative(self.gdLnIddV)      #d^2logI/dV^2
+        self.gd2LnIddV2.SetName("gd2LnIddV2")
+        self.gd2LnIddV2.SetTitle("d^{2}Ln(I_{d})/d^{2}V;Volts;d^{2}Ln(I_{d})/d^{2}V")
         self.gd2LnIddV2=TGraphScale(self.gd2LnIddV2,self.vSign)
         self.gd2LnIddV2.SetLineStyle(3)
         self.gdVdLnId=TGraphInvert(self.gdLnIddV)
@@ -121,10 +140,16 @@ class ivAnalyze():
             results["vPeakIp"]=self.vPeakIp
             results["LDRmax"]=self.LDRmax
             results["M(Vop)"]=self.gGain.Eval(self.LDRmax[0])
+            results["I90"]=self.gIdV.Eval(self.vPeakIp*0.9)  # currents at fixed fractions of Vbr
+            results["I60"]=self.gIdV.Eval(self.vPeakIp*0.6)
+            results["I30"]=self.gIdV.Eval(self.vPeakIp*0.3)
         else:
             results["vPeakIp"]=0
             results["LDRmax"]=0
             results["M(Vop)"]=0
+            results["I90"]=0
+            results["I60"]=0
+            results["I30"]=0
         return results
         
     def AnalyzeLight(self):
