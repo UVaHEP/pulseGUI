@@ -65,6 +65,7 @@ if __name__ == '__main__':
         if min(I)<im: im=min(I)
         if max(I)>iM: iM=max(I)
         color=n+2
+        if color==5 : color=809 # get rid of yellow
         tg.SetLineColor(color)
         tg.SetLineWidth(2)
         mg.Add(tg)
@@ -91,6 +92,7 @@ if __name__ == '__main__':
         lab.append( 
             TPaveText(xlabmin,0.88-0.05*n,xlabmin+0.45,0.93-0.05*n,"NDC") )
         color=n+2
+        if color==5 : color=809 # get rid of yellow
         if args.labels==None: lab[n].AddText(name)
         else: lab[n].AddText(args.labels[n])
         lab[n].SetTextColor(color)
