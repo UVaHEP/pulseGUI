@@ -66,6 +66,8 @@ if __name__ == '__main__':
         if max(I)>iM: iM=max(I)
         color=n+2
         if color==5 : color=809 # get rid of yellow
+        if color==3 : color=416 # replace light green with dark green
+        if color==10: color=49 #replace white with mauve, will cause probs is >48 curves
         tg.SetLineColor(color)
         tg.SetLineWidth(2)
         mg.Add(tg)
@@ -93,6 +95,8 @@ if __name__ == '__main__':
             TPaveText(xlabmin,0.88-0.05*n,xlabmin+0.45,0.93-0.05*n,"NDC") )
         color=n+2
         if color==5 : color=809 # get rid of yellow
+        if color==3 : color= 416 # replace light green with dark green
+        if color==10: color=49 # replace white with mauve. Probs if >48 curves
         if args.labels==None: lab[n].AddText(name)
         else: lab[n].AddText(args.labels[n])
         lab[n].SetTextColor(color)
