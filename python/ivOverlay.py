@@ -93,6 +93,7 @@ if __name__ == '__main__':
             TPaveText(xlabmin,0.88-0.05*n,xlabmin+0.45,0.93-0.05*n,"NDC") )
         color=n+2
         if color==5 : color=809 # get rid of yellow
+        if color==3 : color=416 # replace light green with dark green
         if args.labels==None: lab[n].AddText(name)
         else: lab[n].AddText(args.labels[n])
         lab[n].SetTextColor(color)
