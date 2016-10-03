@@ -74,7 +74,7 @@ if __name__ == '__main__':
     canvas = TCanvas("ivdata","I-V Overlay",800,800)
     canvas.SetLogy()
 
-    gStyle.SetOptStat(0)
+    gStyle.SetOptStat(0) #;vM=-50
     h=TH1F("ivoverlay",args.title+";V;I [Amps]",2,vm,vM)
     h.SetMinimum(im*0.9)
     h.SetMaximum(iM*1.1)

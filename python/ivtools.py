@@ -37,14 +37,15 @@ def GraphMax(tg,xmin=-1e20,xmax=1e20):
         tg.GetPoint(i+1,x2,y2)
         if y1<=yMax/2: break
     mL=(y2-y1)/(x2-x1)
-    #print x1,y1,x2,y2,yMax/2
     xL=x1+(yMax/2-y1)/mL
     for i in range(imax,npoints): #Scan right
         tg.GetPoint(i,x1,y1)
         tg.GetPoint(i+1,x2,y2)
         if y2<=yMax/2: break
+    if (x2-x1)==0:
+        print "Cannot esimtate FWHM for graph:",tg.GetName()
+        return  xMax,yMax,-1
     mH=(y2-y1)/(x2-x1)
-    #print x1,y1,x2,y2,yMax/2
     xH=x1+(yMax/2-y1)/mH
     return xMax,yMax,xH-xL
 
