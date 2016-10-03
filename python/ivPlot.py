@@ -174,7 +174,7 @@ if doLightAnalysis:
     # Draw the Ratio of Light to Dark Curves
     canvas.cd(3) #.SetLogy()
     gLDRatio.ComputeRange(xmin, ymin, xmax, ymax)
-    gLDRatio.SetTitle("Ratio of Light to Dark;Volts;Current Ratio [A]")
+    gLDRatio.SetTitle("Ratios;Volts;Light to Dark Current Ratio")
     if ana.vPeak<0: 
         gRframe=TH2F("grFrame",gLDRatio.GetTitle(),10,xmin,xmin*0.75,10,0.1,ymax*1.1)
     else:
