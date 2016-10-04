@@ -73,7 +73,7 @@ def GraphMaxRight(tg,xmin=-1e20,xmax=1e20):
 
 ########################
 # read CSV file and return V,I data in given arrays 
-def readVIfile(file, V, I, Vmin=0):
+def readVIfile(file, V, I, Vmin=0, Vmax=200):
 ########################
     f = open(file, 'r')
     # identify file type from header
@@ -91,7 +91,10 @@ def readVIfile(file, V, I, Vmin=0):
         else: v,i=line[0:2]           # Keithley data format
         v=float(v)
         i=abs(float(i))
-        if abs(v)<Vmin or i==0: continue
+        if abs(v)<Vmin or i==0:
+            continue
+        if abs(v)>Vmax:
+            continue
         if len(V)>0 and v==V[len(V)-1] :
             I[len(V)-1]=i # if doing multiple readings, take the last one
             continue      # TO DO: add averaging option
