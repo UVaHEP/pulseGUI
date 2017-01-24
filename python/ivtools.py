@@ -45,7 +45,6 @@ def GraphMax(tg,xmin=-1e20,xmax=1e20):
         if y1<=yMax/2: break
     #print 'y2: {0}, y1:{1}, x2: {2}, x1: {3}, imax:{4}'.format(y2, y1, x2, x1,imax)
     mL=(y2-y1)/(x2-x1)
-    #print x1,y1,x2,y2,yMax/2
     xL=x1+(yMax/2-y1)/mL
     for i in range(imax,npoints): #Scan right
         if (i+1) > imax:
@@ -53,9 +52,10 @@ def GraphMax(tg,xmin=-1e20,xmax=1e20):
         tg.GetPoint(i,x1,y1)
         tg.GetPoint(i+1,x2,y2)
         if y2<=yMax/2: break
-
+    if (x2-x1)==0:
+        print "Cannot esimtate FWHM for graph:",tg.GetName()
+        return  xMax,yMax,-1
     mH=(y2-y1)/(x2-x1)
-       
     xH=x1+(yMax/2-y1)/mH
     return xMax,yMax,xH-xL
 
@@ -83,7 +83,7 @@ def GraphMaxRight(tg,xmin=-1e20,xmax=1e20):
 
 ########################
 # read CSV file and return V,I data in given arrays 
-def readVIfile(file, V, I, Vmin=0):
+def readVIfile(file, V, I, Vmin=0, Vmax=200):
 ########################
     f = open(file, 'r')
     # identify file type from header
@@ -101,7 +101,10 @@ def readVIfile(file, V, I, Vmin=0):
         else: v,i=line[0:2]           # Keithley data format
         v=float(v)
         i=abs(float(i))
-        if abs(v)<Vmin or i==0: continue
+        if abs(v)<Vmin or i==0:
+            continue
+        if abs(v)>Vmax:
+            continue
         if len(V)>0 and v==V[len(V)-1] :
             I[len(V)-1]=i # if doing multiple readings, take the last one
             continue      # TO DO: add averaging option

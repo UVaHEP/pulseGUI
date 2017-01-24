@@ -22,7 +22,7 @@ from ivtools import *
 from rootTools import *
 
 VMIN=10  # minimum voltage to read
-
+VMAX=100 # maximum voltage to read
 
 class Thermistor():
     def __init__ (self):
@@ -48,6 +48,8 @@ parser.add_option('-l', '--lightfn', dest='lfn', default=None)
 #parser.add_option('-g', '--gainPoint', dest='gPoint', default=None)
 parser.add_option('-x', '--debug', dest='doDebug', default=None)
 parser.add_option('-w', '--write', dest='writeGraphs', action="store_true")
+parser.add_option('-m', '--minV', dest='minV', type="int", default=None)
+parser.add_option('-M', '--maxV', dest='maxV', type="int", default=None)
 
 
 (options, args) = parser.parse_args()
@@ -59,11 +61,12 @@ if options.lfn: lfn=options.lfn
 if options.dfn==None and len(args)>0: dfn=args[0]
 if options.lfn==None and len(args)>1: lfn=args[1]
 
-
 if dfn is None: 
     print 'No I-V data file to process...quitting'
     exit(0)
 
+if not options.minV==None: VMIN=options.minV
+if not options.maxV==None: VMAX=options.maxV
 
 doLightAnalysis = not (lfn is None)
 doDebug=not (options.doDebug is None)
@@ -71,6 +74,7 @@ doDebug=not (options.doDebug is None)
 if doLightAnalysis: ana=ivAnalyze(dfn,lfn)
 else: ana=ivAnalyze(dfn)
 ana.SetVmin(VMIN)
+ana.SetVmax(VMAX)
 results=ana.Analyze()
 
 # analysis done, get with the plots
@@ -174,7 +178,7 @@ if doLightAnalysis:
     # Draw the Ratio of Light to Dark Curves
     canvas.cd(3) #.SetLogy()
     gLDRatio.ComputeRange(xmin, ymin, xmax, ymax)
-    gLDRatio.SetTitle("Ratio of Light to Dark;Volts;Current Ratio [A]")
+    gLDRatio.SetTitle("Ratios;Volts;Light to Dark Current Ratio")
     if ana.vPeak<0: 
         gRframe=TH2F("grFrame",gLDRatio.GetTitle(),10,xmin,xmin*0.75,10,0.1,ymax*1.1)
     else:

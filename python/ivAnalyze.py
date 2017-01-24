@@ -48,6 +48,7 @@ class ivAnalyze():
         self.gGain=None        # gain vs V 
         # parameters
         self.VMIN=10           # default minimum voltage to read
+        self.VMAX=80           # default maximum voltage to read
         self.G1FITFRAC=0.5     # fit range for currents at G~1 as fraction of vPeak 
     def __init__(self,fnIV=None,fnLIV=None):
         self.Reset()
@@ -61,6 +62,8 @@ class ivAnalyze():
         self.doLightAnalysis= not (fnLIV is None)
     def SetVmin(self, vmin):
         self.VMIN=vmin
+    def SetVmax(self, vmax):
+        self.VMAX=vmax  
     def Write(self, filename):
         tf=TFile(filename,"recreate")
         self.gIdV.Write()
@@ -117,7 +120,7 @@ class ivAnalyze():
 
     # read dark I-V data and estimate Vbr
     def Analyze(self, dorebin=False):
-        readVIfile(self.fnIV,self.V,self.Id,self.VMIN)
+        readVIfile(self.fnIV,self.V,self.Id,self.VMIN,self.VMAX)
         self.gIdV=TGraph(len(self.V), self.V, self.Id)
         self.gIdV.SetName("gIdV")
         self.gIdV.SetTitle("I-V Curve;Volts;Current [Amps]")
@@ -158,7 +161,7 @@ class ivAnalyze():
         #Nota bene! I'm doing minimal error checking here, so if you have files with 
         #different voltage ranges or data points this might not work! 
         print "Also analyzing illuminated I-V curve"
-        readVIfile(self.fnLIV,self.LV,self.Itot,self.VMIN)
+        readVIfile(self.fnLIV,self.LV,self.Itot,self.VMIN,self.VMAX)
 
         # to do: calc [dlogItot/dV]-1, use to estimate Vbr
         
