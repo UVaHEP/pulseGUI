@@ -1,7 +1,7 @@
 import numpy, os, re, sys
 from array import array
 from ROOT import TGraph, TGraphSmooth, Double
-
+import time
 ########################
 # C-like printf
 def printf(format, *args):
@@ -14,15 +14,19 @@ def printf(format, *args):
 # optionally search within range
 ########################
 def GraphMax(tg,xmin=-1e20,xmax=1e20):
+    tg.Draw()
+    time.sleep(1)
     xMax=0
     yMax=-1e50
     npoints=tg.GetN()
     x=Double(); y=Double()
     tg.Sort()
     #print tg.GetName()
+    #print 'yMax: {0}'.format(yMax)
     imax=0
     for i in range(npoints):
         tg.GetPoint(i,x,y)
+        #print 'x:{0}, ymax: {3}, y:{1}, i:{2}'.format(x, y, i, yMax)
         if x<xmin: continue
         if x>xmax: continue
         if y>yMax:
@@ -32,19 +36,26 @@ def GraphMax(tg,xmin=-1e20,xmax=1e20):
     # find approximate FWHM
     x1=Double(); y1=Double()
     x2=Double(); y2=Double()
+    #This handles the case where we start on the maximum point
+    if imax == 0:
+        imax += 1
     for i in range(imax-1,-1,-1): #Scan left
-        tg.GetPoint(i,x1,y1)
-        tg.GetPoint(i+1,x2,y2)
+        print tg.GetPoint(i,x1,y1)
+        print tg.GetPoint(i+1,x2,y2)
         if y1<=yMax/2: break
+    #print 'y2: {0}, y1:{1}, x2: {2}, x1: {3}, imax:{4}'.format(y2, y1, x2, x1,imax)
     mL=(y2-y1)/(x2-x1)
     #print x1,y1,x2,y2,yMax/2
     xL=x1+(yMax/2-y1)/mL
     for i in range(imax,npoints): #Scan right
+        if (i+1) > imax:
+            break
         tg.GetPoint(i,x1,y1)
         tg.GetPoint(i+1,x2,y2)
         if y2<=yMax/2: break
+
     mH=(y2-y1)/(x2-x1)
-    #print x1,y1,x2,y2,yMax/2
+       
     xH=x1+(yMax/2-y1)/mH
     return xMax,yMax,xH-xL
 
@@ -143,12 +154,20 @@ def TGraphInvert(graphin):
 #######################
     ginv=TGraph(graphin.GetN())
     x=Double(); y=Double()
+    prev = 0.1
     for i in range(graphin.GetN()):
+        #print 'prev before get point: {0}'.format(prev)
         graphin.GetPoint(i, x, y)
+        #print 'prev after get point :{0}'.format(prev)
+        #print 'x:{0}, y:{1}, i:{2}'.format(x, y, i)
         if y==0:
-            print "[TGraphInvert] Cannot invert graph with 0 value, returning None"
-            return None
+            print 'Found a 0 Value! Using previous {3}, Check Data, x: {0}, y:{1}, i:{2}'.format(x, y, i, prev)
+            print 'You may want to do another run'
+            y = Double(prev+0.01*prev)
+            #print "[TGraphInvert] Cannot invert graph with 0 value, returning None"
+            #return None
         ginv.SetPoint(i, x, 1/y)
+        prev = float(y)
     return TGraph(ginv)
 
     

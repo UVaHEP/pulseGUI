@@ -12,6 +12,7 @@ import getopt, string
 from array import array
 from math import copysign
 import argparse 
+import time
 
 from ROOT import Double, gStyle, kRed, kBlue, kGreen, kTeal, TFile
 from ROOT import TString, TCanvas, TGraph, TLine, TF1, TH2F, TPaveText, TSpectrum
