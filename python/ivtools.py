@@ -10,12 +10,12 @@ def printf(format, *args):
 
 
 ########################
-# return x,y for maximum of TGraph
-# optionally search within range
+# return x,y for maximum of TGraph and approximate FWHM
+# optionally search within range [xmin:xmax]
 ########################
 def GraphMax(tg,xmin=-1e20,xmax=1e20):
-    tg.Draw()
-    time.sleep(1)
+    #tg.Draw()
+    #time.sleep(1)
     xMax=0
     yMax=-1e50
     npoints=tg.GetN()
@@ -37,18 +37,15 @@ def GraphMax(tg,xmin=-1e20,xmax=1e20):
     x1=Double(); y1=Double()
     x2=Double(); y2=Double()
     #This handles the case where we start on the maximum point
-    if imax == 0:
-        imax += 1
+    if imax == 0: imax = 1
     for i in range(imax-1,-1,-1): #Scan left
-        print tg.GetPoint(i,x1,y1)
-        print tg.GetPoint(i+1,x2,y2)
+        tg.GetPoint(i,x1,y1)
+        tg.GetPoint(i+1,x2,y2)
         if y1<=yMax/2: break
     #print 'y2: {0}, y1:{1}, x2: {2}, x1: {3}, imax:{4}'.format(y2, y1, x2, x1,imax)
     mL=(y2-y1)/(x2-x1)
     xL=x1+(yMax/2-y1)/mL
-    for i in range(imax,npoints): #Scan right
-        if (i+1) > imax:
-            break
+    for i in range(imax,npoints-1): #Scan right
         tg.GetPoint(i,x1,y1)
         tg.GetPoint(i+1,x2,y2)
         if y2<=yMax/2: break
@@ -58,6 +55,8 @@ def GraphMax(tg,xmin=-1e20,xmax=1e20):
     mH=(y2-y1)/(x2-x1)
     xH=x1+(yMax/2-y1)/mH
     return xMax,yMax,xH-xL
+
+
 
 ########################
 # hack to find right most peak >=20% of highest peak
@@ -164,8 +163,8 @@ def TGraphInvert(graphin):
         #print 'prev after get point :{0}'.format(prev)
         #print 'x:{0}, y:{1}, i:{2}'.format(x, y, i)
         if y==0:
-            print 'Found a 0 Value! Using previous {3}, Check Data, x: {0}, y:{1}, i:{2}'.format(x, y, i, prev)
-            print 'You may want to do another run'
+            #print 'Found a 0 Value! Using previous {3}, Check Data, x: {0}, y:{1}, i:{2}'.format(x, y, i, prev),graphin.GetName()
+            #print 'You may want to do another run'
             y = Double(prev+0.01*prev)
             #print "[TGraphInvert] Cannot invert graph with 0 value, returning None"
             #return None
@@ -271,4 +270,10 @@ def TGraphScale(tg,scale):
         tg.GetPoint(i, x, y)
         tgnew.SetPoint(i,x,float(y)*scale)
     return TGraph(tgnew)
+class Thermistor():
+    def __init__ (self):
+        self.graph=TGraph("KT103J2_TvR.dat")
+        
+    def Temperature(self,R):
+        return self.graph.Eval(R)
     

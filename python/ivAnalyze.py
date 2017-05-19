@@ -194,7 +194,7 @@ class ivAnalyze():
         self.gIpV.SetLineColor(kBlue)
         self.gdLnIpdV=IV2dLogIdV(self.gIpV)
         self.gdLnIpdV.SetLineColor(kBlue)
-        self.vPeakIp=GraphMax(self.gdLnIpdV,-999,-54)[0] # HACK to get around noisy data at low voltages
+        self.vPeakIp=GraphMax(self.gdLnIpdV,-999,-40)[0] # HACK to get around noisy data at low voltages
         self.gIpLowV=TGraph(self.gIpV)
         Vi=Double(); Ii=Double()
         for i in range(npoints):

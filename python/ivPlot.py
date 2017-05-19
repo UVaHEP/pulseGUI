@@ -24,15 +24,6 @@ from rootTools import *
 VMIN=10  # minimum voltage to read
 VMAX=100 # maximum voltage to read
 
-class Thermistor():
-    def __init__ (self):
-        self.graph=TGraph("KT103J2_TvR.dat")
-        
-    def Temperature(self,R):
-        return self.graph.Eval(R)
-
-    
-    
 
 #######################
 # main
@@ -77,7 +68,25 @@ ana.SetVmin(VMIN)
 ana.SetVmax(VMAX)
 results=ana.Analyze()
 
+
+
+
+print "\n============= I-V Analysis ============"
+if doLightAnalysis:
+    VOp=results["LDRmax"][0]
+    VexOp=VOp-results["vPeakIp"]
+    printf("Vpeak dLogIp/DV (Vbr): %4.2f\n",results["vPeakIp"])
+    printf("Peak light/dark (Vop): %4.2f   FWHM: %4.2f\n",VOp,results["LDRmax"][2])
+    printf("M(Vop): %6.2e at Vex: %6.2f\n",results["M(Vop)"],VexOp)
+else:    
+    printf("Peak dLogI/DV: %4.2f\n",results["vPeak"])
+printf("Dark Current @ 90%% 60%% 30%% of Vbr: %6.2e %6.2e %6.2e\n",results["I90"],results["I60"],results["I30"])
+print "======================================="
+
+
+####################################################
 # analysis done, get with the plots
+####################################################
 
 gStyle.SetOptStat(0)
 #### graphs
@@ -88,7 +97,7 @@ gDV = ana.gdLnIddV   # dark dLogI/dV
 gDV.SetLineWidth(2)
 
 if doLightAnalysis:
-    gdLnIpdV=ana.gdLnIpdV        # dLogIp/dV for photo current
+    gdLnIpdV=ana.gdLnIpdV            # dLogIp/dV for photo current
     gLDRatio = ana.gLDRatio          # light to dark current ratio
     gLDRatio.SetName("LD_ratio")
     gLDRatio.SetLineWidth(2)
@@ -98,7 +107,6 @@ if doLightAnalysis:
     gGain.SetLineColor(kGreen+1)
     
 
-#canvas = TCanvas("ivdata","I-V Data",800,400)
 canvas = TCanvas("ivdata",os.path.basename(dfn),1200,600)
 if doLightAnalysis:
     canvas.Divide(3,1)
@@ -210,17 +218,8 @@ if doLightAnalysis:
 
     canvas.Update()
 
-print "=== I-V Analysis ==="
-if doLightAnalysis:
-    printf("Vpeak dLogIp/DV (Vbr): %4.2f\n",results["vPeakIp"])
-    printf("Peak light/dark (Vop): %4.2f   FWHM: %4.2f\n",results["LDRmax"][0],results["LDRmax"][2])
-    printf("M(Vop): %6.2e at Vex: %6.2f\n",results["M(Vop)"],results["LDRmax"][0]-results["vPeakIp"])
-else:    
-    printf("Peak dLogI/DV: %4.2f\n",results["vPeak"])
-printf("Dark Current @ 90%% 60%% 30%% of Vbr: %6.2e %6.2e %6.2e\n",results["I90"],results["I60"],results["I30"])
-print "===================="
-
     
+
 if options.png:
     png=dfn.replace(".csv",".png")
     canvas.Print(png)
