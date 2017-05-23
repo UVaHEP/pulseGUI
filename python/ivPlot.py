@@ -36,11 +36,11 @@ parser.add_option('-p', '--png', dest='png', action="store_true")
 parser.add_option('-b', '--batch', dest='batch', action="store_true")
 parser.add_option('-f', '--darkfn', dest='dfn', default=None)
 parser.add_option('-l', '--lightfn', dest='lfn', default=None)
-#parser.add_option('-g', '--gainPoint', dest='gPoint', default=None)
 parser.add_option('-x', '--debug', dest='doDebug', default=None)
 parser.add_option('-w', '--write', dest='writeGraphs', action="store_true")
 parser.add_option('-m', '--minV', dest='minV', type="int", default=None)
 parser.add_option('-M', '--maxV', dest='maxV', type="int", default=None)
+parser.add_option('-0', '--noPlot', dest='noPlot', default=None, action="store_true")
 
 
 (options, args) = parser.parse_args()
@@ -84,8 +84,11 @@ printf("Dark Current @ 90%% 60%% 30%% of Vbr: %6.2e %6.2e %6.2e\n",results["I90"
 print "======================================="
 
 
+
+if (options.noPlot): sys.exit(0)
+
 ####################################################
-# analysis done, get with the plots
+# analysis done, make plots
 ####################################################
 
 gStyle.SetOptStat(0)
@@ -198,12 +201,6 @@ if doLightAnalysis:
     RatioMax.SetLineColor(kRed)
     RatioMax.Draw("same")
     canvas.Update()
-    #if options.gPoint:
-    #    gPoint=options.gPoint
-    #    if gPoint=="Vop": gPoint=ana.LDRmax[0]
-    #    elif gPoint=="+2": gPoint=ana.vPeakIp-2
-    #    else: gPoint=math.copysign(float(gPoint),ana.vPeak) # ensure correct sign convention
-    #    gPointGain=gGain.Eval(gPoint)
     ylimit=None
     plot,axis=scaleToPad(gGain,ylimit)
     plot.Draw("L")

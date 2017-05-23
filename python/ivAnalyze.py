@@ -35,6 +35,7 @@ class ivAnalyze():
         self.LDRmax=[0,0,0]    # Location of peak light/dark current ratio, est. of Vop [x,y, fwhm]
         self.lowVslope=0       # Slope of dark current before Vbr
         self.MVop=0            # Gain at operating voltage = LDRmax[0]
+        self.results={}
         # graphs
         self.gIdV=None         # I_dark vs V graph
         self.gItotV=None       # I_light vs V graph
@@ -136,30 +137,35 @@ class ivAnalyze():
         self.gdVdLnId=TGraphInvert(self.gdLnIddV)
         self.vPeak=GraphMax(self.gdLnIddV)[0]
         self.vSign=copysign(1,self.vPeak/100)
-        if self.doLightAnalysis: self.AnalyzeLight()
-        results={}
-        results["fnLIV"]=self.fnLIV
-        results["vPeak"]=self.vPeak
+
+        self.results={}
+        self.results["fnLIV"]=self.fnLIV
+        self.results["vPeak"]=self.vPeak
+       
+        
         if self.doLightAnalysis:
-            results["vPeakIp"]=self.vPeakIp
-            results["LDRmax"]=self.LDRmax
-            results["M(Vop)"]=self.gGain.Eval(self.LDRmax[0])
-            results["I90"]=self.gIdV.Eval(self.vPeakIp*0.9)  # currents at fixed fractions of Vbr
-            results["I60"]=self.gIdV.Eval(self.vPeakIp*0.6)
-            results["I30"]=self.gIdV.Eval(self.vPeakIp*0.3)
+            self.AnalyzeLight()
         else:
-            results["vPeakIp"]=0
-            results["LDRmax"]=0
-            results["M(Vop)"]=0
-            results["I90"]=0
-            results["I60"]=0
-            results["I30"]=0
-        return results
+            self.results["vPeakIp"]=0
+            self.results["LDRmax"]=0
+            self.results["M(Vop)"]=0
+            self.results["I90"]=0
+            self.results["I60"]=0
+            self.results["I30"]=0
+            
+        # currents at fixed fractions of Vbr
+        vref=self.vPeak
+        if self.doLightAnalysis: vref=self.vPeakIp
+        self.results["I90"]=self.gIdV.Eval(vref*0.9)
+        self.results["I60"]=self.gIdV.Eval(vref*0.6)
+        self.results["I30"]=self.gIdV.Eval(vref*0.3)
+
+        return self.results
         
     def AnalyzeLight(self):
-        #generate Light/Dark Ratio
-        #Nota bene! I'm doing minimal error checking here, so if you have files with 
-        #different voltage ranges or data points this might not work! 
+        # generate Light/Dark Ratio
+        # Note! I'm doing minimal error checking here, so if you have files with 
+        # different voltage ranges or data points this might not work! 
         print "Also analyzing illuminated I-V curve"
         readVIfile(self.fnLIV,self.LV,self.Itot,self.VMIN,self.VMAX)
 
@@ -187,14 +193,19 @@ class ivAnalyze():
         self.gLDRatio.SetName("LDRatio")
         self.LDRmax=GraphMax(self.gLDRatio,
                              self.vPeak-abs(self.vPeak/4),
-                             self.vPeak+abs(self.vPeak/4))        
+                             self.vPeak+abs(self.vPeak/4))
+        self.results["LDRmax"]=self.LDRmax
+
             
         # make graph of Ip = light+leakage-dark currents
         self.gIpV=TGraphDiff(self.gItotV,self.gIdV)
         self.gIpV.SetLineColor(kBlue)
         self.gdLnIpdV=IV2dLogIdV(self.gIpV)
         self.gdLnIpdV.SetLineColor(kBlue)
-        self.vPeakIp=GraphMax(self.gdLnIpdV,-999,-40)[0] # HACK to get around noisy data at low voltages
+        # HACK to avois noise at low/high V.  vPeak(Idark) is a good
+        # approximation to vPeak(Ip), search w/in 1 Volt range
+        self.vPeakIp=GraphMax(self.gdLnIpdV,self.vPeak-1,self.vPeak+1)[0] 
+        self.results["vPeakIp"]=self.vPeakIp
         self.gIpLowV=TGraph(self.gIpV)
         Vi=Double(); Ii=Double()
         for i in range(npoints):
@@ -209,4 +220,4 @@ class ivAnalyze():
         for i in range(npoints):
             g=(self.Itot[i]-self.Id[i])/IatGain1
             self.gGain.SetPoint(i,self.V[i],g)
-
+        self.results["M(Vop)"]=self.gGain.Eval(self.LDRmax[0])
