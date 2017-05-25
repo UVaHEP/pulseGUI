@@ -166,9 +166,9 @@ class ivAnalyze():
         # generate Light/Dark Ratio
         # Note! I'm doing minimal error checking here, so if you have files with 
         # different voltage ranges or data points this might not work! 
-        print "Also analyzing illuminated I-V curve"
+        print "Analyzing illuminated I-V curve"
         readVIfile(self.fnLIV,self.LV,self.Itot,self.VMIN,self.VMAX)
-
+        
         # to do: calc [dlogItot/dV]-1, use to estimate Vbr
         
         npoints=len(self.Itot)
@@ -187,24 +187,15 @@ class ivAnalyze():
         self.gItotV.SetTitle("I-V Curve (light);Volts;Current [Amps]")
         self.gItotV.SetName("LIV")
             
-        # ratio of light to dark IV curves
-        self.gLDRatio = TGraphDivide(self.gItotV,self.gIdV)
-        self.gLDRatio.SetTitle("LDRatio")
-        self.gLDRatio.SetName("LDRatio")
-        self.LDRmax=GraphMax(self.gLDRatio,
-                             self.vPeak-abs(self.vPeak/4),
-                             self.vPeak+abs(self.vPeak/4))
-        self.results["LDRmax"]=self.LDRmax
-
             
         # make graph of Ip = light+leakage-dark currents
         self.gIpV=TGraphDiff(self.gItotV,self.gIdV)
         self.gIpV.SetLineColor(kBlue)
         self.gdLnIpdV=IV2dLogIdV(self.gIpV)
         self.gdLnIpdV.SetLineColor(kBlue)
-        # HACK to avois noise at low/high V.  vPeak(Idark) is a good
-        # approximation to vPeak(Ip), search w/in 1 Volt range
-        self.vPeakIp=GraphMax(self.gdLnIpdV,self.vPeak-1,self.vPeak+1)[0] 
+        # HACK to avoid noise at low/high V.  Limit range to middle 80%
+        # of voltage range
+        self.vPeakIp=GraphMax(self.gdLnIpdV,window=0.8)[0]
         self.results["vPeakIp"]=self.vPeakIp
         self.gIpLowV=TGraph(self.gIpV)
         Vi=Double(); Ii=Double()
@@ -212,6 +203,17 @@ class ivAnalyze():
             self.gIpLowV.GetPoint(i,Vi,Ii)
             if abs(Vi)>abs(self.vPeak)*self.G1FITFRAC:
                 self.gIpLowV.RemovePoint(i)
+
+        # ratio of light to dark IV curves
+        self.gLDRatio = TGraphDivide(self.gItotV,self.gIdV)
+        #self.gLDRatio = TGraphDivide(self.gIpV,self.gIdV)
+        self.gLDRatio.SetTitle("LDRatio")
+        self.gLDRatio.SetName("LDRatio")
+        self.LDRmax=GraphMax(self.gLDRatio,
+                             self.vPeak-abs(self.vPeak/4),
+                             self.vPeak+abs(self.vPeak/4))
+        self.results["LDRmax"]=self.LDRmax
+
                 
         # estimate the light current Ip at Gain~1
         IatGain1=self.CalcIatGain1()

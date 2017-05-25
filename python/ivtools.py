@@ -12,15 +12,29 @@ def printf(format, *args):
 ########################
 # return x,y for maximum of TGraph and approximate FWHM
 # optionally search within range [xmin:xmax]
+# the window parameter can be used to ignore points near edges
+# eg GraphMax(tg,window=0.8) searches in the center 80% of the graph
 ########################
-def GraphMax(tg,xmin=-1e20,xmax=1e20):
+def GraphMax(tg,xmin=-1e20,xmax=1e20,window=1):
+    npoints=tg.GetN()
+    x=Double(); y=Double()
+    tg.Sort()
+    if xmin>xmax:
+        temp=xmin
+        xmin=xmax
+        xmax=xmin
+    elif window<1:
+        tg.GetPoint(0,x,y)
+        xmin=float(x)
+        tg.GetPoint(npoints-1,x,y)
+        xmax=float(x)
+        xRange=xmax-xmin
+        xmin=xmin+xRange*(1-window)/2
+        xmax=xmin+xRange*window
     #tg.Draw()
     #time.sleep(1)
     xMax=0
     yMax=-1e50
-    npoints=tg.GetN()
-    x=Double(); y=Double()
-    tg.Sort()
     #print tg.GetName()
     #print 'yMax: {0}'.format(yMax)
     imax=0

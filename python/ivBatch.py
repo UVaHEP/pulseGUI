@@ -19,7 +19,7 @@ results={}
 def ProcessDir(dir):
     print "Processing data in:",dir
     darkFiles=[]
-    darkFiles.extend( glob.glob(dir+'/*iLED0-*csv') )
+    darkFiles.extend( glob.glob(dir+'/*iLED0*csv') )
     lightFiles=[]
     lightFiles.extend( glob.glob(dir+'/*iLED[1-9]*csv') )
 
