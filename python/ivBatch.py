@@ -36,7 +36,9 @@ def ProcessDir(dir):
                 break
         print df,lf
         ana.SetData(df,lf)
-        results[df]=ana.Analyze()        
+        data=ana.Analyze()
+        if data==None: return
+        results[df]=data        
     return
 
 if __name__ == '__main__': 
@@ -50,7 +52,7 @@ if __name__ == '__main__':
 
     for o, a in opts:
          if o == "-r": recurse=True
-         elif o == "-v": verbose=true
+         elif o == "-v": verbose=True
 
     if len(args)==0: usage()
     dir=args[0]
@@ -62,7 +64,8 @@ if __name__ == '__main__':
         dirList.extend(commands.getoutput(cmd).split())
     else: dirList.append(dir)
     
-    for d in dirList: 
+    for d in dirList:
+        print "Scanning directory",d
         ProcessDir(d)
 
     # need to print: Vbr, "Vop", LDR(@Vop), Id(Vbr/10,4,2,1), Delta(Vop,VBr)

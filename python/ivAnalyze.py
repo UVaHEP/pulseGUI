@@ -121,7 +121,8 @@ class ivAnalyze():
 
     # read dark I-V data and estimate Vbr
     def Analyze(self, dorebin=False):
-        readVIfile(self.fnIV,self.V,self.Id,self.VMIN,self.VMAX)
+        status=readVIfile(self.fnIV,self.V,self.Id,self.VMIN,self.VMAX)
+        if not status==0: return None
         self.gIdV=TGraph(len(self.V), self.V, self.Id)
         self.gIdV.SetName("gIdV")
         self.gIdV.SetTitle("I-V Curve;Volts;Current [Amps]")

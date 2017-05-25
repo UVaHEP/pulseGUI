@@ -123,7 +123,8 @@ def readVIfile(file, V, I, Vmin=0, Vmax=200):
             continue      # TO DO: add averaging option
         V.append(v)
         I.append(i)
-
+    if len(V)==0: return -1
+    return 0
 
 #######################
 def getField(sname, tgt):
