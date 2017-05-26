@@ -19,7 +19,7 @@ VMIN=0  # minimum voltage to read
 if __name__ == '__main__': 
     if len(sys.argv)<2: 
         print "No file names given"
-        print "Usage ivOverlay.py IVfiles [-t title] [-l labels] [-d search dir]"
+        print "Usage ivOverlay.py IVfiles [-t title] [-l labels] [-d search dir] -0 (no labels) -a (Do require minPoints)"
         sys.exit()
 
     parser = argparse.ArgumentParser(description='I-V Overlay Plotter') 
@@ -36,8 +36,14 @@ if __name__ == '__main__':
                         help="Output file for image")
     parser.add_argument("-b", "--batch", help="run in batch mode",
                     action="store_true")
+    parser.add_argument("-0", "--nolabels", default=None, help="Do not display labels",
+                    action="store_true")
+    parser.add_argument("-a", "--plotAll", default=None, help="Do require minPoints",
+                    action="store_true")
     args = parser.parse_args()
-
+    addLabels=(args.nolabels==None)
+    plotAll=(not args.plotAll==None)
+    
     # import ROOT here to
     # avoid ANNOYING conflict in argument parsing 
     
@@ -50,15 +56,21 @@ if __name__ == '__main__':
     n=0
 
     vm=100; vM=-100; im=100; iM=-100  # display ranges
-        
+    minPoints=30 # skip plots with less than minPoints
+    
     if not args.dir==None:
         for i in range(len(args.files)):
             args.files[i]=args.dir+"/"+args.files[i]
 
     for file in args.files:
+        if not file.endswith(".csv"): continue
         V=array("d")
         I=array("d")
         readVIfile(file,V,I,VMIN)
+        if not plotAll and len(V)<minPoints:
+            print "Too few points read from file",file,"skipping..."
+            print "Use option -a to force plotting"
+            continue
         tg=TGraph(len(V),V,I)
         if min(V)<vm: vm=min(V)
         if max(V)>vM: vM=max(V)
@@ -88,20 +100,21 @@ if __name__ == '__main__':
     lab=[]
     if vM>0: xlabmin=0.15 # positive voltages
     else: xlabmin=0.5
- 
-    for file in args.files:
-        name=os.path.basename(file)
-        lab.append( 
-            TPaveText(xlabmin,0.88-0.05*n,xlabmin+0.45,0.93-0.05*n,"NDC") )
-        color=n+2
-        if color==5 : color=809 # get rid of yellow
-        if color==3 : color= 416 # replace light green with dark green
-        if color==10: color=49 # replace white with mauve. Probs if >48 curves
-        if args.labels==None: lab[n].AddText(name)
-        else: lab[n].AddText(args.labels[n])
-        lab[n].SetTextColor(color)
-        lab[n].Draw()
-        n=n+1
+
+    if addLabels:
+        for file in args.files:
+            name=os.path.basename(file)
+            lab.append( 
+                TPaveText(xlabmin,0.88-0.05*n,xlabmin+0.45,0.93-0.05*n,"NDC") )
+            color=n+2
+            if color==5 : color=809 # get rid of yellow
+            if color==3 : color= 416 # replace light green with dark green
+            if color==10: color=49 # replace white with mauve. Probs if >48 curves
+            if args.labels==None: lab[n].AddText(name)
+            else: lab[n].AddText(args.labels[n])
+            lab[n].SetTextColor(color)
+            lab[n].Draw()
+            n=n+1
 
 
     canvas.Update()

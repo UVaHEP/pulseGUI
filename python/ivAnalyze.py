@@ -119,10 +119,24 @@ class ivAnalyze():
         return g1fit.GetParameter(1) # current Ip at unity gain
 
 
-    # read dark I-V data and estimate Vbr
+    # read I-V data and estimate Vbr
     def Analyze(self, dorebin=False):
         status=readVIfile(self.fnIV,self.V,self.Id,self.VMIN,self.VMAX)
-        if not status==0: return None
+        if self.doLightAnalysis:
+            status=status+readVIfile(self.fnLIV,self.LV,self.Itot,self.VMIN,self.VMAX)
+        if not status==0:
+            print "Error reading input file(s)",self.fnIV,self.fnLIV
+            return None
+        if self.doLightAnalysis:
+            # due to current limit settings dark/light data may have differnt number of points
+            # we assume the starting value sand steps are the same and truncate to the shorter length
+            if not len(self.V)==len(self.LV):
+                nKeep=min(len(self.V),len(self.LV))
+                self.V=self.V[0:nKeep-1]
+                self.Id=self.Id[0:nKeep-1]
+                self.LV=self.LV[0:nKeep-1]
+                self.Itot=self.Itot[0:nKeep-1]
+                
         self.gIdV=TGraph(len(self.V), self.V, self.Id)
         self.gIdV.SetName("gIdV")
         self.gIdV.SetTitle("I-V Curve;Volts;Current [Amps]")
@@ -164,19 +178,14 @@ class ivAnalyze():
         return self.results
         
     def AnalyzeLight(self):
-        # generate Light/Dark Ratio
-        # Note! I'm doing minimal error checking here, so if you have files with 
-        # different voltage ranges or data points this might not work! 
-        print "Analyzing illuminated I-V curve"
-        readVIfile(self.fnLIV,self.LV,self.Itot,self.VMIN,self.VMAX)
-        
+        # generate Light/Dark Ratio        
         # to do: calc [dlogItot/dV]-1, use to estimate Vbr
         
         npoints=len(self.Itot)
         if not npoints==len(self.Id):
-            print "Dark/light files of different length:",len(self.Itot),len(self.Id)
+            #print "Dark/light files of different length:",len(self.Itot),len(self.Id)
             if len(self.Itot)<len(self.Id):
-                print "Padding light data to match dark measurements, beware..."
+                #print "Padding light data to match dark measurements, beware..."
                 npoints=len(self.Id)
                 for i in range(len(self.Itot),len(self.Id)):
                     self.LV.append(self.V[i])

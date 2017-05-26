@@ -21,12 +21,24 @@ parser.add_argument('-s', '--rs', default=0,
                     help="Series resistance in device circuit")
 parser.add_argument('-a', '--auto', action="store_true",
                     help="Run and exit w/o user interaction")
+parser.add_argument('-x', '--xmin', default=0,
+                    help="starting point of fit")
+parser.add_argument('-X', '--xmax', default=0,
+                    help="ending point of fit")
 args = parser.parse_args()
 
 if args.f is None: 
     print 'No I-V data file to process...quitting'
-    exit(0)
+    exit(1)
 
+xmin=float(args.xmin)
+xmax=float(args.xmax)
+
+if (xmax-xmin)<=0:
+    print "Undefined fit range, specify xmin,xmax"
+    exit(1)
+
+    
 nSPADs=int(args.n)
 rSeries=float(args.rs)  # series resistance
 
@@ -55,24 +67,31 @@ if rSeries>0: # V_diode=V_tot-V_Rseries
 gIV=TGraph(len(V), V, I)
 gIV.SetTitle("Current vs. voltage;V;I [A]")
 
+# do linear fit to graph
+gIV.Fit("pol1","","",xmin,xmax)
+pol1=gIV.GetFunction("pol1")
+Rfit=1.0/abs(pol1.GetParameter(1))
+print "***",gIV.GetFunction("pol1"),Rfit
+
 # load minuit fitting code
-gROOT.ProcessLine(".L python/ForwardIVfitter.C+")
-from ROOT import ForwardIVfitter
-fitter=ForwardIVfitter(gIV,nSPADs)
-par=array("d",[0,0,0])
-fitter.Fit(par)
+#gROOT.ProcessLine(".L python/ForwardIVfitter.C+")
+#from ROOT import ForwardIVfitter
+#fitter=ForwardIVfitter(gIV,nSPADs)
+#par=array("d",[0,0,0])
+#fitter.Fit(par)
+
 
 # plotting
 c_IV = TCanvas("cIV","I-V",800,800)
 gIV.Draw("APL")
-fitter.GetFitGraph().Draw("L")
+#fitter.GetFitGraph().Draw("L")
 
 c_IV.Update()
 
 print "=== Quench Resistance Analysis ==="
 printf("Number of SPADs: %6d\n",nSPADs)
 printf("Current supply series resistance: %4.0f Ohms\n",rSeries)
-printf("Average quence resistance / SPAD: %6.2e Ohms\n",par[2])
+printf("Average quence resistance / SPAD: %6.2e Ohms\n",Rfit*nSPADs)
 print "===================="
 
 

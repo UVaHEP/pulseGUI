@@ -103,9 +103,9 @@ def readVIfile(file, V, I, Vmin=0, Vmax=200):
     line=f.readline()
     isAgilent = "Repeat,VAR2" in line
     isFromEric="Voltage_1" in line
-    if isAgilent: print "Reading I-V curve from Agilent sourcemeter"
-    elif isFromEric: print "Reading from Eric's data"
-    else: print "Reading I-V curve from Keithley sourcemeter"
+    #if isAgilent: print "Reading I-V curve from Agilent sourcemeter"
+    #elif isFromEric: print "Reading from Eric's data"
+    #else: print "Reading I-V curve from Keithley sourcemeter"
 
     for line in f.readlines():
         line=line.strip().split(',')
@@ -241,6 +241,7 @@ def IV2dLogIdV(tg):
         tg.GetPoint(i+1, v2, i2)
         dI=i2-i1
         Ibar=(i2+i1)/2
+        if Ibar==0: Ibar=1e-11*v1/abs(v1) # in case I is just LSB fluctuations
         dV=v2-v1
         Vbar=(v2+v1)/2
         if dV==0: # voltage is repeated, use last value for derivative
