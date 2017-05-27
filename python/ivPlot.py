@@ -7,6 +7,11 @@
 ### if given an extra csv file 
 ### Consider the ratio generator in a prototype stage, i.e. no/little error checking
 
+# keep ROOT TApplication from grabbing -h flag
+from ROOT import PyConfig
+PyConfig.IgnoreCommandLineOptions = True
+from ROOT import *
+
 import sys, os, commands, re
 import getopt, string, math
 from array import array
@@ -17,9 +22,10 @@ from ivAnalyze import ivAnalyze
 rootlibs=commands.getoutput("root-config --libdir")
 sys.path.append(rootlibs)
 
-from ROOT import *
+
 from ivtools import *
 from rootTools import *
+
 
 VMIN=10  # minimum voltage to read
 VMAX=100 # maximum voltage to read
@@ -67,7 +73,6 @@ else: ana=ivAnalyze(dfn)
 ana.SetVmin(VMIN)
 ana.SetVmax(VMAX)
 results=ana.Analyze()
-
 
 
 
@@ -140,7 +145,7 @@ if doLightAnalysis:
     leg1.AddEntry(ana.gIpV,"Light-Dark","l")
     
 leg1.Draw()
-#gIV.Fit("expo","0","",-50,-10)
+
 #### Canvas 2: V_breakdown analysis
 # To do: think about possibility of some
 #         dark count analysis using dLnI/dV vs dLnIp/dV
@@ -158,9 +163,9 @@ else:
     
 if ana.vPeak<0: 
     gDVframe=TH2F("dvFrame",title2,5,xmin,min(ana.vPeak*0.75,xmin/2),5,0,ymax*1.1)
+    #gDVframe=TH2F("dvFrame",title2,5,xmin,0,5,0,ymax*1.1)
 else:
     gDVframe=TH2F("dvFrame",title2,5,max(ana.vPeak*0.75,xmax/2),xmax,5,0,ymax*1.1)
-
 
 gDVframe.Draw()
 
@@ -191,9 +196,9 @@ if doLightAnalysis:
     gLDRatio.ComputeRange(xmin, ymin, xmax, ymax)
     gLDRatio.SetTitle("Ratios;Volts;Light to Dark Current Ratio")
     if ana.vPeak<0: 
-        gRframe=TH2F("grFrame",gLDRatio.GetTitle(),10,xmin,xmin*0.75,10,0.1,ymax*1.1)
+        gRframe=TH2F("grFrame",gLDRatio.GetTitle(),10,xmin,max(ana.LDRmax[0]*.9,xmin*0.8),10,0.1,ymax*1.1)
     else:
-        gRframe=TH2F("grFrame",gLDRatio.GetTitle(),10,xmax*0,75,xmax,10,0.1,ymax*1.1)
+        gRframe=TH2F("grFrame",gLDRatio.GetTitle(),10,min(ana.LDRmax[0]*.9,xmax*0.8),xmax,10,0.1,ymax*1.1)
     gRframe.Draw()
     gLDRatio.Draw("L")
     #RatioMax = TLine(ana.LDRmax[0], ymin, ana.LDRmax[0], ymax/2)

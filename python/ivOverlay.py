@@ -9,7 +9,17 @@ import argparse
 
 rootlibs=commands.getoutput("root-config --libdir")
 sys.path.append(rootlibs)
-    
+
+# keep ROOT TApplication from grabbing -h flag
+from ROOT import PyConfig
+PyConfig.IgnoreCommandLineOptions = True
+from ROOT import *
+
+from ivtools import readVIfile
+from ivAnalyze import ivAnalyze
+
+
+
 VMIN=0  # minimum voltage to read
 
 #######################
@@ -38,20 +48,12 @@ if __name__ == '__main__':
                     action="store_true")
     parser.add_argument("-0", "--nolabels", default=None, help="Do not display labels",
                     action="store_true")
-    parser.add_argument("-a", "--plotAll", default=None, help="Do require minPoints",
+    parser.add_argument("-a", "--plotAll", default=None, help="Do not require min #Points",
                     action="store_true")
     args = parser.parse_args()
     addLabels=(args.nolabels==None)
     plotAll=(not args.plotAll==None)
     
-    # import ROOT here to
-    # avoid ANNOYING conflict in argument parsing 
-    
-    from ROOT import Double, gStyle
-    from ROOT import TCanvas, TGraph, TMultiGraph, TH1F, TPaveText
-    from ivtools import readVIfile
-    from ivAnalyze import ivAnalyze
-
     mg=TMultiGraph()
     n=0
 

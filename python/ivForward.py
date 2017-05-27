@@ -3,11 +3,22 @@
 # analyze forward bias I-V data
 #######################################################
 
+# keep ROOT TApplication from grabbing -h flag
+from ROOT import PyConfig
+PyConfig.IgnoreCommandLineOptions = True
+from ROOT import *
+
+rootlibs=commands.getoutput("root-config --libdir")
+sys.path.append(rootlibs)
+
 import sys, os, commands
 import getopt, string
 from array import array
 from math import log
 import argparse 
+from plotStyle import *
+from ivtools import *
+
 
 #######################
 # main
@@ -42,14 +53,6 @@ if (xmax-xmin)<=0:
 nSPADs=int(args.n)
 rSeries=float(args.rs)  # series resistance
 
-# ROOT messes with arg parsing, import after instantiating parser
-rootlibs=commands.getoutput("root-config --libdir")
-sys.path.append(rootlibs)
-from ROOT import Double, kRed, kBlue
-from ROOT import TString, TCanvas, TGraph, TLine, TF1, TH2F
-from ROOT import gROOT
-from plotStyle import *
-from ivtools import *
 
 FIT_FRAC_MIN=0.9 # fraction of highest voltage for start of linear fit
 

@@ -10,7 +10,6 @@
 import sys, os, commands, re
 import getopt, string
 from array import array
-from math import copysign
 import argparse 
 import time
 
@@ -50,7 +49,8 @@ class ivAnalyze():
         # parameters
         self.VMIN=10           # default minimum voltage to read
         self.VMAX=80           # default maximum voltage to read
-        self.G1FITFRAC=0.5     # fit range for currents at G~1 as fraction of vPeak 
+        self.G1FITFRAC=0.5     # fit range for currents at G~1 as fraction of vPeak
+        self.VbrMIN=40         # absolute value of lower limit for breakdown region
     def __init__(self,fnIV=None,fnLIV=None):
         self.Reset()
         self.fnIV=fnIV         # dark I-V data file
@@ -127,9 +127,11 @@ class ivAnalyze():
         if not status==0:
             print "Error reading input file(s)",self.fnIV,self.fnLIV
             return None
+        if self.V[-1]<0: self.vSign=-1
+        else: self.vSign=1
         if self.doLightAnalysis:
-            # due to current limit settings dark/light data may have differnt number of points
-            # we assume the starting value sand steps are the same and truncate to the shorter length
+            # due to current limit settings dark/light data may have different number of points
+            # we assume the starting values and steps are the same and truncate to the shorter length
             if not len(self.V)==len(self.LV):
                 nKeep=min(len(self.V),len(self.LV))
                 self.V=self.V[0:nKeep-1]
@@ -150,8 +152,9 @@ class ivAnalyze():
         self.gd2LnIddV2=TGraphScale(self.gd2LnIddV2,self.vSign)
         self.gd2LnIddV2.SetLineStyle(3)
         self.gdVdLnId=TGraphInvert(self.gdLnIddV)
-        self.vPeak=GraphMax(self.gdLnIddV)[0]
-        self.vSign=copysign(1,self.vPeak/100)
+        if self.vSign<0:
+            self.vPeak=GraphMax(self.gdLnIddV,umax=-1*self.VbrMIN)[0]
+        else: self.vPeak=GraphMax(self.gdLnIddV,umin=self.VbrMIN)[0]
 
         self.results={}
         self.results["fnLIV"]=self.fnLIV
@@ -182,22 +185,14 @@ class ivAnalyze():
         # to do: calc [dlogItot/dV]-1, use to estimate Vbr
         
         npoints=len(self.Itot)
-        if not npoints==len(self.Id):
-            #print "Dark/light files of different length:",len(self.Itot),len(self.Id)
-            if len(self.Itot)<len(self.Id):
-                #print "Padding light data to match dark measurements, beware..."
-                npoints=len(self.Id)
-                for i in range(len(self.Itot),len(self.Id)):
-                    self.LV.append(self.V[i])
-                    self.Itot.append(1e-2)  # ~current limit
-            else: sys.exit(1)
-
+        self.results["fnLIV"]=self.fnLIV
+            
         # define graphs
         self.gItotV=TGraph(len(self.LV), self.LV, self.Itot)
         self.gItotV.SetTitle("I-V Curve (light);Volts;Current [Amps]")
         self.gItotV.SetName("LIV")
             
-            
+
         # make graph of Ip = light+leakage-dark currents
         self.gIpV=TGraphDiff(self.gItotV,self.gIdV)
         self.gIpV.SetLineColor(kBlue)
@@ -205,7 +200,7 @@ class ivAnalyze():
         self.gdLnIpdV.SetLineColor(kBlue)
         # HACK to avoid noise at low/high V.  Limit range to middle 80%
         # of voltage range
-        self.vPeakIp=GraphMax(self.gdLnIpdV,window=0.8)[0]
+        self.vPeakIp=GraphMax(self.gdLnIpdV,window=0.9)[0]
         self.results["vPeakIp"]=self.vPeakIp
         self.gIpLowV=TGraph(self.gIpV)
         Vi=Double(); Ii=Double()
@@ -220,8 +215,8 @@ class ivAnalyze():
         self.gLDRatio.SetTitle("LDRatio")
         self.gLDRatio.SetName("LDRatio")
         self.LDRmax=GraphMax(self.gLDRatio,
-                             self.vPeak-abs(self.vPeak/4),
-                             self.vPeak+abs(self.vPeak/4))
+                             self.vPeakIp-abs(self.vPeakIp/4),
+                             self.vPeakIp+abs(self.vPeakIp/4))
         self.results["LDRmax"]=self.LDRmax
 
                 

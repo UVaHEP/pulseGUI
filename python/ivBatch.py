@@ -2,6 +2,11 @@
 
 # batch process iv data files in given directory
 
+# keep ROOT TApplication from grabbing -h flag
+from ROOT import PyConfig
+PyConfig.IgnoreCommandLineOptions = True
+from ROOT import *
+
 import getopt,commands,sys,glob,os
 from ivAnalyze import ivAnalyze
 
@@ -52,6 +57,9 @@ if __name__ == '__main__':
     for o, a in opts:
          if o == "-r": recurse=True
          elif o == "-v": verbose=True
+         elif o == "-h":
+             usage()
+             sys.exit(0)
 
     if len(args)==0: usage()
     dir=args[0]
@@ -63,7 +71,6 @@ if __name__ == '__main__':
         dirList.extend(commands.getoutput(cmd).split())
     else: dirList.append(dir)
     
-    print "***",dirList
     for d in dirList:
         print "Scanning directory",d
         ProcessDir(d)

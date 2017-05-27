@@ -30,20 +30,16 @@ def GraphMax(tg,umin=-1e20,umax=1e20,window=1):
         xRange=xmax-xmin
         xmin=xmin+xRange*(1-window)/2
         xmax=xmin+xRange*window
-    print "!!!!!",xmin,xmax,umin,umax,window
     if umin>xmin: xmin=umin
     if umax<xmax: xmax=umax
         
-    #tg.Draw()
-    #time.sleep(1)
     xMax=0
     yMax=-1e50
-    #print tg.GetName()
-    #print 'yMax: {0}'.format(yMax)
     imax=0
+    base=0
     for i in range(npoints):
         tg.GetPoint(i,x,y)
-        #print 'x:{0}, ymax: {3}, y:{1}, i:{2}'.format(x, y, i, yMax)
+        if i==0: base=float(y)
         if x<xmin: continue
         if x>xmax: continue
         if y>yMax:
@@ -53,19 +49,19 @@ def GraphMax(tg,umin=-1e20,umax=1e20,window=1):
     # find approximate FWHM
     x1=Double(); y1=Double()
     x2=Double(); y2=Double()
-    #This handles the case where we start on the maximum point
+    yHalf=(yMax-base)/2+base
+    #This handles the case where the graph on the maximum point
     if imax == 0: imax = 1
     for i in range(imax-1,-1,-1): #Scan left
         tg.GetPoint(i,x1,y1)
         tg.GetPoint(i+1,x2,y2)
-        if y1<=yMax/2: break
-    #print 'y2: {0}, y1:{1}, x2: {2}, x1: {3}, imax:{4}'.format(y2, y1, x2, x1,imax)
+        if y1<=yHalf: break
     mL=(y2-y1)/(x2-x1)
     xL=x1+(yMax/2-y1)/mL
     for i in range(imax,npoints-1): #Scan right
         tg.GetPoint(i,x1,y1)
         tg.GetPoint(i+1,x2,y2)
-        if y2<=yMax/2: break
+        if y2<=yHalf: break
     if (x2-x1)==0:
         print "Cannot esimtate FWHM for graph:",tg.GetName()
         return  xMax,yMax,-1
