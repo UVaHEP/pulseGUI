@@ -59,6 +59,9 @@ SetPlotStyle() # pretty up plots
 V=array("d")
 I=array("d")
 readVIfile(args.f[0],V,I)
+for i in range(len(V)):
+    V[i]=abs(V[i])
+    I[i]=abs(I[i])
 
 # correct for additional series resistance
 if rSeries>0: # V_diode=V_tot-V_Rseries
@@ -91,7 +94,7 @@ c_IV.Update()
 print "=== Quench Resistance Analysis ==="
 printf("Number of SPADs: %6d\n",nSPADs)
 printf("Current supply series resistance: %4.0f Ohms\n",rSeries)
-printf("Average quence resistance / SPAD: %6.2e Ohms\n",Rfit*nSPADs)
+printf("Average quench resistance / SPAD: %6.2e Ohms\n",Rfit*nSPADs)
 print "===================="
 
 

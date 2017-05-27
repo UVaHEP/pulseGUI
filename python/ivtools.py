@@ -15,15 +15,14 @@ def printf(format, *args):
 # the window parameter can be used to ignore points near edges
 # eg GraphMax(tg,window=0.8) searches in the center 80% of the graph
 ########################
-def GraphMax(tg,xmin=-1e20,xmax=1e20,window=1):
+def GraphMax(tg,umin=-1e20,umax=1e20,window=1):
     npoints=tg.GetN()
     x=Double(); y=Double()
     tg.Sort()
-    if xmin>xmax:
-        temp=xmin
-        xmin=xmax
-        xmax=xmin
-    elif window<1:
+    if window==1:
+        xmin=umin
+        xmax=umax
+    if window<1:  # user range
         tg.GetPoint(0,x,y)
         xmin=float(x)
         tg.GetPoint(npoints-1,x,y)
@@ -31,6 +30,10 @@ def GraphMax(tg,xmin=-1e20,xmax=1e20,window=1):
         xRange=xmax-xmin
         xmin=xmin+xRange*(1-window)/2
         xmax=xmin+xRange*window
+    print "!!!!!",xmin,xmax,umin,umax,window
+    if umin>xmin: xmin=umin
+    if umax<xmax: xmax=umax
+        
     #tg.Draw()
     #time.sleep(1)
     xMax=0
