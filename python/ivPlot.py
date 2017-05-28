@@ -86,6 +86,7 @@ if doLightAnalysis:
 else:    
     printf("Peak dLogI/DV: %4.2f\n",results["vPeak"])
 printf("Dark Current @ 90%% 60%% 30%% of Vbr: %6.2e %6.2e %6.2e\n",results["I90"],results["I60"],results["I30"])
+printf("Leakage fit exp([0]+[1]*x), Ileak(Vbr) %7.3f %7.3f , %7.3f [nA]\n",results["leakConst"],results["leakSlope"],results["leakAtVbr"]*1e9)
 print "======================================="
 
 

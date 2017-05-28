@@ -178,6 +178,18 @@ class ivAnalyze():
         self.results["I60"]=self.gIdV.Eval(vref*0.6)
         self.results["I30"]=self.gIdV.Eval(vref*0.3)
 
+        # fit for exponential slope of leakage current
+        if self.vSign<0:
+            xstart=vref*0.95
+            xstop=vref*0.6
+        else:
+            xstop=vref*0.95
+            xstart=vref*0.6
+        self.gIdV.Fit("expo","q","",xstart,xstop)
+        leakFcn=self.gIdV.GetFunction("expo")
+        self.results["leakConst"]=leakFcn.GetParameter(0)
+        self.results["leakSlope"]=leakFcn.GetParameter(1)
+        self.results["leakAtVbr"]=leakFcn.Eval(vref)
         return self.results
         
     def AnalyzeLight(self):

@@ -79,8 +79,8 @@ if __name__ == '__main__':
     #                (I_light-I_dark)/I_dark (@Vop), Gain(@Vop)
     # look at slope of dI/dV vs V, is it ~flat up to Vbr for good devs?
     print ""
-    print ("%15s %4s %8s %8s %8s %8s %8s %8s %8s %8s %8s") % ("Dev", "chan","Vbr","Vop","Vex","LDRmax","FWHM","DC_Gain",
-                                              "I90%", "I60%", "I30%")
+    print ("%15s %4s %8s %8s %8s %8s %8s %8s %8s %8s %8s %8s %8s %6s") % ("Dev", "chan","Vbr","Vop","Vex","LDRmax","FWHM","DC_Gain",
+                                                                          "I90%", "I60%", "I30%","leakConst","Slope","leak@Vbr")
     for df in sorted(results.iterkeys()):
         matchto=os.path.basename(df).find("_iLED")
         dev=os.path.basename(df)[0:matchto]
@@ -88,9 +88,10 @@ if __name__ == '__main__':
         name=dev[0]
         chan=dev[1]
         dat=results[df]
-        print ("%15s %4s %8.2f %8.2f %8.2f %8.2f %8.2f %8.1e %8.2e %8.2e %8.2e") %\
+        print ("%15s %4s %8.2f %8.2f %8.2f %8.2f %8.2f %8.1e %8.2e %8.2e %8.2e,%8.3e %8.3e %8.2f") %\
         (name,chan,dat["vPeakIp"],dat["LDRmax"][0],
          dat["LDRmax"][0]-dat["vPeakIp"],
          dat["LDRmax"][1],dat["LDRmax"][2],dat["M(Vop)"],
-         dat["I90"],dat["I60"],dat["I30"])
+         dat["I90"],dat["I60"],dat["I30"],
+         dat["leakConst"],dat["leakSlope"],dat["leakAtVbr"]*1e9)
 
