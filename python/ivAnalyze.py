@@ -207,8 +207,10 @@ class ivAnalyze():
 
         # make graph of Ip = light+leakage-dark currents
         self.gIpV=TGraphDiff(self.gItotV,self.gIdV)
+        self.gIpV.SetName("gIpV"); self.gIpV.SetTitle("I-V Curve (light-dark);Volts;Current [Amps]")
         self.gIpV.SetLineColor(kBlue)
         self.gdLnIpdV=IV2dLogIdV(self.gIpV)
+        self.gdLnIpdV.SetName("gdLnIpdV"); self.gdLnIpdV.SetTitle("dLn(I_{dp/dV;Volts;dLn(I_{p})/dV")
         self.gdLnIpdV.SetLineColor(kBlue)
         # HACK to avoid noise at low/high V.  Limit range to middle 80%
         # of voltage range
