@@ -88,7 +88,7 @@ if __name__ == '__main__':
         name=dev[0]
         chan=dev[1]
         dat=results[df]
-        print ("%15s %4s %8.2f %8.2f %8.2f %8.2f %8.2f %8.1e %8.2e %8.2e %8.2e,%8.3e %8.3e %8.2f") %\
+        print ("%15s %4s %8.2f %8.2f %8.2f %8.2f %8.2f %8.1e %8.2e %8.2e %8.2e %8.3e %8.3e %8.2f") %\
         (name,chan,dat["vPeakIp"],dat["LDRmax"][0],
          dat["LDRmax"][0]-dat["vPeakIp"],
          dat["LDRmax"][1],dat["LDRmax"][2],dat["M(Vop)"],
