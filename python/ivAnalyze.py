@@ -93,6 +93,7 @@ class ivAnalyze():
         return ip30
         # Smooth the graph of light-dark current before fitting
         gsmooth = TGraphSmoother(self.gIpLowV)
+        gsmooth.SetName("gIpLowV_sm")
         gDeltaIerr=TGraphErrors(self.gIpLowV.GetN()) # assign some *incorrect* errors for stable fit
         xmin=Double(); xmax=Double(); ymin=Double(); ymax=Double()
         Vi=Double(); Ii=Double()
@@ -147,11 +148,13 @@ class ivAnalyze():
         self.gdLnIddV.SetTitle("dLn(I_{d})/dV;Volts;dLn(I_{d})/dV")
         # take 2nd derivative
         self.gd2LnIddV2=TGraphDerivative(self.gdLnIddV)      #d^2logI/dV^2
+        self.gd2LnIddV2=TGraphScale(self.gd2LnIddV2,self.vSign)
         self.gd2LnIddV2.SetName("gd2LnIddV2")
         self.gd2LnIddV2.SetTitle("d^{2}Ln(I_{d})/d^{2}V;Volts;d^{2}Ln(I_{d})/d^{2}V")
-        self.gd2LnIddV2=TGraphScale(self.gd2LnIddV2,self.vSign)
         self.gd2LnIddV2.SetLineStyle(3)
         self.gdVdLnId=TGraphInvert(self.gdLnIddV)
+        self.gdVdLnId.SetName("gdVdLnId")
+        self.gdVdLnId.SetTitle("1/(dLn(I_{d})/dV);Volts;1/(dLn(I_{d})/dV)")
         if self.vSign<0:
             self.vPeak=GraphMax(self.gdLnIddV,umax=-1*self.VbrMIN)[0]
         else: self.vPeak=GraphMax(self.gdLnIddV,umin=self.VbrMIN)[0]
@@ -202,7 +205,7 @@ class ivAnalyze():
         # define graphs
         self.gItotV=TGraph(len(self.LV), self.LV, self.Itot)
         self.gItotV.SetTitle("I-V Curve (light);Volts;Current [Amps]")
-        self.gItotV.SetName("LIV")
+        self.gItotV.SetName("gItotV")
             
 
         # make graph of Ip = light+leakage-dark currents
@@ -214,9 +217,10 @@ class ivAnalyze():
         self.gdLnIpdV.SetLineColor(kBlue)
         # HACK to avoid noise at low/high V.  Limit range to middle 80%
         # of voltage range
-        self.vPeakIp=GraphMax(self.gdLnIpdV,window=0.9)[0]
-        self.results["vPeakIp"]=self.vPeakIp
+        self.vPeakIp=GraphMax(self.gdLnIpdV,window=0.9)[0]  
+        self.results["vPeakIp"]=self.vPeakIp  # Estimate of Vbr-try w/ pol2 fit to 3 highest points
         self.gIpLowV=TGraph(self.gIpV)
+        self.gIpLowV.SetName("gIpLowV")
         Vi=Double(); Ii=Double()
         for i in range(npoints):
             self.gIpLowV.GetPoint(i,Vi,Ii)
