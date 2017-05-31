@@ -1,4 +1,4 @@
-import numpy, os, re, sys
+import numpy, os, re, sys, bz2
 from array import array
 from ROOT import TGraph, TGraphSmooth, Double
 import time
@@ -285,10 +285,22 @@ def TGraphScale(tg,scale):
         tg.GetPoint(i, x, y)
         tgnew.SetPoint(i,x,float(y)*scale)
     return TGraph(tgnew)
+
 class Thermistor():
     def __init__ (self):
-        self.graph=TGraph("KT103J2_TvR.dat")
-        
+        datdir = os.environ.get('PULSGUIDIR')+'/dat'
+        rtable = datdir+"/KT103J2.dat.bz2"
+        f_p=bz2.BZ2File(rtable,"r")
+        self.graph=TGraph()
+        n=0
+        while 1:
+            line=f_p.readline()
+            if not line: break
+            if line.startswith('#') : continue
+            if not "." in line : continue
+            T,R=line.split()
+            self.graph.SetPoint(n,float(R),float(T))
+            n=n+1
     def Temperature(self,R):
         return self.graph.Eval(R)
     
