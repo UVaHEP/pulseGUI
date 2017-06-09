@@ -46,6 +46,8 @@ if __name__ == '__main__':
                         help="Output file for image")
     parser.add_argument("-b", "--batch", help="run in batch mode",
                     action="store_true")
+    parser.add_argument('-m', '--minX', type=float, default=-1,
+                        help="Minimum for xrange in plot. Enter abs(minX)")
     parser.add_argument("-0", "--nolabels", default=None, help="Do not display labels",
                     action="store_true")
     parser.add_argument("-a", "--plotAll", default=None, help="Do not require min #Points",
@@ -78,6 +80,9 @@ if __name__ == '__main__':
         if max(V)>vM: vM=max(V)
         if min(I)<im: im=min(I)
         if max(I)>iM: iM=max(I)
+        if args.minX>0:
+            if abs(vM)<abs(vm): vM=-1.0*args.minX
+            else: vm=args.minX
         color=n+2
         if color==5 : color=809 # get rid of yellow
         if color==3 : color=416 # replace light green with dark green
@@ -112,8 +117,9 @@ if __name__ == '__main__':
             if color==5 : color=809 # get rid of yellow
             if color==3 : color= 416 # replace light green with dark green
             if color==10: color=49 # replace white with mauve. Probs if >48 curves
-            if args.labels==None: lab[n].AddText(name)
-            else: lab[n].AddText(args.labels[n])
+            if not args.labels==None and len(args.labels)>n:
+                lab[n].AddText(args.labels[n])
+            else: lab[n].AddText(name)
             lab[n].SetTextColor(color)
             lab[n].Draw()
             n=n+1
@@ -125,5 +131,4 @@ if __name__ == '__main__':
     print 'Hit return to exit'
     sys.stdout.flush()
     raw_input('')
-
 

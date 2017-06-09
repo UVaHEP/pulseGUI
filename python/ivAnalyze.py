@@ -160,6 +160,7 @@ class ivAnalyze():
         else: self.vPeak=GraphMax(self.gdLnIddV,umin=self.VbrMIN)[0]
 
         self.results={}
+        self.results["fnIV"]=self.fnIV
         self.results["fnLIV"]=self.fnLIV
         self.results["vPeak"]=self.vPeak
        
@@ -168,7 +169,7 @@ class ivAnalyze():
             self.AnalyzeLight()
         else:
             self.results["vPeakIp"]=0
-            self.results["LDRmax"]=0
+            self.results["LDRmax"]=[0,0,0]
             self.results["M(Vop)"]=0
             self.results["I90"]=0
             self.results["I60"]=0
@@ -184,10 +185,10 @@ class ivAnalyze():
         # fit for exponential slope of leakage current
         if self.vSign<0:
             xstart=vref*0.95
-            xstop=vref*0.6
+            xstop=vref*0.65
         else:
             xstop=vref*0.95
-            xstart=vref*0.6
+            xstart=vref*0.65
         self.gIdV.Fit("expo","q","",xstart,xstop)
         leakFcn=self.gIdV.GetFunction("expo")
         self.results["leakConst"]=leakFcn.GetParameter(0)
