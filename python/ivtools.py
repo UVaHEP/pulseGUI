@@ -56,6 +56,8 @@ def GraphMax(tg,umin=-1e20,umax=1e20,window=1):
         tg.GetPoint(i,x1,y1)
         tg.GetPoint(i+1,x2,y2)
         if y1<=yHalf: break
+    #print tg.GetName(),y2,y1,x2,x1
+    #tg.Print()
     mL=(y2-y1)/(x2-x1)
     xL=x1+(yMax/2-y1)/mL
     for i in range(imax,npoints-1): #Scan right
@@ -117,12 +119,14 @@ def readVIfile(file, V, I, Vmin=0, Vmax=200):
             continue
         if abs(v)>Vmax:
             continue
-        if len(V)>0 and v==V[len(V)-1] :
-            I[len(V)-1]=i # if doing multiple readings, take the last one
-            continue      # TO DO: add averaging option
+        # if doing multiple readings, take the last one
+        # TO DO: add averaging option
+        if len(V)>0 and abs(v-V[-1])<1e-5:
+            I[-1]=i
+            continue
         V.append(v)
         I.append(i)
-    if len(V)==0: return -1
+    if len(V)<20: return -1 # Fail of short files. Warning magic number!
     return 0
 
 #######################

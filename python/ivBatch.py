@@ -36,6 +36,7 @@ def ProcessAll(darkFiles,lightFiles):
 
     for df in darkFiles:
         lf=None
+        if "Forward" in df: continue
         dn=os.path.basename(df)
         matchto=dn.find("_iLED")
         for f in lightFiles: # skip light files if not matched to dark
@@ -44,6 +45,7 @@ def ProcessAll(darkFiles,lightFiles):
                 lf=f
                 break
         #if lf==None: continue
+        if verbose: print "Analyzing",df,lf
         ana.SetData(df,lf)
         data=ana.Analyze()
         if data==None: continue
@@ -57,7 +59,7 @@ if __name__ == '__main__':
     parser.add_argument('files', nargs='*')
     parser.add_argument("-r", "--recursive", default=None, help="Search subdirectories",
                     action="store_true")
-    parser.add_argument("-v", "--verbose", default=None, help="Search subdirectories",
+    parser.add_argument("-v", "--verbose", default=None, help="Not implemented",
                     action="store_true")
     parser.add_argument("-s", "--sorted", default=None, help="Sort results according to device/channel",
                     action="store_true")
