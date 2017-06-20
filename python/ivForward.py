@@ -2,7 +2,7 @@
 #######################################################
 # analyze forward bias I-V data
 #######################################################
-
+import commands,sys
 # keep ROOT TApplication from grabbing -h flag
 from ROOT import PyConfig
 PyConfig.IgnoreCommandLineOptions = True
@@ -11,7 +11,7 @@ from ROOT import *
 rootlibs=commands.getoutput("root-config --libdir")
 sys.path.append(rootlibs)
 
-import sys, os, commands
+import os
 import getopt, string
 from array import array
 from math import log
