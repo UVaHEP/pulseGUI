@@ -52,6 +52,8 @@ if __name__ == '__main__':
                     action="store_true")
     parser.add_argument("-a", "--plotAll", default=None, help="Do not require min #Points",
                     action="store_true")
+    parser.add_argument("-n", "--negPolarity", default=None, help="For plots in negative polarity",
+                    action="store_true")
     args = parser.parse_args()
     addLabels=(args.nolabels==None)
     plotAll=(not args.plotAll==None)
@@ -75,6 +77,8 @@ if __name__ == '__main__':
             print "Too few points read from file",file,"skipping..."
             print "Use option -a to force plotting"
             continue
+        if args.negPolarity and V[-1]>0:
+            for i in range(len(V)): V[i]=-1*V[i]
         tg=TGraph(len(V),V,I)
         if min(V)<vm: vm=min(V)
         if max(V)>vM: vM=max(V)
@@ -85,7 +89,7 @@ if __name__ == '__main__':
             else: vm=args.minX
         color=n+2
         if color==5 : color=809 # get rid of yellow
-        if color==3 : color=416 # replace light green with dark green
+        if color==3 : color=418 # replace light green with dark green
         if color==10: color=49 #replace white with mauve, will cause probs is >48 curves
         tg.SetLineColor(color)
         tg.SetLineWidth(2)
@@ -115,7 +119,7 @@ if __name__ == '__main__':
                 TPaveText(xlabmin,0.88-0.05*n,xlabmin+0.45,0.93-0.05*n,"NDC") )
             color=n+2
             if color==5 : color=809 # get rid of yellow
-            if color==3 : color= 416 # replace light green with dark green
+            if color==3 : color= 418 # replace light green with dark green
             if color==10: color=49 # replace white with mauve. Probs if >48 curves
             if not args.labels==None and len(args.labels)>n:
                 lab[n].AddText(args.labels[n])
