@@ -24,8 +24,10 @@ from ivtools import *
 # main
 #######################
 parser = argparse.ArgumentParser(description='IV Curve Analyzer')
-parser.add_argument('-f', metavar='--filename', type=str, nargs=1, default=None,
+parser.add_argument('file', nargs='*', default=None,
                     help="I-V data file to process")
+parser.add_argument('-f', metavar='--filename', type=str, nargs=1, default=None,
+                    help="I-V data file to process [-f is optional]")
 parser.add_argument('-n', default=1,
                     help="Number of SPADs in device")
 parser.add_argument('-s', '--rs', default=0,
@@ -38,10 +40,14 @@ parser.add_argument('-X', '--xmax', default=0,
                     help="ending point of fit")
 args = parser.parse_args()
 
-if args.f is None: 
+if args.f is None and args.file is None: 
     print 'No I-V data file to process...quitting'
     exit(1)
 
+if args.f is None: filename=args.file[0]
+else: filename=args.f[0]
+print "filename",filename
+    
 xmin=float(args.xmin)
 xmax=float(args.xmax)
 
@@ -61,7 +67,8 @@ SetPlotStyle() # pretty up plots
 # variables for analysis of IV data
 V=array("d")
 I=array("d")
-readVIfile(args.f[0],V,I)
+#readVIfile(args.f[0],V,I)
+readVIfile(filename,V,I)
 for i in range(len(V)):
     V[i]=abs(V[i])
     I[i]=abs(I[i])
@@ -71,7 +78,7 @@ if rSeries>0: # V_diode=V_tot-V_Rseries
     for i in range(len(V)): V[i]=V[i]-I[i]*rSeries
 
 gIV=TGraph(len(V), V, I)
-gIV.SetTitle("Current vs. voltage;V;I [A]")
+gIV.SetTitle("Current vs. forward voltage;V;I [A]")
 
 # do linear fit to graph
 gIV.Fit("pol1","","",xmin,xmax)

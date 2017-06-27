@@ -33,7 +33,8 @@ if __name__ == '__main__':
         sys.exit()
 
     parser = argparse.ArgumentParser(description='I-V Overlay Plotter') 
-    parser.add_argument('files', nargs='*')
+    parser.add_argument('files', nargs='*', help="Give file paths or a [filename].list to \
+    specify files.  Use of list overrides labels on command line, use filepath & label in list.")
     parser.add_argument('-t', '--title', type=str, 
                         default='I-VOverlay',
                         help="Title for graph")
@@ -48,12 +49,25 @@ if __name__ == '__main__':
                     action="store_true")
     parser.add_argument('-m', '--minX', type=float, default=-1,
                         help="Minimum for xrange in plot. Enter abs(minX)")
-    parser.add_argument("-0", "--nolabels", default=None, help="Do not display labels",
-                    action="store_true")
-    parser.add_argument("-a", "--plotAll", default=None, help="Do not require min #Points",
-                    action="store_true")
-    parser.add_argument("-n", "--negPolarity", default=None, help="For plots in negative polarity",
-                    action="store_true")
+    parser.add_argument('-M', '--maxX', type=float, default=-1,
+                        help="Maximum for xrange in plot. Enter abs(maxX)")
+    parser.add_argument("-0", "--nolabels", default=None,
+                        help="Do not display labels",
+                        action="store_true")
+    parser.add_argument("-a", "--plotAll", default=None,
+                        help="Do not require min #Points",
+                        action="store_true")
+    parser.add_argument("-n", "--negPolarity", default=None,
+                        help="For plots in negative polarity",
+                        action="store_true")
+    parser.add_argument("-L", "--linear", default=None,
+                        help="Use linear y-axis",
+                        action="store_true")
+    parser.add_argument('-k','--key', type=str, default="",
+                        help="Choose location for key (TL,TR,BL,BR)")
+    parser.add_argument('-E','--Vbr', type=float, nargs='*', default=None,
+                        help="Plot current as function of Vex based on given Vbr.\n"
+                        "Give list of Vbr as positive values.")
     args = parser.parse_args()
     addLabels=(args.nolabels==None)
     plotAll=(not args.plotAll==None)
@@ -68,11 +82,37 @@ if __name__ == '__main__':
         for i in range(len(args.files)):
             args.files[i]=args.dir+"/"+args.files[i]
 
-    for file in args.files:
+    if ".list" in args.files[0]:
+        flist=[]
+        args.labels=[]
+        print "reading filelist",args.files[0]
+        with open(args.files[0]) as f:
+            filedata = f.readlines()
+        filedata = [x.strip() for x in filedata] 
+        for f in filedata:
+            if f.startswith("#") or f=="": continue
+            if '&' in f:
+                f=f.split('&')
+                flist.append(f[0].strip())
+                args.labels.append(f[1].strip())
+    else: flist=args.files
+
+    if not args.Vbr==None:
+        if not len(args.Vbr)==len(flist):
+            print "Vbr entries much math number of input files",args.Vbr
+            sys.exit()
+
+    nfile=0
+    for file in flist:
         if not file.endswith(".csv"): continue
         V=array("d")
         I=array("d")
         readVIfile(file,V,I,VMIN)
+        if V[-1]>0: sign=1
+        else: sign=-1
+        if args.Vbr:
+            for i in range(len(V)): V[i]=V[i]-sign*args.Vbr[nfile]
+        nfile=nfile+1
         if not plotAll and len(V)<minPoints:
             print "Too few points read from file",file,"skipping..."
             print "Use option -a to force plotting"
@@ -85,8 +125,10 @@ if __name__ == '__main__':
         if min(I)<im: im=min(I)
         if max(I)>iM: iM=max(I)
         if args.minX>0:
-            if abs(vM)<abs(vm): vM=-1.0*args.minX
+            if sign<0: vM=-1.0*args.minX
             else: vm=args.minX
+        if args.maxX>0: vM=args.maxX
+
         color=n+2
         if color==5 : color=809 # get rid of yellow
         if color==3 : color=418 # replace light green with dark green
@@ -97,29 +139,34 @@ if __name__ == '__main__':
         n=n+1
 
     canvas = TCanvas("ivdata","I-V Overlay",800,800)
-    canvas.SetLogy()
+    if args.linear==None: canvas.SetLogy()
 
     gStyle.SetOptStat(0) #;vM=-50
     h=TH1F("ivoverlay",args.title+";V;I [Amps]",2,vm,vM)
+    if args.Vbr: h.SetTitle(args.title+";Vex;I [Amps]")
     h.SetMinimum(im*0.9)
     h.SetMaximum(iM*1.1)
     h.Draw()
     h.GetYaxis().SetTitleOffset(1.4)
     mg.Draw('PL')
 
+    # choose location of the key
     n=0
     lab=[]
-    if vM>0: xlabmin=0.15 # positive voltages
-    else: xlabmin=0.5
-
+    if vM>0 or "L" in args.key: xlabmin=0.15 # positive voltages
+    if vM<0 or "R" in args.key: xlabmin=0.5
+    if "B" in args.key: ylabmax=0.6
+    else: ylabmax=0.93
+    
+    
     if addLabels:
-        for file in args.files:
+        for file in flist:
             name=os.path.basename(file)
             lab.append( 
-                TPaveText(xlabmin,0.88-0.05*n,xlabmin+0.45,0.93-0.05*n,"NDC") )
+                TPaveText(xlabmin,ylabmax-0.05*(n+1),xlabmin+0.45,ylabmax-0.05*n,"NDC") )
             color=n+2
             if color==5 : color=809 # get rid of yellow
-            if color==3 : color= 418 # replace light green with dark green
+            if color==3 : color=418 # replace light green with dark green
             if color==10: color=49 # replace white with mauve. Probs if >48 curves
             if not args.labels==None and len(args.labels)>n:
                 lab[n].AddText(args.labels[n])

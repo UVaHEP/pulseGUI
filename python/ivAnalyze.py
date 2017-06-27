@@ -194,6 +194,15 @@ class ivAnalyze():
         self.results["leakConst"]=leakFcn.GetParameter(0)
         self.results["leakSlope"]=leakFcn.GetParameter(1)
         self.results["leakAtVbr"]=leakFcn.Eval(vref)
+
+        # find voltage stepsize in vicinity of Vbr
+        lastv=0
+        for v in self.V:
+            if abs(v)<abs(self.vPeak) : lastv=abs(v)
+            else:
+                self.results["dV"]=abs(abs(v)-lastv)
+                break
+
         return self.results
         
     def AnalyzeLight(self):
@@ -237,7 +246,6 @@ class ivAnalyze():
                              self.vPeakIp-abs(self.vPeakIp/4),
                              self.vPeakIp+abs(self.vPeakIp/4))
         self.results["LDRmax"]=self.LDRmax
-
                 
         # estimate the light current Ip at Gain~1
         IatGain1=self.CalcIatGain1()

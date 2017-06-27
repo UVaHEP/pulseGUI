@@ -57,12 +57,18 @@ if __name__ == '__main__':
 
     parser = argparse.ArgumentParser(description='I-V Curve Batch Processor')
     parser.add_argument('files', nargs='*')
-    parser.add_argument("-r", "--recursive", default=None, help="Search subdirectories",
-                    action="store_true")
-    parser.add_argument("-v", "--verbose", default=None, help="Not implemented",
-                    action="store_true")
-    parser.add_argument("-s", "--sorted", default=None, help="Sort results according to device/channel",
-                    action="store_true")
+    parser.add_argument("-r", "--recursive", default=None,
+                        help="Search subdirectories",
+                        action="store_true")
+    parser.add_argument("-v", "--verbose", default=None,
+                        help="Not implemented",
+                        action="store_true")
+    parser.add_argument("-s", "--sorted", default=None,
+                        help="Sort results according to device/channel",
+                        action="store_true")
+    parser.add_argument("-d", "--dfdir", default=None,
+                        help="Include directory name for dark iv file",
+                        action="store_true")
     args = parser.parse_args()
     verbose=args.verbose
     
@@ -88,9 +94,11 @@ if __name__ == '__main__':
     if args.sorted:
         for df in sorted(results.iterkeys()):
             matchto=os.path.basename(df).find("_iLED")
+            dfdir=df.split("/")[-2]+"/"
             dev=os.path.basename(df)[0:matchto]
             dev=dev.split("_Ch")
             name=dev[0]
+            if args.dfdir: name=dfdir+name
             chan=dev[1]
             dat=results[df]
             if dat["vPeakIp"]==0: Vbr=dat["vPeak"]
@@ -105,9 +113,11 @@ if __name__ == '__main__':
         for dat in resList:
             df=dat["fnIV"]
             matchto=os.path.basename(df).find("_iLED")
+            dfdir=df.split("/")[-2]+"/"
             dev=os.path.basename(df)[0:matchto]
             dev=dev.split("_Ch")
             name=dev[0]
+            if args.dfdir: name=dfdir+name
             chan=dev[1]
             dat=results[df]
             if dat["vPeakIp"]==0: Vbr=dat["vPeak"]

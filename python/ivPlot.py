@@ -39,6 +39,7 @@ VMAX=100 # maximum voltage to read
 parser = optparse.OptionParser() 
 parser.add_option('-o', '--output', dest='outfn', default=None)
 parser.add_option('-p', '--png', dest='png', action="store_true")
+parser.add_option('-d', '--dir', dest='dir', default=None)
 parser.add_option('-b', '--batch', dest='batch', action="store_true")
 parser.add_option('-f', '--darkfn', dest='dfn', default=None)
 parser.add_option('-l', '--lightfn', dest='lfn', default=None)
@@ -52,11 +53,13 @@ parser.add_option('-0', '--noPlot', dest='noPlot', default=None, action="store_t
 (options, args) = parser.parse_args()
 dfn=None
 lfn=None
-if options.dfn: dfn=options.dfn
-if options.lfn: lfn=options.lfn
+if options.dir==None: indir=""
+else: indir=options.dir+"/"
+if options.dfn: dfn=indir+options.dfn
+if options.lfn: lfn=indir+options.lfn
 
-if options.dfn==None and len(args)>0: dfn=args[0]
-if options.lfn==None and len(args)>1: lfn=args[1]
+if options.dfn==None and len(args)>0: dfn=indir+args[0]
+if options.lfn==None and len(args)>1: lfn=indir+args[1]
 
 if dfn is None: 
     print 'No I-V data file to process...quitting'

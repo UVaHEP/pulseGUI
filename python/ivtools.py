@@ -209,10 +209,16 @@ def TGraphDivide(graph1,graph2):
 def TGraphDiff(graph1,graph2):
 # return difference of two TGraphs = graph1-graph2
 # ASSUMES x values are the same!
+# If graphs are different sizes we truncate the last points
 #######################
     gr=TGraph(graph1)
     x=Double(); y1=Double(); y2=Double()
-    for i in range(graph1.GetN()):
+    npoints=graph1.GetN()
+    if not graph1.GetN() == graph2.GetN():
+        print "TGraphDiff: Warning - Graphs are different sizes",
+        graph1.GetName(), graph2.GetName()
+    if graph1.GetN() > graph2.GetN(): npoints=graph2.GetN()
+    for i in range(npoints):
         graph1.GetPoint(i, x, y1)
         graph2.GetPoint(i, x, y2)
         gr.SetPoint(i, x, y1-y2)
