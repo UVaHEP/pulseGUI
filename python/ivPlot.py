@@ -192,9 +192,7 @@ else:
 leg2.Draw()
 
 ##### Canvas 3: Gain
-
 if doLightAnalysis:
-    leg3=TLegend(0.5,0.75,0.9,0.9)
     # Draw the Ratio of Light to Dark Curves
     canvas.cd(3) #.SetLogy()
     gLDRatio.ComputeRange(xmin, ymin, xmax, ymax)
@@ -216,6 +214,7 @@ if doLightAnalysis:
     axis.SetTitleOffset(1.3)
     axis.SetMaxDigits(3) #; axis.SetNoExponent(True)
     axis.Draw()
+    leg3=TLegend(0.5,0.75,0.9,0.9)
     leg3.AddEntry("gLDRatio","L/D ratio","l")
     leg3.AddEntry("gGain","Gain [I_p/I_p(@30)]","l")
     msg="Vop="+("%5.2f" % ana.LDRmax[0])

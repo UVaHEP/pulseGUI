@@ -283,10 +283,23 @@ def TGraphDerivative(tg):
         else:
             tgnew.SetPoint(i,Xbar,dY/dX)
     return TGraph(tgnew)
-    
+
+#######################
+def TGraphShift(tg,shiftx,shifty=0):
+# shift point by shiftx, shifty
+#######################
+    x=Double(); y=Double()
+    npoints=tg.GetN()
+    print "TGSHIFT",npoints
+    for i in range(npoints):
+        tg.GetPoint(i, x, y)
+        tg.SetPoint(i,x-shiftx,y-shifty)
+    print tg
+    return tg
+        
 #######################
 def TGraphScale(tg,scale):
-# simple calculation returns derivative of TGraph
+# scale y values in TGraph
 #######################
     npoints=tg.GetN()
     tgnew=TGraph(npoints)

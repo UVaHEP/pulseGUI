@@ -47,6 +47,8 @@ if __name__ == '__main__':
                         help="Output file for image")
     parser.add_argument("-b", "--batch", help="run in batch mode",
                     action="store_true")
+    parser.add_argument("-P", "--pub", help="us publication TStyle",
+                    action="store_true")
     parser.add_argument('-m', '--minX', type=float, default=-1,
                         help="Minimum for xrange in plot. Enter abs(minX)")
     parser.add_argument('-M', '--maxX', type=float, default=-1,
@@ -71,6 +73,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
     addLabels=(args.nolabels==None)
     plotAll=(not args.plotAll==None)
+    if args.pub: gROOT.SetStyle("Pub")
     
     mg=TMultiGraph()
     n=0
