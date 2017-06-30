@@ -47,12 +47,18 @@ if __name__ == '__main__':
                         help="Output file for image")
     parser.add_argument("-b", "--batch", help="run in batch mode",
                     action="store_true")
-    parser.add_argument("-P", "--pub", help="us publication TStyle",
+    parser.add_argument("-P", "--pub", help="use publication TStyle",
                     action="store_true")
     parser.add_argument('-m', '--minX', type=float, default=-1,
                         help="Minimum for xrange in plot. Enter abs(minX)")
     parser.add_argument('-M', '--maxX', type=float, default=-1,
                         help="Maximum for xrange in plot. Enter abs(maxX)")
+    parser.add_argument('-B', '--beginX', type=float, default=None,
+                        help="Start x-axis range here")
+    parser.add_argument('-y', '--minY', type=float, default=None,
+                        help="Minimum for yrange in plot. Enter abs(minY)")
+    parser.add_argument('-Y', '--maxY', type=float, default=None,
+                        help="Maximum for yrange in plot. Enter abs(maxY)")
     parser.add_argument("-0", "--nolabels", default=None,
                         help="Do not display labels",
                         action="store_true")
@@ -73,8 +79,10 @@ if __name__ == '__main__':
     args = parser.parse_args()
     addLabels=(args.nolabels==None)
     plotAll=(not args.plotAll==None)
-    if args.pub: gROOT.SetStyle("Pub")
-    
+    if args.pub: 
+        gROOT.SetStyle("Pub")
+	gStyle.SetPadLeftMargin(0.17);    
+
     mg=TMultiGraph()
     n=0
 
@@ -145,10 +153,13 @@ if __name__ == '__main__':
     if args.linear==None: canvas.SetLogy()
 
     gStyle.SetOptStat(0) #;vM=-50
+    if args.beginX: vm=args.beginX
     h=TH1F("ivoverlay",args.title+";V;I [Amps]",2,vm,vM)
     if args.Vbr: h.SetTitle(args.title+";Vex;I [Amps]")
     h.SetMinimum(im*0.9)
     h.SetMaximum(iM*1.1)
+    if args.minY: h.SetMinimum(args.minY)
+    if args.maxY: h.SetMaximum(args.maxY)
     h.Draw()
     h.GetYaxis().SetTitleOffset(1.4)
     mg.Draw('PL')

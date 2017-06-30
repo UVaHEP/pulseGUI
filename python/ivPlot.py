@@ -48,6 +48,7 @@ parser.add_option('-w', '--write', dest='writeGraphs', action="store_true")
 parser.add_option('-m', '--minV', dest='minV', type="int", default=None)
 parser.add_option('-M', '--maxV', dest='maxV', type="int", default=None)
 parser.add_option('-0', '--noPlot', dest='noPlot', default=None, action="store_true")
+parser.add_option('-P', '--pubStyle', dest='pubStyle', action="store_true")
 
 
 (options, args) = parser.parse_args()
@@ -95,6 +96,8 @@ print "======================================="
 
 
 if (options.noPlot): sys.exit(0)
+if options.pubStyle:
+    gROOT.SetStyle("Pub")
 
 ####################################################
 # analysis done, make plots
@@ -192,7 +195,9 @@ else:
 leg2.Draw()
 
 ##### Canvas 3: Gain
+
 if doLightAnalysis:
+    leg3=TLegend(0.5,0.75,0.9,0.9)
     # Draw the Ratio of Light to Dark Curves
     canvas.cd(3) #.SetLogy()
     gLDRatio.ComputeRange(xmin, ymin, xmax, ymax)
@@ -214,7 +219,6 @@ if doLightAnalysis:
     axis.SetTitleOffset(1.3)
     axis.SetMaxDigits(3) #; axis.SetNoExponent(True)
     axis.Draw()
-    leg3=TLegend(0.5,0.75,0.9,0.9)
     leg3.AddEntry("gLDRatio","L/D ratio","l")
     leg3.AddEntry("gGain","Gain [I_p/I_p(@30)]","l")
     msg="Vop="+("%5.2f" % ana.LDRmax[0])
