@@ -71,7 +71,7 @@ if __name__ == '__main__':
     parser.add_argument("-L", "--linear", default=None,
                         help="Use linear y-axis",
                         action="store_true")
-    parser.add_argument('-k','--key', type=str, default="",
+    parser.add_argument('-k','--key', type=str, default="TR",
                         help="Choose location for key (TL,TR,BL,BR)")
     parser.add_argument('-E','--Vbr', type=float, nargs='*', default=None,
                         help="Plot current as function of Vex based on given Vbr.\n"
