@@ -22,8 +22,7 @@ from ivAnalyze import ivAnalyze
 
 VMIN=0  # minimum voltage to read
 
-#######################
-# main
+######################## main
 #######################
 
 if __name__ == '__main__': 
@@ -183,6 +182,9 @@ if __name__ == '__main__':
             if color==3 : color=418 # replace light green with dark green
             if color==10: color=49 # replace white with mauve. Probs if >48 curves
             if not args.labels==None and len(args.labels)>n:
+                # hack to fix minus signs
+                args.labels[n]=args.labels[n].strip()
+                if args.labels[n].startswith("m-") : args.labels[n]=args.labels[n].replace("m-","-")
                 lab[n].AddText(args.labels[n])
             else: lab[n].AddText(name)
             lab[n].SetTextColor(color)
