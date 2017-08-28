@@ -191,10 +191,15 @@ class ivAnalyze():
             xstart=vref*0.65
         self.gIdV.Fit("expo","q","",xstart,xstop)
         leakFcn=self.gIdV.GetFunction("expo")
-        self.results["leakConst"]=leakFcn.GetParameter(0)
-        self.results["leakSlope"]=leakFcn.GetParameter(1)
-        self.results["leakAtVbr"]=leakFcn.Eval(vref)
-
+        if leakFcn==None:
+            self.results["leakConst"]=0
+            self.results["leakSlope"]=0
+            self.results["leakAtVbr"]=0
+        else:
+            self.results["leakConst"]=leakFcn.GetParameter(0)
+            self.results["leakSlope"]=leakFcn.GetParameter(1)
+            self.results["leakAtVbr"]=leakFcn.Eval(vref)
+            
         # find voltage stepsize in vicinity of Vbr
         lastv=0
         for v in self.V:
@@ -249,6 +254,7 @@ class ivAnalyze():
                 
         # estimate the light current Ip at Gain~1
         IatGain1=self.CalcIatGain1()
+        if IatGain1==0: IatGain1=1
         # gain calculation
         self.gGain=TGraph(npoints)
         for i in range(npoints):
