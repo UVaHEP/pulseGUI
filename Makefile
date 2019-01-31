@@ -4,6 +4,7 @@ SHELL:=/bin/sh
 ifndef ROOTSYS
 $(error *** Please set up environment variable ROOTSYS)
 endif
+
 # ----------------------------------------------------------------------------
 NAME	:= PulseGUI
 BLDDIR	:= build
@@ -45,11 +46,11 @@ CINT	:= rootcint
 PYCFLAGS:= $(shell python-config --includes)
 CPPFLAGS:= -I. -I$(INCDIR) -DR__HAVE_CONFIG \
 $(filter-out -stdlib=libc++,$(shell root-config --cflags)) $(PYCFLAGS)
-ifdef DEBUG
+#ifdef DEBUG
 CXXFLAGS:= -Wall -fPIC -g -ansi -Wextra -Wshadow -DDODEBUG
-else
-CXXFLAGS:= -O3 -Wall -fPIC -ansi -Wextra -Wshadow
-endif
+#else
+#CXXFLAGS:= -O3 -Wall -fPIC -ansi -Wextra -Wshadow
+#endif
 LDFLAGS	:= -g
 # ----------------------------------------------------------------------------
 # which operating system?
@@ -96,10 +97,10 @@ endif
 all: $(LIBRARY) bin/pulseEXE bin/convertPS
 
 bin/pulseEXE: exe/pulseEXE.cc 
-	g++ $(CXXFLAGS) $(CPPFLAGS) -o bin/pulseEXE exe/pulseEXE.cc -L$(LIBDIR) -l$(NAME) $(ROOTLIBS)
+	g++ $(CXXFLAGS) $(CPPFLAGS) -o bin/pulseEXE exe/pulseEXE.cc -L$(LIBDIR) -l$(NAME) $(ROOTLIBS) -Wl,-rpath $(CURDIR)/$(LIBDIR)
 
 bin/convertPS: exe/convertPS.cc 
-	g++ $(CXXFLAGS) $(CPPFLAGS) -o bin/convertPS exe/convertPS.cc -L$(LIBDIR) -l$(NAME) $(ROOTLIBS)
+	g++ $(CXXFLAGS) $(CPPFLAGS) -o bin/convertPS exe/convertPS.cc -L$(LIBDIR) -l$(NAME) $(ROOTLIBS) -Wl,-rpath $(CURDIR)/$(LIBDIR)
 
 $(LIBRARY)	: $(OBJECTS)
 	@echo "===> Linking shared library $@"
