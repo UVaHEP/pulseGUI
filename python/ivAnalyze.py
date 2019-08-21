@@ -50,7 +50,7 @@ class ivAnalyze():
         self.VMIN=10           # default minimum voltage to read
         self.VMAX=80           # default maximum voltage to read
         self.G1FITFRAC=0.5     # fit range for currents at G~1 as fraction of vPeak
-        self.VbrMIN=40         # absolute value of lower limit for breakdown region
+        self.VbrMIN=10         # absolute value of lower limit for breakdown region
     def __init__(self,fnIV=None,fnLIV=None):
         self.Reset()
         self.fnIV=fnIV         # dark I-V data file
@@ -87,7 +87,7 @@ class ivAnalyze():
         # quick and dirty, return i(light)-i(dark) @ 30V
         ip30=0
         for i in range(len(self.V)):
-            if self.V[i]<-30: break
+            if self.V[i]<self.vPeakIp/2: break
             ip30=self.Itot[i]-self.Id[i]
             #print i, self.V[i],self.Itot[i]-self.Id[i]
         return ip30
