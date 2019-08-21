@@ -224,6 +224,7 @@ Double_t getPSDouble(psblock block, fstream &fin){
 
 bool PicoReader::LocateBlock(vector<psblock> &blocks, 
 			     TString name, psblock &block) {
+
   for (std::vector<psblock>::iterator it = blocks.begin(); it < blocks.end(); ++it){
     if (it->name==name) {
       block=*it;
@@ -239,7 +240,7 @@ psdata* PicoReader::ReadMatFile(TString& filename){
   fin.open(filename.Data(), ios::binary | ios::in); 
   if (!fin.is_open()) 
     return NULL; 
- 
+
   psdata *ps = new psdata(); 
   
   vector<psblock> blocks = ReadBlocks(fin); 
@@ -449,7 +450,9 @@ vector<psblock> PicoReader::ReadBlocks(fstream& fin) {
       break; 
     }
     }
-    debug("The next block starts at: 0x%x",(unsigned)nextBlock); 
+    debug("The next block starts at: 0x%x",(unsigned)nextBlock);
+    if (nextBlock == 0)
+      break; 
     fin.seekg(nextBlock, fin.cur); 
     blocks.push_back(temp);
   }    

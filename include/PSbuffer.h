@@ -10,7 +10,8 @@
 
 
 #include <vector>
-
+#include <fstream> 
+using std::fstream; 
 using std::vector;
 
 // to do: better to turn this into a class

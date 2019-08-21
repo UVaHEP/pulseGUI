@@ -10,9 +10,9 @@
 class PulseAnalysis {
 
  private: 
-  static const Int_t MAXPEAKS = 100000;  // max peaks considered in spectrum
-  static const double NSIGMA = 3.5;      // #_pSigma > noise for peak search threshold
-  static const double DEFAULT_ZOOM=1e4;  // default (minimum) zoom [ns]
+  static constexpr Int_t MAXPEAKS = 100000;  // max peaks considered in spectrum
+  static constexpr double NSIGMA = 3.5;      // #_pSigma > noise for peak search threshold
+  static constexpr double DEFAULT_ZOOM=1e4;  // default (minimum) zoom [ns]
 
   TFile *_tf;       // pointer to current data file
   TString _currentTFile;  // name of current TFile
