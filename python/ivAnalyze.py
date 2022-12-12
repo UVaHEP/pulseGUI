@@ -54,7 +54,7 @@ class ivAnalyze():
                 self.nVl,self.nIl=readVIfile2(fnLIV)
                 self.nIl=np.abs(self.nIl)
                 self.AlignIV()
-        except Exception, e:
+        except Exception as e:
             print("Error reading input file(s)",fnIV,fnLIV)
         if np.sign(self.nVd[1])<0:
             self.nVd=-1*self.nVd  # enforce +V
@@ -142,13 +142,22 @@ class ivAnalyze():
     def TrimVIdata(self):
         vmin=self.vmin
         imin=self.imin
-        tVd=filter(lambda x: x>0, map(lambda v,i,vmin=vmin,imin=imin: (v>=vmin)*(i>imin)*v, self.nVd,self.nId))
-        tId=filter(lambda x: x>0, map(lambda v,i,vmin=vmin,imin=imin: (v>=vmin)*(i>imin)*i, self.nVd,self.nId))
+
+        # tVd = []
+        # for i in range(0, len(self.nVd)):
+        #     v = self.nVd[i]
+        #     i = self.nId[i]
+        #     print(f'{v}, {i}, {v>=vmin}, {i>imin}')
+        #     tVd.append((v>=vmin)*(i>imin)*v)
+        # print (tVd)
+            #print(list(map(lambda v,i: (v>=vmin)*(i>imin)*v, self.nVd,self.nId)))
+        tVd=list(filter(lambda x: x>0, map(lambda v,i,vmin=vmin,imin=imin: (v>=vmin)*(i>imin)*v, self.nVd,self.nId)))
+        tId=list(filter(lambda x: x>0, map(lambda v,i,vmin=vmin,imin=imin: (v>=vmin)*(i>imin)*i, self.nVd,self.nId)))
         self.tVd=np.array(tVd,'d')  # map/filter turns np array into list, grumble!
         self.tId=np.array(tId,'d')
         self.ntrim=len(tVd)
         if self.doLightAnalysis:
-            tIl=filter(lambda x: x>0, map(lambda v,i,vmin=vmin: (v>=vmin)*i, self.nVd,self.nIl))
+            tIl=list(filter(lambda x: x>0, map(lambda v,i,vmin=vmin: (v>=vmin)*i, self.nVd,self.nIl)))
             self.tIl=np.array(tIl,dtype=float)
         
     # read I-V data and estimate Vbr

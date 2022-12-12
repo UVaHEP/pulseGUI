@@ -7,7 +7,7 @@ import time
 ########################
 # C-like printf
 def printf(format, *args):
-########################
+    ########################
     sys.stdout.write(format % args)
 
 
@@ -54,8 +54,8 @@ def GraphMax(tg,xmin=-1e20,xmax=1e20,window=1):
             yR=ary_y[i]
             xR=ary_x[i]
             if yR<=yHalf: break
-    except Exception, e:
-        print "Cannot esimtate FWHM for graph:",tg.GetName()
+    except Exception as e:
+        print ("Cannot esimtate FWHM for graph:",tg.GetName())
 
     if xR<0 or yR<0:
         return xMax,yMax,0 
@@ -80,37 +80,37 @@ def GraphMaxRight(tg,xmin=-1e20,xmax=1e20):
             x2=float(x)
             y2=float(y)
     return x2,y2
-    
+
 
 def readVIfile2(file,sortV="False"):
     v,i = np.loadtxt(file, delimiter=',', usecols = (0,1), unpack=True)
-#    if sortV:
-#        vi=np.stack(v,i) 
-#        vi = np.abs(vi)
-#        vi = np.sort(vi,0)
-#        v,i=np.hsplit(vi,2)
-#        v=np.flatten(v)
-#        i=np.flatten(i)
+    #    if sortV:
+    #        vi=np.stack(v,i) 
+    #        vi = np.abs(vi)
+    #        vi = np.sort(vi,0)
+    #        v,i=np.hsplit(vi,2)
+    #        v=np.flatten(v)
+    #        i=np.flatten(i)
     return v,i
 
 
 
 #######################
 def getField(sname, tgt):
-# extract "tgt" field from a file name
-# e.g. for temperature field getField(fn,"C") 
-#######################
-	s=os.path.basename(sname)
-	fields=re.split("[-_]|(\.root)|(\.csv)",s)
-#	fields=re.split("[_](.csv)",s)
-        print fields
-	for f in fields:
-            if f==None : continue
-            ff=re.split(tgt,f)
-            if len(ff) > 1: return ff[0]
-# use isinstance(val,bool) to check for error
-	return False
-	
+    # extract "tgt" field from a file name
+    # e.g. for temperature field getField(fn,"C") 
+    #######################
+    s=os.path.basename(sname)
+    fields=re.split("[-_]|(\.root)|(\.csv)",s)
+        #	fields=re.split("[_](.csv)",s)
+    print( fields)
+    for f in fields:
+        if f==None : continue
+        ff=re.split(tgt,f)
+        if len(ff) > 1: return ff[0]
+        # use isinstance(val,bool) to check for error
+    return False
+    
 def CalcCelcius(resistance):
     T,R=np.genfromtxt(os.getenv("PULSGUIDIR")+"/dat/KT103J2.dat.bz2",unpack=True)
     return np.interp(resistance,R,T)
@@ -118,11 +118,11 @@ def CalcCelcius(resistance):
 
 #######################
 def TGraphSmoother(graphin,type="super",strength=0):
-# return a smoothed version of input TGraph
-# strength parameter depends on smoother choosen
-# SmoothSuper: strength=bass
-# SmoothKernel: strength=bandwidth
-#######################
+    # return a smoothed version of input TGraph
+    # strength parameter depends on smoother choosen
+    # SmoothSuper: strength=bass
+    # SmoothKernel: strength=bandwidth
+    #######################
     type=type.lower()
     gs = r.TGraphSmooth("normal")
     if type=="super":
@@ -130,14 +130,14 @@ def TGraphSmoother(graphin,type="super",strength=0):
     elif type=="kernel":
         graphSm=gs.SmoothKernel(graphin,"",strength)
     else:
-        print "[TGraphSmooth] Smoother",type,"not recognized, returning None"
+        print ("[TGraphSmooth] Smoother",type,"not recognized, returning None")
         return None
     return r.TGraph(graphSm)
 
 #######################
 def TGraphInvert(graphin):
-# return a inverted version of input TGraph
-#######################
+    # return a inverted version of input TGraph
+    #######################
     ginv=r.TGraph(graphin.GetN())
     x=r.Double(); y=r.Double()
     prev = 0.1
@@ -159,9 +159,9 @@ def TGraphInvert(graphin):
     
 #######################
 def TGraphDivide(graph1,graph2):
-# return ratio of two TGraphs = graph1/graph2
-# ASSUMES x values are the same!
-#######################
+    # return ratio of two TGraphs = graph1/graph2
+    # ASSUMES x values are the same!
+    #######################
     gr=r.TGraph(graph1)
     x=r.Double(); y1=r.Double(); y2=r.Double()
     for i in range(graph1.GetN()):
@@ -173,16 +173,16 @@ def TGraphDivide(graph1,graph2):
 
 #######################
 def TGraphDiff(graph1,graph2):
-# return difference of two TGraphs = graph1-graph2
-# ASSUMES x values are the same!
-# If graphs are different sizes we truncate the last points
-#######################
+    # return difference of two TGraphs = graph1-graph2
+    # ASSUMES x values are the same!
+    # If graphs are different sizes we truncate the last points
+    #######################
     gr=r.TGraph(graph1)
     x=r.Double(); y1=r.Double(); y2=r.Double()
     npoints=graph1.GetN()
     if not graph1.GetN() == graph2.GetN():
-        print "TGraphDiff: Warning - Graphs are different sizes",
-        graph1.GetName(), graph2.GetName()
+        print ("TGraphDiff: Warning - Graphs are different sizes",
+        graph1.GetName(), graph2.GetName())
     if graph1.GetN() > graph2.GetN(): npoints=graph2.GetN()
     for i in range(npoints):
         graph1.GetPoint(i, x, y1)
@@ -192,9 +192,9 @@ def TGraphDiff(graph1,graph2):
 
 #######################
 def TGraphMultiply(graph1,graph2):
-# return new TGraph with points ynew=y1*y2
-# ASSUMES x values are the same!
-#######################
+    # return new TGraph with points ynew=y1*y2
+    # ASSUMES x values are the same!
+    #######################
     gr=r.TGraph(graph1)
     x=Double(); y1=Double(); y2=Double()
     for i in range(graph1.GetN()):
@@ -207,7 +207,7 @@ def TGraphMultiply(graph1,graph2):
 ########################
 # simple derivative calculation of dLogY/dX for peak Vbr estimation
 def IV2dLogIdV(tg):
-########################
+    ########################
     npoints=tg.GetN()-1
     tgnew=r.TGraph(npoints)
     v1=r.Double(); v2=r.Double(); i1=r.Double(); i2=r.Double()
@@ -230,8 +230,8 @@ def IV2dLogIdV(tg):
 
 #######################
 def TGraphDerivative(tg):
-# simple calculation returns derivative of TGraph
-#######################
+    # simple calculation returns derivative of TGraph
+    #######################
     npoints=tg.GetN()-1
     tgnew=r.TGraph(npoints)
     x1=r.Double(); x2=r.Double(); y1=r.Double(); y2=r.Double()
@@ -252,21 +252,21 @@ def TGraphDerivative(tg):
 
 #######################
 def TGraphShift(tg,shiftx,shifty=0):
-# shift point by shiftx, shifty
-#######################
+    # shift point by shiftx, shifty
+    #######################
     x=r.Double(); y=r.Double()
     npoints=tg.GetN()
-    print "TGSHIFT",npoints
+    print ("TGSHIFT",npoints)
     for i in range(npoints):
         tg.GetPoint(i, x, y)
         tg.SetPoint(i,x-shiftx,y-shifty)
-    print tg
+        print (tg)
     return tg
-        
+
 #######################
 def TGraphScale(tg,scale):
-# scale y values in TGraph
-#######################
+    # scale y values in TGraph
+    #######################
     npoints=tg.GetN()
     tgnew=r.TGraph(npoints)
     x=r.Double(); y=r.Double();
@@ -303,15 +303,15 @@ class Thermistor():
 ########################
 # read CSV file and return V,I data in given arrays 
 def readVIfile(file, V, I, Vmin=0, Vmax=200):
-########################
+    ########################
     f = open(file, 'r')
     # identify file type from header
     line=f.readline()
     isAgilent = "Repeat,VAR2" in line
     isFromEric="Voltage_1" in line
-    if isAgilent: print "Reading I-V curve from Agilent sourcemeter"
+    if isAgilent: print ("Reading I-V curve from Agilent sourcemeter")
     #elif isFromEric: print "Reading from Eric's data"
-    else: print "Reading I-V curve from Keithley sourcemeter"
+    else: print ("Reading I-V curve from Keithley sourcemeter")
 
     for line in f.readlines():
         line=line.strip().split(',')

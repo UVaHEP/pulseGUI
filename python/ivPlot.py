@@ -7,15 +7,18 @@
 from ROOT import PyConfig
 PyConfig.IgnoreCommandLineOptions = True
 from ROOT import *
+import ctypes
+from ctypes import c_double as Double 
 
-import sys, os, commands, re
+import sys, os, re
 import getopt, string, math
 from array import array
 import optparse
 from ivAnalyze import ivAnalyze
 import argparse
 
-rootlibs=commands.getoutput("root-config --libdir")
+#rootlibs=commands.getoutput("root-config --libdir")
+rootlibs = '/usr/lib64/root'
 sys.path.append(rootlibs)
 
 from ivtools import *
@@ -62,7 +65,7 @@ if options.dfn==None and len(args)>0: dfn=indir+args[0]
 if options.lfn==None and len(args)>1: lfn=indir+args[1]
 
 if dfn is None: 
-    print 'No I-V data file to process...quitting'
+    print ('No I-V data file to process...quitting')
     exit(0)
 
 if not options.minV==None: VMIN=options.minV
@@ -78,7 +81,7 @@ results=ana.Analyze(VMIN,IMIN)
 
 
 
-print "\n============= I-V Analysis ============"
+print ("\n============= I-V Analysis ============")
 if ana.doLightAnalysis:
     VOp=ana.vLDratioMax
     VexOp=VOp-ana.Vbr
@@ -90,7 +93,7 @@ if ana.doLightAnalysis:
 
 #printf("Dark Current @ 90%% 60%% 30%% of Vbr: %6.2e %6.2e %6.2e\n",results["I90"],results["I60"],results["I30"])
 #printf("Leakage fit exp([0]+[1]*x), Ileak(Vbr) %7.3f %7.3f , %7.3f [nA]\n",results["leakConst"],results["leakSlope"],results["leakAtVbr"]*1e9)
-print "======================================="
+print ("=======================================")
 
 
 
@@ -130,12 +133,12 @@ else:
 #### Canvas 1:  Dark and light I-V curves
     
 gDark=ana.GetVIgraph('dark')
-xmin=r.Double(); xmax=r.Double(); ymin=r.Double(); ymax=r.Double()
+xmin=Double(); xmax=Double(); ymin=Double(); ymax=Double()
 gDark.ComputeRange(xmin,ymin,xmax,ymax)
 
 # set range for plotting IV curves
-imin=int( np.log10(ymin.real) )-1 ; imin=np.power(10.,imin)
-imax=int( np.log10(ymax.real) )   ; imax=np.power(10.,imax)
+imin=int( np.log10(ymin) )-1 ; imin=np.power(10.,imin)
+imax=int( np.log10(ymax) )   ; imax=np.power(10.,imax)
 imin=max(imin,2e-10)
 hIV=TH2F("hIV","I-V Curve;Volts;Current [Amps]",10,xmin,xmax,
          10,imin,imax*1.1)
@@ -177,7 +180,7 @@ else:
     gdLnIddV.ComputeRange(xmin,ymin,xmax,ymax)      
     title2=gdLnIddV.GetTitle()
 
-gDVframe=TH2F("dvFrame",title2,2,xmin,xmax,2,0,ymax*1.1)
+gDVframe=TH2F("dvFrame",title2,2,xmin,xmax,2,0,ymax.value*1.1)
 gDVframe.Draw()
 
 if ana.doLightAnalysis:
@@ -201,7 +204,7 @@ if ana.doLightAnalysis:
     gLDRatio.ComputeRange(xmin, ymin, xmax, ymax)
     vLDmax=ana.vLDratioMax
     gRframe=TH2F("grFrame",gLDRatio.GetTitle(),2,xmin,xmax,
-                 2,0,ymax*1.1)
+                 2,0,ymax.value*1.1)
     gRframe.Draw()
     gLDRatio.Draw("L")
 
@@ -239,6 +242,6 @@ if options.writeGraphs:
     
 
 if not options.batch:
-    print 'Hit return to exit'
+    print ('Hit return to exit')
     sys.stdout.flush() 
-    raw_input('')
+    sys.stdin.readline()

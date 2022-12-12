@@ -73,7 +73,7 @@ PYHOME	:= $(shell python-config --prefix)
 PYLIB	:= -L$(PYHOME)/lib
 PYLIBS	:= $(shell python-config --libs)
 LDFLAGS += $(shell root-config --ldflags) $(PYLIB)
-LIBS	:= -lMathMore -lSpectrum -lPyROOT -lGui $(ROOTLIBS) $(PYLIBS)
+LIBS	:= -lMathMore -lSpectrum  -lGui $(ROOTLIBS) $(PYLIBS)
 
 ifdef DEBUG
 say	:= $(shell echo "CCSRCS:  $(CCSRCS)" >& 2)

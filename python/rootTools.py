@@ -1,24 +1,25 @@
 import os
-from ROOT import Double, gPad, TGaxis, TMath
-
+from ROOT import  gPad, TGaxis, TMath
+import ctypes
+from ctypes import c_double as Double
 # scale graphic object for plotting on gPad
 # assuming same x-axis for now, and no scaling for ymin
 def scaleToPad(obj2,ylimit=None) :
     if gPad==0:
-        print "plotOver: No current TPad. Skip drawing."
+        print ("plotOver: No current TPad. Skip drawing.")
         return
     isGraph=obj2.InheritsFrom("TGraph")
     isTH1=obj2.InheritsFrom("TH1")
     knownType = isGraph or isTH1
     logy=(gPad.GetLogy()==1)
     if not knownType:
-        print "plotOver: unknown plot type. Skip drawing."
+        print ("plotOver: unknown plot type. Skip drawing.")
         return
     if isGraph:
         xmin=Double(); xmax=Double(); ymin=Double(); ymax=Double()
         obj2.ComputeRange(xmin, ymin, xmax, ymax)
         if not ylimit==None: ymax=ylimit
-        rightmax=ymax*1.1  # right axis
+        rightmax=ymax.value*1.1  # right axis
         scale = gPad.GetUymax()/rightmax;
         if logy: scale=TMath.Power(10,scale)
         for i in range(obj2.GetN()):
